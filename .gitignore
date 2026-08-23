@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+
+# Build output
+dist/
+build/
+coverage/
+
+# Temporary files
+tmp/
+temp/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Generated project workspaces
+workspace/
+
+# Generated artifacts
+artifacts/
+
+# Docker
+docker-data/
+
+# Prisma
+prisma/*.db
+prisma/*.db-journal
+
+# Runtime
+*.pid
+
+# Test
+.nyc_output/

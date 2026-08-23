@@ -1,0 +1,22 @@
+{
+  "name": "forge-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A production-oriented multi-model AI coding agent.",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=@forge-ai/api",
+    "dev:web": "npm run dev --workspace=@forge-ai/web",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "format": "prettier --write ."
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
