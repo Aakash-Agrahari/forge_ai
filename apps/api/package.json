@@ -1,0 +1,13 @@
+{
+  "name": "@forge-ai/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/app.js",
+  "scripts": {
+    "dev": "node --watch src/app.js",
+    "start": "node src/app.js",
+    "test": "node --test",
+    "lint": "eslint ."
+  }
+}
