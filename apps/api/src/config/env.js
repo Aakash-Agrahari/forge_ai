@@ -1,0 +1,30 @@
+import "dotenv/config";
+
+const requiredEnvVariables = [
+    "SESSION_SECRET"
+];
+
+for(const variable of requiredEnvVariables) {
+    if(!process.env[variable]) {
+        throw new Error(`Missing required environment variable: ${variable}`);
+    }
+}
+
+const env = {
+    nodeEnv: process.env.NODE_ENV || "development",
+    port: Number(process.env.PORT) || 3000,
+
+    databaseUrl: process.env.DATABASE_URL || "",
+    redisUrl: process.env.REDIS_URL || "",
+
+    sessionSecret: process.env.SESSION_SECRET,
+
+    geminiApiKey: process.env.GEMINI_API_KEY || "",
+    groqApiKey: process.env.GROQ_API_KEY || "",
+    cerebrasApiKey: process.env.CEREBRAS_API_KEY || "",
+    openRouterApiKey: process.env.OPENROUTER_API_KEY || "",
+
+    ollamaBaseUrl: process.env.OLLAMA_BASE_URL || "http://localhost:11434"
+};
+
+export default Object.freeze(env);
