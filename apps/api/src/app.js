@@ -1,19 +1,49 @@
 import express from "express";
+import helmet from "helmet";
+import cors from "cors";
+import pinoHttp from "pino-http";
+
+import env from "./config/env.js";
+import logger from "./utils/logger.js";
+import healthRoutes from "./routes/healthRoutes.js";
+import notFound from "./middleware/notFound.js";
+import errorHandler from "./middleware/errorHandler.js";
 
 const app = express();
 
-const PORT = process.env.PORT || 3000;
+//Security headers
+app.use(helmet());
 
-app.use(express.json());
 
-app.get("/api/v1/health", (req,res) => {
-    res.status(200).json({
-        success: true,
-        message: "ForgeAI API is running",
-        timestamp: new Date().toISOString()
-    });
-});
+ //CORS
+app.use(
+    cors({
+        origin: "http://localhost:5173",
+        credentials: true
+    })
+);
 
-app.listen(PORT, () => {
-    console.log(`ForgeAI API running on port ${PORT}`);
-});
+//Request logging
+app.use(
+    pinoHttp({
+        logger
+    })
+);
+
+//This is Request body limits which prevents unexpectedly large JSON requests.
+app.use(
+    express.json({
+        limit: "1mb"
+    })
+);
+
+//Health check
+app.use("/api/v1/health", healthRoutes);
+
+//404 handler
+app.use(notFound);
+
+// This is a centralized error handler and must be registered after routes.
+app.use(errorHandler);
+
+export default app;
