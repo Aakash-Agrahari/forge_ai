@@ -22,6 +22,7 @@ for(const variable of requiredEnvVariables) {
     }
 }
 
+// This is a centralized configuration file that loads environment variables from the .env file and makes them available throughout the application. It also provides default values for certain variables if they are not set in the environment.
 const env = {
     nodeEnv: process.env.NODE_ENV || "development",
     port: Number(process.env.PORT) || 3000,
