@@ -15,7 +15,7 @@ const app = express();
 app.use(helmet());
 
 
- //CORS
+ //CORS, used to control which domains can access the API. In production, you should set the origin to your frontend domain.
 app.use(
     cors({
         origin: "http://localhost:5173",
