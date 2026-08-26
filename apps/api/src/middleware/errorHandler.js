@@ -18,7 +18,7 @@ const errorHandler = (error, req, res, next) => {
             code: error.code || "INTERNAL_SERVER_ERROR",
             message:
                 statusCode === 500
-                    ? "An unexpected error occured."
+                    ? "An unexpected error has been occured."
                     : error.message
         }
     });
