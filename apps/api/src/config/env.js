@@ -18,7 +18,7 @@ const requiredEnvVariables = [
 
 for(const variable of requiredEnvVariables) {
     if(!process.env[variable]) {
-        throw new Error(`Missing required environment variable: ${variable}`);
+        throw new Error(`Missing the required environment variable: ${variable}`);
     }
 }
 
