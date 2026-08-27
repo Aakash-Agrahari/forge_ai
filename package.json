@@ -14,17 +14,20 @@
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
     "lint": "npm run lint --workspaces",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "postinstall": "prisma skills sync || exit 0"
   },
   "engines": {
     "node": ">=22.0.0"
   },
   "dependencies": {
+    "@prisma/client": "^7.10.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "helmet": "^8.3.0",
     "pino": "^10.3.1",
-    "pino-http": "^11.0.0"
+    "pino-http": "^11.0.0",
+    "prisma": "^8.0.0-rc.12"
   }
 }
