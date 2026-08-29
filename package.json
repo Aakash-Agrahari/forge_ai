@@ -8,9 +8,6 @@
     "apps/*",
     "packages/*"
   ],
-  "prisma": {
-    "schema": "infrastructure/prisma/schema.prisma"
-},
   "scripts": {
     "dev": "npm run dev --workspace=@forge-ai/api",
     "dev:web": "npm run dev --workspace=@forge-ai/web",
