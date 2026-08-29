@@ -13,7 +13,8 @@ dotenv.config({
 
 
 const requiredEnvVariables = [
-    "SESSION_SECRET"
+    "SESSION_SECRET",
+    "DATABASE_URL"
 ];
 
 for(const variable of requiredEnvVariables) {
