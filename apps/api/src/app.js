@@ -8,6 +8,7 @@ import logger from "./utils/logger.js";
 import healthRoutes from "./routes/healthRoutes.js";
 import notFound from "./middleware/notFound.js";
 import errorHandler from "./middleware/errorHandler.js";
+import authRoutes from "./routes/authRoutes.js";
 
 const app = express();
 
@@ -39,6 +40,9 @@ app.use(
 
 //Health check
 app.use("/api/v1/health", healthRoutes);
+
+//Auth routes
+app.use("/api/v1/auth", authRoutes);
 
 //404 handler
 app.use(notFound);
