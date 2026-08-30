@@ -40,7 +40,7 @@ export async function registerUser({name, email, password}){
             }
         });
 
-        await transaction.session.created({
+        await transaction.session.create({
             data: {
                 tokenHash,
                 userId: user.id,
