@@ -25,7 +25,7 @@ export async function registerUser({name, email, password}){
     const tokenHash = hashSessionToken(sessionToken);
     const expiresAt = getSessionExpiration();
 
-    const result = await.prisma.$transaction(async (transaction) => {
+    const result = await prisma.$transaction(async (transaction) => {
         const user = await transaction.user.create({
             data: {
                 name,
