@@ -1,6 +1,7 @@
 import {Router} from "express";
 import {registerSchema, loginSchema} from "../validators/authValidator.js";
 import {registerUser, loginUser} from "../services/authService.js";
+import requireAuth from "./middleware/auth.js";
 
 const router = Router();
 
@@ -92,6 +93,13 @@ router.post("/login", async(req, res, next) => {
     } catch (error) {
         next(error);
     }
-})
+});
+
+router.get("/me", requireAuth, async(req,res) => {
+    return res.status(200).json({
+        success: true,
+        user: req.user
+    })
+});
 
 export default router;
