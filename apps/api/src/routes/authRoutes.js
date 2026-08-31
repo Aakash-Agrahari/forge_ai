@@ -2,6 +2,7 @@ import {Router} from "express";
 import {registerSchema, loginSchema} from "../validators/authValidator.js";
 import {registerUser, loginUser} from "../services/authService.js";
 import requireAuth from "../middleware/auth.js";
+import prisma from "../config/prisma.js";
 
 const router = Router();
 
@@ -89,6 +90,34 @@ router.post("/login", async(req, res, next) => {
         return res.status(200).json({
             success: true,
             user
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+
+router.post("/logout", requireAuth, async (req, res, next) => {
+    try {
+        await prisma.session.update({
+            where: {
+                id: req.session.id
+            },
+            data: {
+                revokedAt: new Date()
+            }
+        });
+
+        res.clearCookie("forgeai_session", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            path: "/"
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Logged out successfully"
         });
     } catch (error) {
         next(error);
