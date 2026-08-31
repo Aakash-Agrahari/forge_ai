@@ -2,6 +2,7 @@ import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import pinoHttp from "pino-http";
+import cookieParser from "cookie-parser";
 
 import env from "./config/env.js";
 import logger from "./utils/logger.js";
@@ -37,6 +38,9 @@ app.use(
         limit: "1mb"
     })
 );
+
+//Cookie parser middleware to parse cookies from incoming requests.
+app.use(cookieParser());
 
 //Health check
 app.use("/api/v1/health", healthRoutes);

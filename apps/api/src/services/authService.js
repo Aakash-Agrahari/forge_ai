@@ -73,7 +73,7 @@ export async function loginUser({email, password}){
         password
     );
 
-    if(!isPasswordValid){
+    if(!passwordValid){
         const error = new Error("Invalid email or password");
         error.statusCode = 401;
         error.code = "INVALID_CREDENTIALS";

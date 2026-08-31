@@ -9,5 +9,8 @@
     "start": "node src/server.js",
     "test": "node --test",
     "lint": "eslint ."
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7"
   }
 }
