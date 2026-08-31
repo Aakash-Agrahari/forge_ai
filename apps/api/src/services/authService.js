@@ -1,5 +1,5 @@
 import prisma from "../config/prisma.js";
-import { hashPassword } from "../utils/password.js";
+import { hashPassword, verifyPassword } from "../utils/password.js";
 import {
     generateSessionToken,
     hashSessionToken,
@@ -52,6 +52,53 @@ export async function registerUser({name, email, password}){
 
     return{
         user: result,
+        sessionToken
+    };
+}
+
+export async function loginUser({email, password}){
+    const user = await prisma.user.findUnique({
+        where: {email}
+    });
+
+    if(!user){
+        const error = new Error("Invalid email or password");
+        error.statusCode = 401;
+        error.code = "INVALID_CREDENTIALS";
+        throw error;
+    }
+
+    const passwordValid = await verifyPassword(
+        user.passwordHash,
+        password
+    );
+
+    if(!isPasswordValid){
+        const error = new Error("Invalid email or password");
+        error.statusCode = 401;
+        error.code = "INVALID_CREDENTIALS";
+        throw error;
+    }
+
+    const sessionToken = generateSessionToken();
+    const tokenHash = hashSessionToken(sessionToken);
+    const expiresAt = getSessionExpiration();
+
+    const session = await prisma.session.create({
+        data: {
+            tokenHash,
+            userId: user.id,
+            expiresAt
+        }
+    });
+
+    return {
+        user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            createdAt: user.createdAt
+        },
         sessionToken
     };
 }
