@@ -3,7 +3,7 @@ import {registerSchema, loginSchema} from "../validators/authValidator.js";
 import {registerUser, loginUser} from "../services/authService.js";
 import requireAuth from "../middleware/auth.js";
 import prisma from "../config/prisma.js";
-
+import {SESSION_COOKIE_NAME, getSessionCookieOptions, getSessionClearCookieOptions} from "../config/auth.js";
 const router = Router();
 
 router.post("/register", async(req, res, next) => {
@@ -34,13 +34,11 @@ router.post("/register", async(req, res, next) => {
 
         const isProduction = process.env.NODE_ENV === "production";
 
-        res.cookie("forgeai_session", sessionToken, {
-            httpOnly: true,
-            secure: isProduction,
-            sameSite: "lax",
-            path: "/",
-            maxAge: 30 * 24 * 60 * 60 * 1000
-        });
+        res.cookie(
+            SESSION_COOKIE_NAME,
+            sessionToken,
+            getSessionCookieOptions()
+        );
 
         return res.status(201).json({
             success: true,
