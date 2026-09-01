@@ -1,9 +1,10 @@
 import prisma from "../config/prisma.js";
 import {hashSessionToken} from "../utils/session.js";
+import {SESSION_COOKIE_NAME} from "../config/auth.js";
 
 export default async function requireAuth(req, res, next){
     try{
-        const sessionToken = req.cookies?.forgeai_session;
+        const sessionToken = req.cookies?.[SESSION_COOKIE_NAME];
 
         if(!sessionToken){
             return res.status(401).json({
