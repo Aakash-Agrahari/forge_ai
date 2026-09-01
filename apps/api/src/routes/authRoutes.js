@@ -4,9 +4,11 @@ import {registerUser, loginUser} from "../services/authService.js";
 import requireAuth from "../middleware/auth.js";
 import prisma from "../config/prisma.js";
 import {SESSION_COOKIE_NAME, getSessionCookieOptions, getSessionClearCookieOptions} from "../config/auth.js";
+import {authRateLimiter} from "../middleware/rateLimiters.js";
+
 const router = Router();
 
-router.post("/register", async(req, res, next) => {
+router.post("/register", authRateLimiter, async(req, res, next) => {
     try{
         const validationResult = registerSchema.safeParse(req.body);
 
@@ -50,7 +52,7 @@ router.post("/register", async(req, res, next) => {
     }
 });
 
-router.post("/login", async(req, res, next) => {
+router.post("/login", authRateLimiter, async(req, res, next) => {
     try {
         const validationResult = loginSchema.safeParse(req.body);
 
