@@ -10,6 +10,7 @@ import healthRoutes from "./routes/healthRoutes.js";
 import notFound from "./middleware/notFound.js";
 import errorHandler from "./middleware/errorHandler.js";
 import authRoutes from "./routes/authRoutes.js";
+import projectRoutes from "./routes/projectRoutes.js";
 
 const app = express();
 
@@ -47,6 +48,9 @@ app.use("/api/v1/health", healthRoutes);
 
 //Auth routes
 app.use("/api/v1/auth", authRoutes);
+
+//Project routes
+app.use("/api/v1/projects", projectRoutes);
 
 //404 handler
 app.use(notFound);
