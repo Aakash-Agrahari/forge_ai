@@ -104,12 +104,10 @@ router.post("/logout", requireAuth, async (req, res, next) => {
             }
         });
 
-        res.clearCookie("forgeai_session", {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            path: "/"
-        });
+        res.clearCookie(
+            SESSION_COOKIE_NAME,
+            getSessionClearCookieOptions()
+        );
 
         return res.status(200).json({
             success: true,
