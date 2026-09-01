@@ -77,13 +77,11 @@ router.post("/login", async(req, res, next) => {
 
         const isProduction = process.env.NODE_ENV === "production";
 
-        res.cookie("forgeai_session", sessionToken, {
-            httpOnly: true,
-            secure: isProduction,
-            sameSite: "lax",
-            path: "/",
-            maxAge: 30 * 24 * 60 * 60 * 1000
-        });
+        res.cookie(
+            SESSION_COOKIE_NAME,
+            sessionToken,
+            getSessionCookieOptions()
+        );
 
         return res.status(200).json({
             success: true,
