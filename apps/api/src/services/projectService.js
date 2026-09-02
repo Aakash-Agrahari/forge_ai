@@ -1,6 +1,6 @@
 import prisma from "../config/prisma.js";
 
-export async function createdProject({
+export async function createProject({
     userId,
     name,
     description
