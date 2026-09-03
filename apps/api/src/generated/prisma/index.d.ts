@@ -28,6 +28,11 @@ export type Session = $Result.DefaultSelection<Prisma.$SessionPayload>
  * 
  */
 export type Project = $Result.DefaultSelection<Prisma.$ProjectPayload>
+/**
+ * Model ProjectFile
+ * 
+ */
+export type ProjectFile = $Result.DefaultSelection<Prisma.$ProjectFilePayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -179,6 +184,16 @@ export class PrismaClient<
     * ```
     */
   get project(): Prisma.ProjectDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.projectFile`: Exposes CRUD operations for the **ProjectFile** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ProjectFiles
+    * const projectFiles = await prisma.projectFile.findMany()
+    * ```
+    */
+  get projectFile(): Prisma.ProjectFileDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -628,7 +643,8 @@ export namespace Prisma {
   export const ModelName: {
     User: 'User',
     Session: 'Session',
-    Project: 'Project'
+    Project: 'Project',
+    ProjectFile: 'ProjectFile'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -644,7 +660,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "session" | "project"
+      modelProps: "user" | "session" | "project" | "projectFile"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -870,6 +886,80 @@ export namespace Prisma {
           }
         }
       }
+      ProjectFile: {
+        payload: Prisma.$ProjectFilePayload<ExtArgs>
+        fields: Prisma.ProjectFileFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ProjectFileFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectFilePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ProjectFileFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectFilePayload>
+          }
+          findFirst: {
+            args: Prisma.ProjectFileFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectFilePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ProjectFileFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectFilePayload>
+          }
+          findMany: {
+            args: Prisma.ProjectFileFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectFilePayload>[]
+          }
+          create: {
+            args: Prisma.ProjectFileCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectFilePayload>
+          }
+          createMany: {
+            args: Prisma.ProjectFileCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ProjectFileCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectFilePayload>[]
+          }
+          delete: {
+            args: Prisma.ProjectFileDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectFilePayload>
+          }
+          update: {
+            args: Prisma.ProjectFileUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectFilePayload>
+          }
+          deleteMany: {
+            args: Prisma.ProjectFileDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ProjectFileUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ProjectFileUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectFilePayload>[]
+          }
+          upsert: {
+            args: Prisma.ProjectFileUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectFilePayload>
+          }
+          aggregate: {
+            args: Prisma.ProjectFileAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateProjectFile>
+          }
+          groupBy: {
+            args: Prisma.ProjectFileGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ProjectFileGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ProjectFileCountArgs<ExtArgs>
+            result: $Utils.Optional<ProjectFileCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -996,6 +1086,7 @@ export namespace Prisma {
     user?: UserOmit
     session?: SessionOmit
     project?: ProjectOmit
+    projectFile?: ProjectFileOmit
   }
 
   /* Types for Logging */
@@ -1108,6 +1199,37 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountProjectsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ProjectWhereInput
+  }
+
+
+  /**
+   * Count Type ProjectCountOutputType
+   */
+
+  export type ProjectCountOutputType = {
+    files: number
+  }
+
+  export type ProjectCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    files?: boolean | ProjectCountOutputTypeCountFilesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * ProjectCountOutputType without action
+   */
+  export type ProjectCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectCountOutputType
+     */
+    select?: ProjectCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * ProjectCountOutputType without action
+   */
+  export type ProjectCountOutputTypeCountFilesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ProjectFileWhereInput
   }
 
 
@@ -3480,6 +3602,8 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
+    files?: boolean | Project$filesArgs<ExtArgs>
+    _count?: boolean | ProjectCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["project"]>
 
   export type ProjectSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -3514,6 +3638,8 @@ export namespace Prisma {
   export type ProjectOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "description" | "userId" | "createdAt" | "updatedAt", ExtArgs["result"]["project"]>
   export type ProjectInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
+    files?: boolean | Project$filesArgs<ExtArgs>
+    _count?: boolean | ProjectCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ProjectIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -3526,6 +3652,7 @@ export namespace Prisma {
     name: "Project"
     objects: {
       user: Prisma.$UserPayload<ExtArgs>
+      files: Prisma.$ProjectFilePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -3929,6 +4056,7 @@ export namespace Prisma {
   export interface Prisma__ProjectClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    files<T extends Project$filesArgs<ExtArgs> = {}>(args?: Subset<T, Project$filesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -4365,6 +4493,30 @@ export namespace Prisma {
   }
 
   /**
+   * Project.files
+   */
+  export type Project$filesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectFile
+     */
+    select?: ProjectFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectFile
+     */
+    omit?: ProjectFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectFileInclude<ExtArgs> | null
+    where?: ProjectFileWhereInput
+    orderBy?: ProjectFileOrderByWithRelationInput | ProjectFileOrderByWithRelationInput[]
+    cursor?: ProjectFileWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ProjectFileScalarFieldEnum | ProjectFileScalarFieldEnum[]
+  }
+
+  /**
    * Project without action
    */
   export type ProjectDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4380,6 +4532,1082 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: ProjectInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ProjectFile
+   */
+
+  export type AggregateProjectFile = {
+    _count: ProjectFileCountAggregateOutputType | null
+    _min: ProjectFileMinAggregateOutputType | null
+    _max: ProjectFileMaxAggregateOutputType | null
+  }
+
+  export type ProjectFileMinAggregateOutputType = {
+    id: string | null
+    projectId: string | null
+    path: string | null
+    content: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ProjectFileMaxAggregateOutputType = {
+    id: string | null
+    projectId: string | null
+    path: string | null
+    content: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ProjectFileCountAggregateOutputType = {
+    id: number
+    projectId: number
+    path: number
+    content: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type ProjectFileMinAggregateInputType = {
+    id?: true
+    projectId?: true
+    path?: true
+    content?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ProjectFileMaxAggregateInputType = {
+    id?: true
+    projectId?: true
+    path?: true
+    content?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ProjectFileCountAggregateInputType = {
+    id?: true
+    projectId?: true
+    path?: true
+    content?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type ProjectFileAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ProjectFile to aggregate.
+     */
+    where?: ProjectFileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProjectFiles to fetch.
+     */
+    orderBy?: ProjectFileOrderByWithRelationInput | ProjectFileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ProjectFileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProjectFiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProjectFiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ProjectFiles
+    **/
+    _count?: true | ProjectFileCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ProjectFileMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ProjectFileMaxAggregateInputType
+  }
+
+  export type GetProjectFileAggregateType<T extends ProjectFileAggregateArgs> = {
+        [P in keyof T & keyof AggregateProjectFile]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateProjectFile[P]>
+      : GetScalarType<T[P], AggregateProjectFile[P]>
+  }
+
+
+
+
+  export type ProjectFileGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ProjectFileWhereInput
+    orderBy?: ProjectFileOrderByWithAggregationInput | ProjectFileOrderByWithAggregationInput[]
+    by: ProjectFileScalarFieldEnum[] | ProjectFileScalarFieldEnum
+    having?: ProjectFileScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ProjectFileCountAggregateInputType | true
+    _min?: ProjectFileMinAggregateInputType
+    _max?: ProjectFileMaxAggregateInputType
+  }
+
+  export type ProjectFileGroupByOutputType = {
+    id: string
+    projectId: string
+    path: string
+    content: string
+    createdAt: Date
+    updatedAt: Date
+    _count: ProjectFileCountAggregateOutputType | null
+    _min: ProjectFileMinAggregateOutputType | null
+    _max: ProjectFileMaxAggregateOutputType | null
+  }
+
+  type GetProjectFileGroupByPayload<T extends ProjectFileGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ProjectFileGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ProjectFileGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ProjectFileGroupByOutputType[P]>
+            : GetScalarType<T[P], ProjectFileGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ProjectFileSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    projectId?: boolean
+    path?: boolean
+    content?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["projectFile"]>
+
+  export type ProjectFileSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    projectId?: boolean
+    path?: boolean
+    content?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["projectFile"]>
+
+  export type ProjectFileSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    projectId?: boolean
+    path?: boolean
+    content?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["projectFile"]>
+
+  export type ProjectFileSelectScalar = {
+    id?: boolean
+    projectId?: boolean
+    path?: boolean
+    content?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type ProjectFileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "projectId" | "path" | "content" | "createdAt" | "updatedAt", ExtArgs["result"]["projectFile"]>
+  export type ProjectFileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }
+  export type ProjectFileIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }
+  export type ProjectFileIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }
+
+  export type $ProjectFilePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ProjectFile"
+    objects: {
+      project: Prisma.$ProjectPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      projectId: string
+      path: string
+      content: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["projectFile"]>
+    composites: {}
+  }
+
+  type ProjectFileGetPayload<S extends boolean | null | undefined | ProjectFileDefaultArgs> = $Result.GetResult<Prisma.$ProjectFilePayload, S>
+
+  type ProjectFileCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ProjectFileFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ProjectFileCountAggregateInputType | true
+    }
+
+  export interface ProjectFileDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ProjectFile'], meta: { name: 'ProjectFile' } }
+    /**
+     * Find zero or one ProjectFile that matches the filter.
+     * @param {ProjectFileFindUniqueArgs} args - Arguments to find a ProjectFile
+     * @example
+     * // Get one ProjectFile
+     * const projectFile = await prisma.projectFile.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ProjectFileFindUniqueArgs>(args: SelectSubset<T, ProjectFileFindUniqueArgs<ExtArgs>>): Prisma__ProjectFileClient<$Result.GetResult<Prisma.$ProjectFilePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ProjectFile that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ProjectFileFindUniqueOrThrowArgs} args - Arguments to find a ProjectFile
+     * @example
+     * // Get one ProjectFile
+     * const projectFile = await prisma.projectFile.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ProjectFileFindUniqueOrThrowArgs>(args: SelectSubset<T, ProjectFileFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ProjectFileClient<$Result.GetResult<Prisma.$ProjectFilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ProjectFile that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectFileFindFirstArgs} args - Arguments to find a ProjectFile
+     * @example
+     * // Get one ProjectFile
+     * const projectFile = await prisma.projectFile.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ProjectFileFindFirstArgs>(args?: SelectSubset<T, ProjectFileFindFirstArgs<ExtArgs>>): Prisma__ProjectFileClient<$Result.GetResult<Prisma.$ProjectFilePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ProjectFile that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectFileFindFirstOrThrowArgs} args - Arguments to find a ProjectFile
+     * @example
+     * // Get one ProjectFile
+     * const projectFile = await prisma.projectFile.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ProjectFileFindFirstOrThrowArgs>(args?: SelectSubset<T, ProjectFileFindFirstOrThrowArgs<ExtArgs>>): Prisma__ProjectFileClient<$Result.GetResult<Prisma.$ProjectFilePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ProjectFiles that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectFileFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ProjectFiles
+     * const projectFiles = await prisma.projectFile.findMany()
+     * 
+     * // Get first 10 ProjectFiles
+     * const projectFiles = await prisma.projectFile.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const projectFileWithIdOnly = await prisma.projectFile.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ProjectFileFindManyArgs>(args?: SelectSubset<T, ProjectFileFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ProjectFile.
+     * @param {ProjectFileCreateArgs} args - Arguments to create a ProjectFile.
+     * @example
+     * // Create one ProjectFile
+     * const ProjectFile = await prisma.projectFile.create({
+     *   data: {
+     *     // ... data to create a ProjectFile
+     *   }
+     * })
+     * 
+     */
+    create<T extends ProjectFileCreateArgs>(args: SelectSubset<T, ProjectFileCreateArgs<ExtArgs>>): Prisma__ProjectFileClient<$Result.GetResult<Prisma.$ProjectFilePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ProjectFiles.
+     * @param {ProjectFileCreateManyArgs} args - Arguments to create many ProjectFiles.
+     * @example
+     * // Create many ProjectFiles
+     * const projectFile = await prisma.projectFile.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ProjectFileCreateManyArgs>(args?: SelectSubset<T, ProjectFileCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ProjectFiles and returns the data saved in the database.
+     * @param {ProjectFileCreateManyAndReturnArgs} args - Arguments to create many ProjectFiles.
+     * @example
+     * // Create many ProjectFiles
+     * const projectFile = await prisma.projectFile.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ProjectFiles and only return the `id`
+     * const projectFileWithIdOnly = await prisma.projectFile.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ProjectFileCreateManyAndReturnArgs>(args?: SelectSubset<T, ProjectFileCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectFilePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ProjectFile.
+     * @param {ProjectFileDeleteArgs} args - Arguments to delete one ProjectFile.
+     * @example
+     * // Delete one ProjectFile
+     * const ProjectFile = await prisma.projectFile.delete({
+     *   where: {
+     *     // ... filter to delete one ProjectFile
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ProjectFileDeleteArgs>(args: SelectSubset<T, ProjectFileDeleteArgs<ExtArgs>>): Prisma__ProjectFileClient<$Result.GetResult<Prisma.$ProjectFilePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ProjectFile.
+     * @param {ProjectFileUpdateArgs} args - Arguments to update one ProjectFile.
+     * @example
+     * // Update one ProjectFile
+     * const projectFile = await prisma.projectFile.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ProjectFileUpdateArgs>(args: SelectSubset<T, ProjectFileUpdateArgs<ExtArgs>>): Prisma__ProjectFileClient<$Result.GetResult<Prisma.$ProjectFilePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ProjectFiles.
+     * @param {ProjectFileDeleteManyArgs} args - Arguments to filter ProjectFiles to delete.
+     * @example
+     * // Delete a few ProjectFiles
+     * const { count } = await prisma.projectFile.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ProjectFileDeleteManyArgs>(args?: SelectSubset<T, ProjectFileDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ProjectFiles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectFileUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ProjectFiles
+     * const projectFile = await prisma.projectFile.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ProjectFileUpdateManyArgs>(args: SelectSubset<T, ProjectFileUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ProjectFiles and returns the data updated in the database.
+     * @param {ProjectFileUpdateManyAndReturnArgs} args - Arguments to update many ProjectFiles.
+     * @example
+     * // Update many ProjectFiles
+     * const projectFile = await prisma.projectFile.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ProjectFiles and only return the `id`
+     * const projectFileWithIdOnly = await prisma.projectFile.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ProjectFileUpdateManyAndReturnArgs>(args: SelectSubset<T, ProjectFileUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectFilePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ProjectFile.
+     * @param {ProjectFileUpsertArgs} args - Arguments to update or create a ProjectFile.
+     * @example
+     * // Update or create a ProjectFile
+     * const projectFile = await prisma.projectFile.upsert({
+     *   create: {
+     *     // ... data to create a ProjectFile
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ProjectFile we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ProjectFileUpsertArgs>(args: SelectSubset<T, ProjectFileUpsertArgs<ExtArgs>>): Prisma__ProjectFileClient<$Result.GetResult<Prisma.$ProjectFilePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ProjectFiles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectFileCountArgs} args - Arguments to filter ProjectFiles to count.
+     * @example
+     * // Count the number of ProjectFiles
+     * const count = await prisma.projectFile.count({
+     *   where: {
+     *     // ... the filter for the ProjectFiles we want to count
+     *   }
+     * })
+    **/
+    count<T extends ProjectFileCountArgs>(
+      args?: Subset<T, ProjectFileCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ProjectFileCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ProjectFile.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectFileAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ProjectFileAggregateArgs>(args: Subset<T, ProjectFileAggregateArgs>): Prisma.PrismaPromise<GetProjectFileAggregateType<T>>
+
+    /**
+     * Group by ProjectFile.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectFileGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ProjectFileGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ProjectFileGroupByArgs['orderBy'] }
+        : { orderBy?: ProjectFileGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ProjectFileGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetProjectFileGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ProjectFile model
+   */
+  readonly fields: ProjectFileFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ProjectFile.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ProjectFileClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    project<T extends ProjectDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProjectDefaultArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ProjectFile model
+   */
+  interface ProjectFileFieldRefs {
+    readonly id: FieldRef<"ProjectFile", 'String'>
+    readonly projectId: FieldRef<"ProjectFile", 'String'>
+    readonly path: FieldRef<"ProjectFile", 'String'>
+    readonly content: FieldRef<"ProjectFile", 'String'>
+    readonly createdAt: FieldRef<"ProjectFile", 'DateTime'>
+    readonly updatedAt: FieldRef<"ProjectFile", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ProjectFile findUnique
+   */
+  export type ProjectFileFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectFile
+     */
+    select?: ProjectFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectFile
+     */
+    omit?: ProjectFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectFileInclude<ExtArgs> | null
+    /**
+     * Filter, which ProjectFile to fetch.
+     */
+    where: ProjectFileWhereUniqueInput
+  }
+
+  /**
+   * ProjectFile findUniqueOrThrow
+   */
+  export type ProjectFileFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectFile
+     */
+    select?: ProjectFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectFile
+     */
+    omit?: ProjectFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectFileInclude<ExtArgs> | null
+    /**
+     * Filter, which ProjectFile to fetch.
+     */
+    where: ProjectFileWhereUniqueInput
+  }
+
+  /**
+   * ProjectFile findFirst
+   */
+  export type ProjectFileFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectFile
+     */
+    select?: ProjectFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectFile
+     */
+    omit?: ProjectFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectFileInclude<ExtArgs> | null
+    /**
+     * Filter, which ProjectFile to fetch.
+     */
+    where?: ProjectFileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProjectFiles to fetch.
+     */
+    orderBy?: ProjectFileOrderByWithRelationInput | ProjectFileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ProjectFiles.
+     */
+    cursor?: ProjectFileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProjectFiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProjectFiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ProjectFiles.
+     */
+    distinct?: ProjectFileScalarFieldEnum | ProjectFileScalarFieldEnum[]
+  }
+
+  /**
+   * ProjectFile findFirstOrThrow
+   */
+  export type ProjectFileFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectFile
+     */
+    select?: ProjectFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectFile
+     */
+    omit?: ProjectFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectFileInclude<ExtArgs> | null
+    /**
+     * Filter, which ProjectFile to fetch.
+     */
+    where?: ProjectFileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProjectFiles to fetch.
+     */
+    orderBy?: ProjectFileOrderByWithRelationInput | ProjectFileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ProjectFiles.
+     */
+    cursor?: ProjectFileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProjectFiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProjectFiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ProjectFiles.
+     */
+    distinct?: ProjectFileScalarFieldEnum | ProjectFileScalarFieldEnum[]
+  }
+
+  /**
+   * ProjectFile findMany
+   */
+  export type ProjectFileFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectFile
+     */
+    select?: ProjectFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectFile
+     */
+    omit?: ProjectFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectFileInclude<ExtArgs> | null
+    /**
+     * Filter, which ProjectFiles to fetch.
+     */
+    where?: ProjectFileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProjectFiles to fetch.
+     */
+    orderBy?: ProjectFileOrderByWithRelationInput | ProjectFileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ProjectFiles.
+     */
+    cursor?: ProjectFileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProjectFiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProjectFiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ProjectFiles.
+     */
+    distinct?: ProjectFileScalarFieldEnum | ProjectFileScalarFieldEnum[]
+  }
+
+  /**
+   * ProjectFile create
+   */
+  export type ProjectFileCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectFile
+     */
+    select?: ProjectFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectFile
+     */
+    omit?: ProjectFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectFileInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ProjectFile.
+     */
+    data: XOR<ProjectFileCreateInput, ProjectFileUncheckedCreateInput>
+  }
+
+  /**
+   * ProjectFile createMany
+   */
+  export type ProjectFileCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ProjectFiles.
+     */
+    data: ProjectFileCreateManyInput | ProjectFileCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ProjectFile createManyAndReturn
+   */
+  export type ProjectFileCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectFile
+     */
+    select?: ProjectFileSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectFile
+     */
+    omit?: ProjectFileOmit<ExtArgs> | null
+    /**
+     * The data used to create many ProjectFiles.
+     */
+    data: ProjectFileCreateManyInput | ProjectFileCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectFileIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ProjectFile update
+   */
+  export type ProjectFileUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectFile
+     */
+    select?: ProjectFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectFile
+     */
+    omit?: ProjectFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectFileInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ProjectFile.
+     */
+    data: XOR<ProjectFileUpdateInput, ProjectFileUncheckedUpdateInput>
+    /**
+     * Choose, which ProjectFile to update.
+     */
+    where: ProjectFileWhereUniqueInput
+  }
+
+  /**
+   * ProjectFile updateMany
+   */
+  export type ProjectFileUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ProjectFiles.
+     */
+    data: XOR<ProjectFileUpdateManyMutationInput, ProjectFileUncheckedUpdateManyInput>
+    /**
+     * Filter which ProjectFiles to update
+     */
+    where?: ProjectFileWhereInput
+    /**
+     * Limit how many ProjectFiles to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ProjectFile updateManyAndReturn
+   */
+  export type ProjectFileUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectFile
+     */
+    select?: ProjectFileSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectFile
+     */
+    omit?: ProjectFileOmit<ExtArgs> | null
+    /**
+     * The data used to update ProjectFiles.
+     */
+    data: XOR<ProjectFileUpdateManyMutationInput, ProjectFileUncheckedUpdateManyInput>
+    /**
+     * Filter which ProjectFiles to update
+     */
+    where?: ProjectFileWhereInput
+    /**
+     * Limit how many ProjectFiles to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectFileIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ProjectFile upsert
+   */
+  export type ProjectFileUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectFile
+     */
+    select?: ProjectFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectFile
+     */
+    omit?: ProjectFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectFileInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ProjectFile to update in case it exists.
+     */
+    where: ProjectFileWhereUniqueInput
+    /**
+     * In case the ProjectFile found by the `where` argument doesn't exist, create a new ProjectFile with this data.
+     */
+    create: XOR<ProjectFileCreateInput, ProjectFileUncheckedCreateInput>
+    /**
+     * In case the ProjectFile was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ProjectFileUpdateInput, ProjectFileUncheckedUpdateInput>
+  }
+
+  /**
+   * ProjectFile delete
+   */
+  export type ProjectFileDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectFile
+     */
+    select?: ProjectFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectFile
+     */
+    omit?: ProjectFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectFileInclude<ExtArgs> | null
+    /**
+     * Filter which ProjectFile to delete.
+     */
+    where: ProjectFileWhereUniqueInput
+  }
+
+  /**
+   * ProjectFile deleteMany
+   */
+  export type ProjectFileDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ProjectFiles to delete
+     */
+    where?: ProjectFileWhereInput
+    /**
+     * Limit how many ProjectFiles to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ProjectFile without action
+   */
+  export type ProjectFileDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectFile
+     */
+    select?: ProjectFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectFile
+     */
+    omit?: ProjectFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectFileInclude<ExtArgs> | null
   }
 
 
@@ -4431,6 +5659,18 @@ export namespace Prisma {
   };
 
   export type ProjectScalarFieldEnum = (typeof ProjectScalarFieldEnum)[keyof typeof ProjectScalarFieldEnum]
+
+
+  export const ProjectFileScalarFieldEnum: {
+    id: 'id',
+    projectId: 'projectId',
+    path: 'path',
+    content: 'content',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type ProjectFileScalarFieldEnum = (typeof ProjectFileScalarFieldEnum)[keyof typeof ProjectFileScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -4641,6 +5881,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Project"> | Date | string
     updatedAt?: DateTimeFilter<"Project"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    files?: ProjectFileListRelationFilter
   }
 
   export type ProjectOrderByWithRelationInput = {
@@ -4651,6 +5892,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     user?: UserOrderByWithRelationInput
+    files?: ProjectFileOrderByRelationAggregateInput
   }
 
   export type ProjectWhereUniqueInput = Prisma.AtLeast<{
@@ -4664,6 +5906,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Project"> | Date | string
     updatedAt?: DateTimeFilter<"Project"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    files?: ProjectFileListRelationFilter
   }, "id">
 
   export type ProjectOrderByWithAggregationInput = {
@@ -4688,6 +5931,67 @@ export namespace Prisma {
     userId?: StringWithAggregatesFilter<"Project"> | string
     createdAt?: DateTimeWithAggregatesFilter<"Project"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Project"> | Date | string
+  }
+
+  export type ProjectFileWhereInput = {
+    AND?: ProjectFileWhereInput | ProjectFileWhereInput[]
+    OR?: ProjectFileWhereInput[]
+    NOT?: ProjectFileWhereInput | ProjectFileWhereInput[]
+    id?: StringFilter<"ProjectFile"> | string
+    projectId?: StringFilter<"ProjectFile"> | string
+    path?: StringFilter<"ProjectFile"> | string
+    content?: StringFilter<"ProjectFile"> | string
+    createdAt?: DateTimeFilter<"ProjectFile"> | Date | string
+    updatedAt?: DateTimeFilter<"ProjectFile"> | Date | string
+    project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+  }
+
+  export type ProjectFileOrderByWithRelationInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    path?: SortOrder
+    content?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    project?: ProjectOrderByWithRelationInput
+  }
+
+  export type ProjectFileWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    projectId_path?: ProjectFileProjectIdPathCompoundUniqueInput
+    AND?: ProjectFileWhereInput | ProjectFileWhereInput[]
+    OR?: ProjectFileWhereInput[]
+    NOT?: ProjectFileWhereInput | ProjectFileWhereInput[]
+    projectId?: StringFilter<"ProjectFile"> | string
+    path?: StringFilter<"ProjectFile"> | string
+    content?: StringFilter<"ProjectFile"> | string
+    createdAt?: DateTimeFilter<"ProjectFile"> | Date | string
+    updatedAt?: DateTimeFilter<"ProjectFile"> | Date | string
+    project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+  }, "id" | "projectId_path">
+
+  export type ProjectFileOrderByWithAggregationInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    path?: SortOrder
+    content?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: ProjectFileCountOrderByAggregateInput
+    _max?: ProjectFileMaxOrderByAggregateInput
+    _min?: ProjectFileMinOrderByAggregateInput
+  }
+
+  export type ProjectFileScalarWhereWithAggregatesInput = {
+    AND?: ProjectFileScalarWhereWithAggregatesInput | ProjectFileScalarWhereWithAggregatesInput[]
+    OR?: ProjectFileScalarWhereWithAggregatesInput[]
+    NOT?: ProjectFileScalarWhereWithAggregatesInput | ProjectFileScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"ProjectFile"> | string
+    projectId?: StringWithAggregatesFilter<"ProjectFile"> | string
+    path?: StringWithAggregatesFilter<"ProjectFile"> | string
+    content?: StringWithAggregatesFilter<"ProjectFile"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"ProjectFile"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"ProjectFile"> | Date | string
   }
 
   export type UserCreateInput = {
@@ -4830,6 +6134,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutProjectsInput
+    files?: ProjectFileCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectUncheckedCreateInput = {
@@ -4839,6 +6144,7 @@ export namespace Prisma {
     userId: string
     createdAt?: Date | string
     updatedAt?: Date | string
+    files?: ProjectFileUncheckedCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectUpdateInput = {
@@ -4848,6 +6154,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutProjectsNestedInput
+    files?: ProjectFileUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateInput = {
@@ -4857,6 +6164,7 @@ export namespace Prisma {
     userId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    files?: ProjectFileUncheckedUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectCreateManyInput = {
@@ -4881,6 +6189,68 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     userId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectFileCreateInput = {
+    id?: string
+    path: string
+    content: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    project: ProjectCreateNestedOneWithoutFilesInput
+  }
+
+  export type ProjectFileUncheckedCreateInput = {
+    id?: string
+    projectId: string
+    path: string
+    content: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ProjectFileUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    project?: ProjectUpdateOneRequiredWithoutFilesNestedInput
+  }
+
+  export type ProjectFileUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectFileCreateManyInput = {
+    id?: string
+    projectId: string
+    path: string
+    content: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ProjectFileUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectFileUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -5067,6 +6437,16 @@ export namespace Prisma {
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
+  export type ProjectFileListRelationFilter = {
+    every?: ProjectFileWhereInput
+    some?: ProjectFileWhereInput
+    none?: ProjectFileWhereInput
+  }
+
+  export type ProjectFileOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type ProjectCountOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
@@ -5110,6 +6490,43 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type ProjectScalarRelationFilter = {
+    is?: ProjectWhereInput
+    isNot?: ProjectWhereInput
+  }
+
+  export type ProjectFileProjectIdPathCompoundUniqueInput = {
+    projectId: string
+    path: string
+  }
+
+  export type ProjectFileCountOrderByAggregateInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    path?: SortOrder
+    content?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ProjectFileMaxOrderByAggregateInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    path?: SortOrder
+    content?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ProjectFileMinOrderByAggregateInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    path?: SortOrder
+    content?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type SessionCreateNestedManyWithoutUserInput = {
@@ -5228,6 +6645,20 @@ export namespace Prisma {
     connect?: UserWhereUniqueInput
   }
 
+  export type ProjectFileCreateNestedManyWithoutProjectInput = {
+    create?: XOR<ProjectFileCreateWithoutProjectInput, ProjectFileUncheckedCreateWithoutProjectInput> | ProjectFileCreateWithoutProjectInput[] | ProjectFileUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: ProjectFileCreateOrConnectWithoutProjectInput | ProjectFileCreateOrConnectWithoutProjectInput[]
+    createMany?: ProjectFileCreateManyProjectInputEnvelope
+    connect?: ProjectFileWhereUniqueInput | ProjectFileWhereUniqueInput[]
+  }
+
+  export type ProjectFileUncheckedCreateNestedManyWithoutProjectInput = {
+    create?: XOR<ProjectFileCreateWithoutProjectInput, ProjectFileUncheckedCreateWithoutProjectInput> | ProjectFileCreateWithoutProjectInput[] | ProjectFileUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: ProjectFileCreateOrConnectWithoutProjectInput | ProjectFileCreateOrConnectWithoutProjectInput[]
+    createMany?: ProjectFileCreateManyProjectInputEnvelope
+    connect?: ProjectFileWhereUniqueInput | ProjectFileWhereUniqueInput[]
+  }
+
   export type NullableStringFieldUpdateOperationsInput = {
     set?: string | null
   }
@@ -5238,6 +6669,48 @@ export namespace Prisma {
     upsert?: UserUpsertWithoutProjectsInput
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutProjectsInput, UserUpdateWithoutProjectsInput>, UserUncheckedUpdateWithoutProjectsInput>
+  }
+
+  export type ProjectFileUpdateManyWithoutProjectNestedInput = {
+    create?: XOR<ProjectFileCreateWithoutProjectInput, ProjectFileUncheckedCreateWithoutProjectInput> | ProjectFileCreateWithoutProjectInput[] | ProjectFileUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: ProjectFileCreateOrConnectWithoutProjectInput | ProjectFileCreateOrConnectWithoutProjectInput[]
+    upsert?: ProjectFileUpsertWithWhereUniqueWithoutProjectInput | ProjectFileUpsertWithWhereUniqueWithoutProjectInput[]
+    createMany?: ProjectFileCreateManyProjectInputEnvelope
+    set?: ProjectFileWhereUniqueInput | ProjectFileWhereUniqueInput[]
+    disconnect?: ProjectFileWhereUniqueInput | ProjectFileWhereUniqueInput[]
+    delete?: ProjectFileWhereUniqueInput | ProjectFileWhereUniqueInput[]
+    connect?: ProjectFileWhereUniqueInput | ProjectFileWhereUniqueInput[]
+    update?: ProjectFileUpdateWithWhereUniqueWithoutProjectInput | ProjectFileUpdateWithWhereUniqueWithoutProjectInput[]
+    updateMany?: ProjectFileUpdateManyWithWhereWithoutProjectInput | ProjectFileUpdateManyWithWhereWithoutProjectInput[]
+    deleteMany?: ProjectFileScalarWhereInput | ProjectFileScalarWhereInput[]
+  }
+
+  export type ProjectFileUncheckedUpdateManyWithoutProjectNestedInput = {
+    create?: XOR<ProjectFileCreateWithoutProjectInput, ProjectFileUncheckedCreateWithoutProjectInput> | ProjectFileCreateWithoutProjectInput[] | ProjectFileUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: ProjectFileCreateOrConnectWithoutProjectInput | ProjectFileCreateOrConnectWithoutProjectInput[]
+    upsert?: ProjectFileUpsertWithWhereUniqueWithoutProjectInput | ProjectFileUpsertWithWhereUniqueWithoutProjectInput[]
+    createMany?: ProjectFileCreateManyProjectInputEnvelope
+    set?: ProjectFileWhereUniqueInput | ProjectFileWhereUniqueInput[]
+    disconnect?: ProjectFileWhereUniqueInput | ProjectFileWhereUniqueInput[]
+    delete?: ProjectFileWhereUniqueInput | ProjectFileWhereUniqueInput[]
+    connect?: ProjectFileWhereUniqueInput | ProjectFileWhereUniqueInput[]
+    update?: ProjectFileUpdateWithWhereUniqueWithoutProjectInput | ProjectFileUpdateWithWhereUniqueWithoutProjectInput[]
+    updateMany?: ProjectFileUpdateManyWithWhereWithoutProjectInput | ProjectFileUpdateManyWithWhereWithoutProjectInput[]
+    deleteMany?: ProjectFileScalarWhereInput | ProjectFileScalarWhereInput[]
+  }
+
+  export type ProjectCreateNestedOneWithoutFilesInput = {
+    create?: XOR<ProjectCreateWithoutFilesInput, ProjectUncheckedCreateWithoutFilesInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutFilesInput
+    connect?: ProjectWhereUniqueInput
+  }
+
+  export type ProjectUpdateOneRequiredWithoutFilesNestedInput = {
+    create?: XOR<ProjectCreateWithoutFilesInput, ProjectUncheckedCreateWithoutFilesInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutFilesInput
+    upsert?: ProjectUpsertWithoutFilesInput
+    connect?: ProjectWhereUniqueInput
+    update?: XOR<XOR<ProjectUpdateToOneWithWhereWithoutFilesInput, ProjectUpdateWithoutFilesInput>, ProjectUncheckedUpdateWithoutFilesInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -5406,6 +6879,7 @@ export namespace Prisma {
     description?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    files?: ProjectFileCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectUncheckedCreateWithoutUserInput = {
@@ -5414,6 +6888,7 @@ export namespace Prisma {
     description?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    files?: ProjectFileUncheckedCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectCreateOrConnectWithoutUserInput = {
@@ -5563,6 +7038,32 @@ export namespace Prisma {
     create: XOR<UserCreateWithoutProjectsInput, UserUncheckedCreateWithoutProjectsInput>
   }
 
+  export type ProjectFileCreateWithoutProjectInput = {
+    id?: string
+    path: string
+    content: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ProjectFileUncheckedCreateWithoutProjectInput = {
+    id?: string
+    path: string
+    content: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ProjectFileCreateOrConnectWithoutProjectInput = {
+    where: ProjectFileWhereUniqueInput
+    create: XOR<ProjectFileCreateWithoutProjectInput, ProjectFileUncheckedCreateWithoutProjectInput>
+  }
+
+  export type ProjectFileCreateManyProjectInputEnvelope = {
+    data: ProjectFileCreateManyProjectInput | ProjectFileCreateManyProjectInput[]
+    skipDuplicates?: boolean
+  }
+
   export type UserUpsertWithoutProjectsInput = {
     update: XOR<UserUpdateWithoutProjectsInput, UserUncheckedUpdateWithoutProjectsInput>
     create: XOR<UserCreateWithoutProjectsInput, UserUncheckedCreateWithoutProjectsInput>
@@ -5592,6 +7093,86 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type ProjectFileUpsertWithWhereUniqueWithoutProjectInput = {
+    where: ProjectFileWhereUniqueInput
+    update: XOR<ProjectFileUpdateWithoutProjectInput, ProjectFileUncheckedUpdateWithoutProjectInput>
+    create: XOR<ProjectFileCreateWithoutProjectInput, ProjectFileUncheckedCreateWithoutProjectInput>
+  }
+
+  export type ProjectFileUpdateWithWhereUniqueWithoutProjectInput = {
+    where: ProjectFileWhereUniqueInput
+    data: XOR<ProjectFileUpdateWithoutProjectInput, ProjectFileUncheckedUpdateWithoutProjectInput>
+  }
+
+  export type ProjectFileUpdateManyWithWhereWithoutProjectInput = {
+    where: ProjectFileScalarWhereInput
+    data: XOR<ProjectFileUpdateManyMutationInput, ProjectFileUncheckedUpdateManyWithoutProjectInput>
+  }
+
+  export type ProjectFileScalarWhereInput = {
+    AND?: ProjectFileScalarWhereInput | ProjectFileScalarWhereInput[]
+    OR?: ProjectFileScalarWhereInput[]
+    NOT?: ProjectFileScalarWhereInput | ProjectFileScalarWhereInput[]
+    id?: StringFilter<"ProjectFile"> | string
+    projectId?: StringFilter<"ProjectFile"> | string
+    path?: StringFilter<"ProjectFile"> | string
+    content?: StringFilter<"ProjectFile"> | string
+    createdAt?: DateTimeFilter<"ProjectFile"> | Date | string
+    updatedAt?: DateTimeFilter<"ProjectFile"> | Date | string
+  }
+
+  export type ProjectCreateWithoutFilesInput = {
+    id?: string
+    name: string
+    description?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutProjectsInput
+  }
+
+  export type ProjectUncheckedCreateWithoutFilesInput = {
+    id?: string
+    name: string
+    description?: string | null
+    userId: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ProjectCreateOrConnectWithoutFilesInput = {
+    where: ProjectWhereUniqueInput
+    create: XOR<ProjectCreateWithoutFilesInput, ProjectUncheckedCreateWithoutFilesInput>
+  }
+
+  export type ProjectUpsertWithoutFilesInput = {
+    update: XOR<ProjectUpdateWithoutFilesInput, ProjectUncheckedUpdateWithoutFilesInput>
+    create: XOR<ProjectCreateWithoutFilesInput, ProjectUncheckedCreateWithoutFilesInput>
+    where?: ProjectWhereInput
+  }
+
+  export type ProjectUpdateToOneWithWhereWithoutFilesInput = {
+    where?: ProjectWhereInput
+    data: XOR<ProjectUpdateWithoutFilesInput, ProjectUncheckedUpdateWithoutFilesInput>
+  }
+
+  export type ProjectUpdateWithoutFilesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutProjectsNestedInput
+  }
+
+  export type ProjectUncheckedUpdateWithoutFilesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    userId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type SessionCreateManyUserInput = {
@@ -5640,6 +7221,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    files?: ProjectFileUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutUserInput = {
@@ -5648,12 +7230,45 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    files?: ProjectFileUncheckedUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateManyWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectFileCreateManyProjectInput = {
+    id?: string
+    path: string
+    content: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ProjectFileUpdateWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectFileUncheckedUpdateWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectFileUncheckedUpdateManyWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
