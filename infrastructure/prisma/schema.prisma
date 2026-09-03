@@ -90,3 +90,20 @@ model Message {
   @@index([conversationId])
   @@index([createdAt])
 }
+
+model AgentRun {
+  id             String    @id @default(cuid())
+  conversationId String
+  status         String
+  provider       String?
+  model          String?
+  startedAt      DateTime  @default(now())
+  completedAt    DateTime?
+  error          String?
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([status])
+  @@index([startedAt])
+}
