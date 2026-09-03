@@ -156,6 +156,33 @@ exports.Prisma.ProjectFileScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.ConversationScalarFieldEnum = {
+  id: 'id',
+  projectId: 'projectId',
+  title: 'title',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.MessageScalarFieldEnum = {
+  id: 'id',
+  conversationId: 'conversationId',
+  role: 'role',
+  content: 'content',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.AgentRunScalarFieldEnum = {
+  id: 'id',
+  conversationId: 'conversationId',
+  status: 'status',
+  provider: 'provider',
+  model: 'model',
+  startedAt: 'startedAt',
+  completedAt: 'completedAt',
+  error: 'error'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -176,7 +203,10 @@ exports.Prisma.ModelName = {
   User: 'User',
   Session: 'Session',
   Project: 'Project',
-  ProjectFile: 'ProjectFile'
+  ProjectFile: 'ProjectFile',
+  Conversation: 'Conversation',
+  Message: 'Message',
+  AgentRun: 'AgentRun'
 };
 
 /**
