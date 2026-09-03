@@ -11,6 +11,7 @@ import notFound from "./middleware/notFound.js";
 import errorHandler from "./middleware/errorHandler.js";
 import authRoutes from "./routes/authRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
+import fileRoutes from "./routes/fileRoutes.js";
 
 const app = express();
 
@@ -51,6 +52,9 @@ app.use("/api/v1/auth", authRoutes);
 
 //Project routes
 app.use("/api/v1/projects", projectRoutes);
+
+//File routes
+app.use("/api/v1/projects", fileRoutes);
 
 //404 handler
 app.use(notFound);
