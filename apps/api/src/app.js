@@ -12,7 +12,7 @@ import errorHandler from "./middleware/errorHandler.js";
 import authRoutes from "./routes/authRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
 import fileRoutes from "./routes/fileRoutes.js";
-import conversationRoutes from "./routes/coverationRoutes.js";
+import conversationRoutes from "./routes/conversationRoutes.js";
 
 const app = express();
 
@@ -58,7 +58,7 @@ app.use("/api/v1/projects", projectRoutes);
 app.use("/api/v1/projects", fileRoutes);
 
 //Conversation routes
-app.use("api/v1/projects", conversationRoutes);
+app.use("/api/v1/projects", conversationRoutes);
 
 //404 handler
 app.use(notFound);

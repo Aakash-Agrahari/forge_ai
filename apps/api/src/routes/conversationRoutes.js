@@ -199,9 +199,11 @@ router.post(
                 });
             }
 
+            const {role, content} = validationResult.data;
             const message = await createMessage({
                 conversationId: req.params.conversationId,
-                ...validationResult.data
+                role,
+                content
             });
 
             return res.status(201).json({
