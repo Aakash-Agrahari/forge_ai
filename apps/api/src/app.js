@@ -14,6 +14,7 @@ import projectRoutes from "./routes/projectRoutes.js";
 import fileRoutes from "./routes/fileRoutes.js";
 import conversationRoutes from "./routes/conversationRoutes.js";
 import agentRunRoutes from "./routes/agentRunRoutes.js";
+import modelRoutes from "./routes/modelRoutes.js";
 
 const app = express();
 
@@ -63,6 +64,9 @@ app.use("/api/v1/projects", conversationRoutes);
 
 //Agent run routes
 app.use("/api/v1/projects", agentRunRoutes);
+
+//Model routes test endpoint
+app.use("/api/v1/models", modelRoutes);
 
 //404 handler
 app.use(notFound);
