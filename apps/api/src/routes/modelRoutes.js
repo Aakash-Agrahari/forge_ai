@@ -3,7 +3,7 @@ import { Router } from "express";
 import requireAuth from "../middleware/auth.js";
 
 import {
-    getAvailableProviders,
+    getConfiguredProviders,
     selectProvider
 } from "../llm/modelRouter.js";
 
@@ -12,7 +12,7 @@ const router = Router();
 router.use(requireAuth);
 
 router.get("/providers", (req, res) => {
-    const availableProviders = getAvailableProviders();
+    const availableProviders = getConfiguredProviders();
 
     return res.status(200).json({
         success: true,
