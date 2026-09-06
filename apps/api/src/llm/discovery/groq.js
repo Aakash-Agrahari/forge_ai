@@ -1,0 +1,47 @@
+import {normalizeModel} from "../modelSchema.js";
+
+const GROQ_MODELS_URL = "https://api.groq.com/openai/v1/models";
+
+export async function discoverGroqModels(){
+    const apiKey = process.env.GROQ_MODELS_URL;
+
+    if(!apiKey){
+        return [];
+    }
+
+    const response = await fetch(GROQ_MODELS_URL, {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${apiKey}`,
+        }
+    });
+
+    if(!response.ok){
+        const error = new Error(`Groq model discovery failed with status ${response.status}`);
+        error.provider = "groq";
+        error.statusCode = response.status;
+        throw error;
+    }
+    
+    const data = await response.json();
+
+    return (data.data || [])
+        .filter((model) => model.id)
+        .map((model) =>
+            normalizeModel({
+                id: model.id,
+                name: model.id,
+                provider: "groq",
+                capabilities: {
+                    text: true,
+                    code: true,
+                    vision: false,
+                    toolCalling: true,
+                    structuredOutput: true
+                },
+                contextWindow: model.context_window,
+                free: true,
+                active: true
+            })
+        );
+}
