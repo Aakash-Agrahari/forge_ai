@@ -56,4 +56,11 @@ router.post("/discover", async (req, res, next) => {
     }
 });
 
+router.get("/catalog", (req, res) => {
+    return res.status(200).json({
+        success: true,
+        models: getAllModels()
+    });
+});
+
 export default router;
