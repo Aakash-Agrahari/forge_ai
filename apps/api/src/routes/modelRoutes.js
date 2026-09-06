@@ -1,6 +1,8 @@
 import { Router } from "express";
 
 import requireAuth from "../middleware/auth.js";
+import discoverAllModels from "../llm/discoverModels.js";
+import getAllModels from "../llm/modelCatalog.js";
 
 import {
     getConfiguredProviders,
@@ -38,6 +40,19 @@ router.get("/selected-provider", (req, res) => {
         });
     } catch (error) {
         throw error;
+    }
+});
+
+router.post("/discover", async (req, res, next) => {
+    try{
+        const results = await discoverAllModels();
+
+        return res.status(200).json({
+            success: true,
+            results
+        });
+    } catch (error) {
+        next(error);
     }
 });
 
