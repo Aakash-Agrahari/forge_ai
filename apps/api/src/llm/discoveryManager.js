@@ -2,10 +2,14 @@ import {getConfiguredProviders} from "./modelRouter.js";
 import {registerModels, clearModels} from "./modelCatalog.js";
 import {discoverGroqModels} from "./discovery/groq.js";
 import {discoverGeminiModels} from "./discovery/gemini.js";
+import {discoverCerebrasModels} from "./discovery/cerebras.js";
+import {discoverOpenRouterModels} from "./discovery/openrouter.js";
 
 const discoveryHandlers = {
     groq: discoverGroqModels,
-    gemini: discoverGeminiModels
+    gemini: discoverGeminiModels,
+    cerebras: discoverCerebrasModels,
+    openrouter: discoverOpenRouterModels
 };
 
 export async function discoverAllModels(){
