@@ -1,9 +1,11 @@
 import {getConfiguredProviders} from "./modelRouter.js";
 import {registerModels, clearModels} from "./modelCatalog.js";
 import {discoverGroqModels} from "./discovery/groq.js";
+import {discoverGeminiModels} from "./discovery/gemini.js";
 
 const discoveryHandlers = {
-    groq: discoverGroqModels
+    groq: discoverGroqModels,
+    gemini: discoverGeminiModels
 };
 
 export async function discoverAllModels(){
@@ -42,6 +44,6 @@ export async function discoverAllModels(){
             });
         }
     }
-    
+
     return results;
 }
