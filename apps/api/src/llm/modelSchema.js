@@ -5,7 +5,8 @@ export function normalizeModel({
     capabilities = {},
     contextWindow = null,
     free = false,
-    active = true
+    active = true,
+    deprecated = false
 }) {
     return {
         id,
@@ -19,7 +20,11 @@ export function normalizeModel({
             structuredOutput: capabilities.structuredOutput ?? false
         },
         contextWindow,
-        free,
-        active
-    }
+        
+        availability: {
+            free,
+            active,
+            deprecated
+        }
+    };
 }
