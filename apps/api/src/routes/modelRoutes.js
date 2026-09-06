@@ -1,8 +1,8 @@
 import { Router } from "express";
 
 import requireAuth from "../middleware/auth.js";
-import discoverAllModels from "../llm/discoverModels.js";
-import getAllModels from "../llm/modelCatalog.js";
+import {discoverAllModels} from "../llm/discoveryManager.js";
+import {getAllModels} from "../llm/modelCatalog.js";
 
 import {
     getConfiguredProviders,
