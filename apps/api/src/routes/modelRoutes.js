@@ -3,7 +3,7 @@ import { Router } from "express";
 import requireAuth from "../middleware/auth.js";
 import {discoverAllModels} from "../llm/discoveryManager.js";
 import {getAllModels} from "../llm/modelCatalog.js";
-
+import { selectModels } from "../llm/modelSelector.js";
 import {
     getConfiguredProviders,
     selectProvider
@@ -60,6 +60,19 @@ router.get("/catalog", (req, res) => {
     return res.status(200).json({
         success: true,
         models: getAllModels()
+    });
+});
+
+router.get("/candidates", (req, res) => {
+    const models = selectModels({
+        freeOnly: true,
+        code: true,
+        toolCalling: true
+    });
+
+    return res.status(200).json({
+        success: true,
+        models
     });
 });
 
