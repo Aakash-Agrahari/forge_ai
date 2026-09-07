@@ -9,6 +9,8 @@ import {
     selectProvider
 } from "../llm/modelRouter.js";
 
+import { executeProvider } from "../llm/providerExecutor.js";
+
 const router = Router();
 
 router.use(requireAuth);
@@ -74,6 +76,46 @@ router.get("/candidates", (req, res) => {
         success: true,
         models
     });
+});
+
+// This endpoint is for testing the execution of a model provider with a given message
+router.post("/generate", async (req, res, next) => {
+    try {
+        const {
+            provider,
+            model,
+            message
+        } = req.body;
+
+        if (!provider || !model || !message) {
+            return res.status(400).json({
+                success: false,
+                error: {
+                    code: "VALIDATION_ERROR",
+                    message:
+                        "provider, model and message are required"
+                }
+            });
+        }
+
+        const result = await executeProvider({
+            provider,
+            model,
+            messages: [
+                {
+                    role: "user",
+                    content: message
+                }
+            ]
+        });
+
+        return res.status(200).json({
+            success: true,
+            result
+        });
+    } catch (error) {
+        next(error);
+    }
 });
 
 export default router;
