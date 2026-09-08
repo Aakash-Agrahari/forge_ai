@@ -1,12 +1,19 @@
 export function classifyProviderError(error) {
-    const statusCode = Number(error?.statusCode);
+    const statusCode =
+        Number(error?.statusCode);
 
-    if (statusCode === 401 || statusCode === 403) {
+    const retryAfterMs =
+        Number(error?.retryAfterMs) || null;
+
+    if (
+        statusCode === 401 ||
+        statusCode === 403
+    ) {
         return {
             type: "authentication",
             retryable: false,
-            providerFailure: true,
-            cooldownMs: 15 * 60 * 1000
+            cooldownMs:
+                15 * 60 * 1000
         };
     }
 
@@ -14,8 +21,8 @@ export function classifyProviderError(error) {
         return {
             type: "model_unavailable",
             retryable: false,
-            providerFailure: false,
-            cooldownMs: 60 * 60 * 1000
+            cooldownMs:
+                60 * 60 * 1000
         };
     }
 
@@ -23,8 +30,8 @@ export function classifyProviderError(error) {
         return {
             type: "timeout",
             retryable: true,
-            providerFailure: true,
-            cooldownMs: 30 * 1000
+            cooldownMs:
+                30 * 1000
         };
     }
 
@@ -32,17 +39,21 @@ export function classifyProviderError(error) {
         return {
             type: "rate_limit",
             retryable: true,
-            providerFailure: true,
-            cooldownMs: 60 * 1000
+            cooldownMs:
+                retryAfterMs ||
+                60 * 1000
         };
     }
 
-    if (statusCode >= 500 && statusCode <= 599) {
+    if (
+        statusCode >= 500 &&
+        statusCode <= 599
+    ) {
         return {
             type: "provider_error",
             retryable: true,
-            providerFailure: true,
-            cooldownMs: 30 * 1000
+            cooldownMs:
+                30 * 1000
         };
     }
 
@@ -53,24 +64,27 @@ export function classifyProviderError(error) {
         return {
             type: "timeout",
             retryable: true,
-            providerFailure: true,
-            cooldownMs: 30 * 1000
+            cooldownMs:
+                30 * 1000
         };
     }
 
-    if (error?.code === "PROVIDER_NOT_CONFIGURED") {
+    if (
+        error?.code ===
+        "PROVIDER_NOT_CONFIGURED"
+    ) {
         return {
             type: "configuration",
             retryable: false,
-            providerFailure: true,
-            cooldownMs: 60 * 60 * 1000
+            cooldownMs:
+                60 * 60 * 1000
         };
     }
 
     return {
         type: "unknown",
         retryable: true,
-        providerFailure: true,
-        cooldownMs: 60 * 1000
+        cooldownMs:
+            30 * 1000
     };
 }
