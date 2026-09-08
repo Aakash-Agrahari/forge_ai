@@ -7,6 +7,7 @@ import { selectModels } from "../llm/modelSelector.js";
 import {getConfiguredProviders,selectProvider} from "../llm/modelRouter.js";
 import { executeWithFallback } from "../llm/fallbackExecutor.js";
 import { executeProvider } from "../llm/providerExecutor.js";
+import {getAllModelHealth} from "../llm/modelHealth.js";
 
 const router = Router();
 
@@ -73,6 +74,17 @@ router.get("/candidates", (req, res) => {
         success: true,
         models
     });
+});
+
+router.get("/health", async (req, res, next) => {
+    try {
+        return res.status(200).json({
+            success: true,
+            models: getAllModelHealth()
+        });
+    } catch (error) {
+        next(error);
+    }
 });
 
 // This endpoint is for testing the execution of a model provider with a given message
