@@ -1,6 +1,4 @@
-import {
-    getModelHealth
-} from "./modelHealth.js";
+import {getModelHealth} from "./modelHealth.js";
 
 export function scoreModel(
     model,
