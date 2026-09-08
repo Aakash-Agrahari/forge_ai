@@ -69,7 +69,7 @@ export function classifyProviderError(error) {
 
     return {
         type: "unknown",
-        retryable: false,
+        retryable: true,
         providerFailure: true,
         cooldownMs: 60 * 1000
     };
