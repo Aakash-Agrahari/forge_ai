@@ -1,6 +1,6 @@
-import { executeProvider } from "./providerExecutor.js";
-import {markModelSuccess, markModelFailure} from "./modelHealth.js";
-import { classifyProviderError } from "./errorClassifier.js";
+import {executeProvider} from "./providerExecutor.js";
+import {markModelSuccess,markModelFailure} from "./modelHealth.js";
+import {classifyProviderError} from "./errorClassifier.js";
 
 export async function executeWithFallback({
     models,
@@ -8,10 +8,17 @@ export async function executeWithFallback({
     temperature,
     maxTokens
 }) {
-    if(!models || models.length === 0){
-        const error = new Error("No eligible models available");
+    if (
+        !models ||
+        models.length === 0
+    ) {
+        const error = new Error(
+            "No eligible models available"
+        );
 
-        error.code = "NO_ELIGIBLE_MODELS";
+        error.code =
+            "NO_ELIGIBLE_MODELS";
+
         error.statusCode = 503;
 
         throw error;
@@ -23,10 +30,16 @@ export async function executeWithFallback({
         try {
             const result =
                 await executeProvider({
-                    provider: model.provider,
-                    model: model.id,
+                    provider:
+                        model.provider,
+
+                    model:
+                        model.id,
+
                     messages,
+
                     temperature,
+
                     maxTokens
                 });
 
@@ -37,14 +50,20 @@ export async function executeWithFallback({
 
             return {
                 ...result,
+
                 fallback: {
-                    attempted: failures.length + 1,
-                    failedAttempts: failures
+                    attempted:
+                        failures.length + 1,
+
+                    failedAttempts:
+                        failures
                 }
             };
         } catch (error) {
             const classification =
-                classifyProviderError(error);
+                classifyProviderError(
+                    error
+                );
 
             markModelFailure(
                 model.provider,
@@ -52,35 +71,43 @@ export async function executeWithFallback({
                 {
                     errorType:
                         classification.type,
+
                     cooldownMs:
                         classification.cooldownMs
                 }
             );
 
             failures.push({
-                provider: model.provider,
-                model: model.id,
+                provider:
+                    model.provider,
+
+                model:
+                    model.id,
+
                 errorType:
                     classification.type,
+
                 statusCode:
-                    error.statusCode ?? null,
-                message: error.message
+                    error.statusCode ??
+                    null,
+
+                message:
+                    error.message
             });
 
-            if (
-                !classification.retryable &&
-                classification.type !==
-                    "model_unavailable"
-            ) {
-                break;
-            }
+            continue;
         }
     }
 
-    const error = new Error("All available LLM models failed");
+    const error = new Error(
+        "All available LLM models failed"
+    );
 
-    error.code = "ALL_MODELS_FAILED";
+    error.code =
+        "ALL_MODELS_FAILED";
+
     error.statusCode = 503;
+
     error.failures = failures;
 
     throw error;
