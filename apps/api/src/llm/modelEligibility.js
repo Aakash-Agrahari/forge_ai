@@ -1,3 +1,5 @@
+import {isModelHealthy} from "./modelHealth.js";
+
 export function isModelEligible(
     model,
     requirements = {}
@@ -11,6 +13,10 @@ export function isModelEligible(
     }
 
     if (model.availability.deprecated) {
+        return false;
+    }
+
+    if (requirements.skipUnhealthy !== false && !isModelHealthy(model.provider, model.id)) {
         return false;
     }
 
