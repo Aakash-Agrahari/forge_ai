@@ -4,11 +4,8 @@ import requireAuth from "../middleware/auth.js";
 import {discoverAllModels} from "../llm/discoveryManager.js";
 import {getAllModels} from "../llm/modelCatalog.js";
 import { selectModels } from "../llm/modelSelector.js";
-import {
-    getConfiguredProviders,
-    selectProvider
-} from "../llm/modelRouter.js";
-
+import {getConfiguredProviders,selectProvider} from "../llm/modelRouter.js";
+import { executeWithFallback } from "../llm/fallbackExecutor.js";
 import { executeProvider } from "../llm/providerExecutor.js";
 
 const router = Router();
@@ -82,32 +79,51 @@ router.get("/candidates", (req, res) => {
 router.post("/generate", async (req, res, next) => {
     try {
         const {
+            message,
             provider,
-            model,
-            message
+            model
         } = req.body;
 
-        if (!provider || !model || !message) {
+        if (!message) {
             return res.status(400).json({
                 success: false,
                 error: {
                     code: "VALIDATION_ERROR",
                     message:
-                        "provider, model and message are required"
+                        "message is required"
                 }
             });
         }
 
-        const result = await executeProvider({
-            provider,
-            model,
-            messages: [
+        let models;
+
+        if (provider && model) {
+            models = [
                 {
-                    role: "user",
-                    content: message
+                    provider,
+                    id: model
                 }
-            ]
-        });
+            ];
+        } else {
+            models = selectModels({
+                freeOnly: true,
+                code: true,
+                toolCalling: true
+            });
+        }
+
+        const result =
+            await executeWithFallback({
+                models,
+                messages: [
+                    {
+                        role: "user",
+                        content: message
+                    }
+                ],
+                temperature: 0.2,
+                maxTokens: 8192
+            });
 
         return res.status(200).json({
             success: true,
