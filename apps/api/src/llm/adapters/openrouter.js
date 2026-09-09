@@ -18,6 +18,14 @@ export async function generateOpenRouter({
         error.code = "PROVIDER_NOT_CONFIGURED";
         error.provider = "openrouter";
 
+        const retryAfter = response.headers.get("retry-after");
+        if(retryAfter){
+            const retryAfterSeconds = Number(retryAfter);
+            if(Number.isFinite(retryAfterSeconds)){
+                error.retryAfterMs = retryAfterSeconds * 1000;
+            }
+        }
+
         throw error;
     }
 
