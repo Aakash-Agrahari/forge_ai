@@ -49,6 +49,14 @@ export async function generateGroq({
         error.model = model;
         error.statusCode = response.status;
 
+        const retryAfter = response.headers.get("retry-after");
+        if(retryAfter){
+            const retryAfterSeconds = Number(retryAfter);
+            if(Number.isFinite(retryAfterSeconds)){
+                error.retryAfterMs = retryAfterSeconds * 1000;
+            }
+        }
+
         throw error;
     }
 
