@@ -1,30 +1,87 @@
-import { generateGemini } from "./adapters/gemini.js";
-import { generateGroq } from "./adapters/groq.js";
-import { generateCerebras } from "./adapters/cerebras.js";
-import { generateOpenRouter } from "./adapters/openrouter.js";
+import {generateGemini} from "./adapters/gemini.js";
+import {generateGroq} from "./adapters/groq.js";
+import {generateCerebras} from "./adapters/cerebras.js";
+import {generateOpenRouter} from "./adapters/openrouter.js";
 
-const adapters = {
-    gemini: generateGemini,
-    groq: generateGroq,
-    cerebras: generateCerebras,
-    openrouter: generateOpenRouter
-};
+import {createProviderAdapter} from "./providerInterface.js";
+
+const adapters = new Map([
+    [
+        "gemini",
+        createProviderAdapter({
+            id: "gemini",
+            generate: generateGemini
+        })
+    ],
+
+    [
+        "groq",
+        createProviderAdapter({
+            id: "groq",
+            generate: generateGroq
+        })
+    ],
+
+    [
+        "cerebras",
+        createProviderAdapter({
+            id: "cerebras",
+            generate: generateCerebras
+        })
+    ],
+
+    [
+        "openrouter",
+        createProviderAdapter({
+            id: "openrouter",
+            generate: generateOpenRouter
+        })
+    ]
+]);
+
+export function getProviderAdapter(
+    provider
+) {
+    return adapters.get(provider);
+}
+
+export function registerProviderAdapter(
+    provider,
+    generate
+) {
+    adapters.set(
+        provider,
+        createProviderAdapter({
+            id: provider,
+            generate
+        })
+    );
+}
 
 export async function executeProvider({
-    provider, model, messages, temperature, maxTokens
+    provider,
+    model,
+    messages,
+    temperature,
+    maxTokens
 }) {
-    const adapter = adapters[provider];
+    const adapter =
+        getProviderAdapter(provider);
 
     if (!adapter) {
-        const error = new Error(`No adapter registered for provider: ${provider}`);
+        const error = new Error(
+            `No adapter registered for provider: ${provider}`
+        );
 
-        error.code = PROVIDER_ADAPTER_NOT_FOUND;
+        error.code =
+            "PROVIDER_ADAPTER_NOT_FOUND";
+
         error.provider = provider;
 
         throw error;
     }
 
-    return adapter({
+    return adapter.generate({
         model,
         messages,
         temperature,
