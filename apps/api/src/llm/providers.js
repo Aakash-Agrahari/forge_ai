@@ -4,7 +4,8 @@ export const providers = [
         name: "Google Gemini",
         envKey: "GEMINI_API_KEY",
         priority: 10,
-        discovery: "dynamic"
+        discovery: "dynamic",
+        protocol: "gemini"
     },
 
     {
@@ -12,7 +13,8 @@ export const providers = [
         name: "Groq",
         envKey: "GROQ_API_KEY",
         priority: 20,
-        discovery: "dynamic"
+        discovery: "dynamic",
+        protocol: "openai"
     },
 
     {
@@ -20,7 +22,8 @@ export const providers = [
         name: "Cerebras",
         envKey: "CEREBRAS_API_KEY",
         priority: 30,
-        discovery: "dynamic"
+        discovery: "dynamic",
+        protocol: "openai"
     },
 
     {
@@ -28,7 +31,8 @@ export const providers = [
         name: "OpenRouter",
         envKey: "OPENROUTER_API_KEY",
         priority: 40,
-        discovery: "dynamic"
+        discovery: "dynamic",
+        protocol: "openai"
     },
 
     {
@@ -36,7 +40,8 @@ export const providers = [
         name: "Mistral",
         envKey: "MISTRAL_API_KEY",
         priority: 50,
-        discovery: "dynamic"
+        discovery: "dynamic",
+        protocol: "openai"
     },
 
     {
@@ -44,7 +49,8 @@ export const providers = [
         name: "Cloudflare Workers AI",
         envKey: "CLOUDFLARE_API_TOKEN",
         priority: 60,
-        discovery: "dynamic"
+        discovery: "dynamic",
+        protocol: "cloudflare"
     },
 
     {
@@ -52,7 +58,8 @@ export const providers = [
         name: "Cohere",
         envKey: "COHERE_API_KEY",
         priority: 70,
-        discovery: "dynamic"
+        discovery: "dynamic",
+        protocol: "cohere"
     },
 
     {
@@ -60,7 +67,8 @@ export const providers = [
         name: "NVIDIA NIM",
         envKey: "NVIDIA_API_KEY",
         priority: 80,
-        discovery: "dynamic"
+        discovery: "dynamic",
+        protocol: "openai"
     },
 
     {
@@ -68,7 +76,8 @@ export const providers = [
         name: "Hugging Face",
         envKey: "HUGGINGFACE_API_KEY",
         priority: 90,
-        discovery: "dynamic"
+        discovery: "dynamic",
+        protocol: "huggingface"
     },
 
     {
@@ -76,7 +85,8 @@ export const providers = [
         name: "SambaNova",
         envKey: "SAMBANOVA_API_KEY",
         priority: 100,
-        discovery: "dynamic"
+        discovery: "dynamic",
+        protocol: "openai"
     },
 
     {
@@ -84,6 +94,7 @@ export const providers = [
         name: "Z.ai",
         envKey: "ZAI_API_KEY",
         priority: 110,
-        discovery: "dynamic"
+        discovery: "dynamic",
+        protocol: "openai"
     }
 ];
