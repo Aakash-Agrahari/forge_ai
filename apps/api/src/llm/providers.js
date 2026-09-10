@@ -58,7 +58,7 @@ export const providers = [
         name: "Cohere",
         envKey: "COHERE_API_KEY",
         priority: 70,
-        discovery: "dynamic",
+        discovery: "static_fallback",
         protocol: "cohere"
     },
 
@@ -94,7 +94,7 @@ export const providers = [
         name: "Z.ai",
         envKey: "ZAI_API_KEY",
         priority: 110,
-        discovery: "dynamic",
+        discovery: "static_fallback",
         protocol: "openai"
     }
 ];
