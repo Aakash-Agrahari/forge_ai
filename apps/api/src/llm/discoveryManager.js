@@ -5,13 +5,25 @@ import {discoverGeminiModels} from "./discovery/gemini.js";
 import {discoverCerebrasModels} from "./discovery/cerebras.js";
 import {discoverOpenRouterModels} from "./discovery/openrouter.js";
 import {discoverMistralModels} from "./discovery/mistral.js";
+import {discoverNvidiaModels} from "./discovery/nvidia.js";
+import {discoverHuggingFaceModels} from "./discovery/huggingface.js";
+import {discoverCloudflareModels} from "./discovery/cloudflare.js";
+import { discoverCohereModels } from "./discovery/cohere.js";
+import { discoverSambaNovaModels } from "./discovery/sambanova.js";
+import { discoverZaiModels } from "./discovery/zai.js";
 
 const discoveryHandlers = {
     groq: discoverGroqModels,
     gemini: discoverGeminiModels,
     cerebras: discoverCerebrasModels,
     openrouter: discoverOpenRouterModels,
-    mistral: discoverMistralModels
+    mistral: discoverMistralModels,
+    nvidia: discoverNvidiaModels,
+    huggingface: discoverHuggingFaceModels,
+    cloudflare: discoverCloudflareModels,
+    cohere: discoverCohereModels,
+    sambanova: discoverSambaNovaModels,
+    zai: discoverZaiModels
 };
 
 export async function discoverAllModels(){
