@@ -12,6 +12,12 @@ import { discoverCohereModels } from "./discovery/cohere.js";
 import { discoverSambaNovaModels } from "./discovery/sambanova.js";
 import { discoverZaiModels } from "./discovery/zai.js";
 
+
+const DISCOVERY_STRATEGIES = new set ([
+    "dynamic",
+    "static_fallback"
+]);
+
 const discoveryHandlers = {
     groq: discoverGroqModels,
     gemini: discoverGeminiModels,
