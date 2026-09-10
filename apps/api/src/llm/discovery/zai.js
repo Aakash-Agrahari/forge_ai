@@ -1,4 +1,4 @@
-import {normalizeModel} from "../modelSchema.js";
+import { normalizeModel } from "../modelSchema.js";
 
 const CURRENT_ZAI_MODELS = [
     "glm-5.1",
@@ -9,28 +9,22 @@ const CURRENT_ZAI_MODELS = [
 ];
 
 export async function discoverZaiModels() {
-    if (!process.env.ZAI_API_KEY) {
-        return [];
-    }
-
-    return CURRENT_ZAI_MODELS.map(
-        (id) =>
-            normalizeModel({
-                id,
-                name: id,
-                provider: "zai",
-                capabilities: {
-                    text: true,
-                    code: true,
-                    vision:
-                        id.includes("4.7") ||
-                        id.includes("5"),
-                    toolCalling: true,
-                    structuredOutput: true
-                },
-                contextWindow: null,
-                free: false,
-                active: true
-            })
+    return CURRENT_ZAI_MODELS.map((id) =>
+        normalizeModel({
+            id,
+            name: id,
+            provider: "zai",
+            capabilities: {
+                text: true,
+                code: true,
+                vision: false,
+                toolCalling: true,
+                structuredOutput: true
+            },
+            contextWindow: null,
+            free: false,
+            active: true,
+            deprecated: false
+        })
     );
 }
