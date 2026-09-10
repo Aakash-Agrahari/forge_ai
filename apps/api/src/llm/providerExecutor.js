@@ -3,6 +3,13 @@ import {generateGroq} from "./adapters/groq.js";
 import {generateCerebras} from "./adapters/cerebras.js";
 import {generateOpenRouter} from "./adapters/openrouter.js";
 import {generateMistral} from "./adapters/mistral.js";
+import {generateMistral} from "./adapters/mistral.js";
+import {generateNvidia} from "./adapters/nvidia.js";
+import {generateSambaNova} from "./adapters/sambanova.js";
+import {generateZai} from "./adapters/zai.js";
+import {generateCohere} from "./adapters/cohere.js";
+import {generateHuggingFace} from "./adapters/huggingface.js";
+import {generateCloudflare} from "./adapters/cloudflare.js";
 
 import {createProviderAdapter} from "./providerInterface.js";
 
@@ -45,7 +52,56 @@ const adapters = new Map([
             id: "mistral",
             generate: generateMistral
         })
+    ],
+
+    [
+        "nvidia",
+        createProviderAdapter({
+            id: "nvidia",
+            generate: generateNvidia
+        })
+    ],
+
+    [
+        "sambanova",
+        createProviderAdapter({
+            id: "sambanova",
+            generate: generateSambaNova
+        })
+    ],
+
+    [
+        "zai",
+        createProviderAdapter({
+            id: "zai",
+            generate: generateZai
+        })
+    ],
+
+    [
+        "cohere",
+        createProviderAdapter({
+            id: "cohere",
+            generate: generateCohere
+        })
+    ],
+
+    [
+        "huggingface",
+        createProviderAdapter({
+            id: "huggingface",
+            generate: generateHuggingFace
+        })
+    ],
+
+    [
+        "cloudflare",
+        createProviderAdapter({
+            id: "cloudflare",
+            generate: generateCloudflare
+        })
     ]
+
 ]);
 
 export function getProviderAdapter(
