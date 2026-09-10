@@ -2,6 +2,7 @@ import {generateGemini} from "./adapters/gemini.js";
 import {generateGroq} from "./adapters/groq.js";
 import {generateCerebras} from "./adapters/cerebras.js";
 import {generateOpenRouter} from "./adapters/openrouter.js";
+import {generateMistral} from "./adapters/mistral.js";
 
 import {createProviderAdapter} from "./providerInterface.js";
 
@@ -35,6 +36,14 @@ const adapters = new Map([
         createProviderAdapter({
             id: "openrouter",
             generate: generateOpenRouter
+        })
+    ],
+
+    [
+        "mistral",
+        createProviderAdapter({
+            id: "mistral",
+            generate: generateMistral
         })
     ]
 ]);
