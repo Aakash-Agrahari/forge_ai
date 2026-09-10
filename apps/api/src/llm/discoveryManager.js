@@ -4,12 +4,14 @@ import {discoverGroqModels} from "./discovery/groq.js";
 import {discoverGeminiModels} from "./discovery/gemini.js";
 import {discoverCerebrasModels} from "./discovery/cerebras.js";
 import {discoverOpenRouterModels} from "./discovery/openrouter.js";
+import {discoverMistralModels} from "./discovery/mistral.js";
 
 const discoveryHandlers = {
     groq: discoverGroqModels,
     gemini: discoverGeminiModels,
     cerebras: discoverCerebrasModels,
-    openrouter: discoverOpenRouterModels
+    openrouter: discoverOpenRouterModels,
+    mistral: discoverMistralModels
 };
 
 export async function discoverAllModels(){
