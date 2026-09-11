@@ -1,17 +1,19 @@
 import { normalizeModel } from "../modelSchema.js";
 
-const GEMINI_MODELS_URL =
+const GEMINI_API_URL =
     "https://generativelanguage.googleapis.com/v1beta/models";
 
 export async function discoverGeminiModels() {
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-        return [];
+        const error = new Error("GEMINI_API_KEY is not configured");
+        error.code = "PROVIDER_NOT_CONFIGURED";
+        throw error;
     }
 
     const response = await fetch(
-        `${GEMINI_MODELS_URL}?key=${encodeURIComponent(apiKey)}`
+        `${GEMINI_API_URL}?key=${encodeURIComponent(apiKey)}&pageSize=1000`
     );
 
     if (!response.ok) {
@@ -21,7 +23,6 @@ export async function discoverGeminiModels() {
             `Gemini model discovery failed with status ${response.status}: ${body}`
         );
 
-        error.provider = "gemini";
         error.statusCode = response.status;
 
         throw error;
@@ -29,38 +30,66 @@ export async function discoverGeminiModels() {
 
     const data = await response.json();
 
-    return (data.models || [])
+    const models = Array.isArray(data.models)
+        ? data.models
+        : [];
+
+    return models
         .filter((model) => {
-            if (!model.name) {
-                return false;
-            }
+            const methods = model.supportedGenerationMethods || [];
 
-            const supportedMethods =
-                model.supportedGenerationMethods || [];
-
-            return supportedMethods.includes("generateContent");
+            return methods.includes("generateContent");
         })
         .map((model) => {
-            const modelId = model.name.replace(/^models\//, "");
+            const id = model.name?.replace(/^models\//, "");
+
+            if (!id) {
+                return null;
+            }
 
             return normalizeModel({
-                id: modelId,
-                name: model.displayName || modelId,
+                id,
+                name: model.displayName || id,
                 provider: "gemini",
 
                 capabilities: {
                     text: true,
                     code: true,
-                    vision: true,
-                    toolCalling: true,
-                    structuredOutput: true
+                    vision: false,
+                    toolCalling: false,
+                    structuredOutput: false
                 },
 
                 contextWindow:
-                    model.inputTokenLimit || null,
+                    model.inputTokenLimit ??
+                    null,
 
                 free: true,
-                active: true
+
+                active: true,
+
+                deprecated: false
             });
-        });
+        })
+        .filter(Boolean);
+}
+
+function supportsVision(model) {
+    const methods = model.supportedGenerationMethods || [];
+
+    return (
+        methods.includes("generateContent") &&
+        (
+            model.inputTokenLimit != null ||
+            model.outputTokenLimit != null
+        )
+    );
+}
+
+function supportsToolCalling(model) {
+    return true;
+}
+
+function supportsStructuredOutput(model) {
+    return true;
 }
