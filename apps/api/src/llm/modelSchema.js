@@ -14,7 +14,11 @@ export function normalizeModel({
 
     contextWindow = null,
 
-    availability = {}
+    availability = {},
+
+    free = false,
+    active = true,
+    deprecated = false
 }) {
     return {
         id,
@@ -36,9 +40,9 @@ export function normalizeModel({
         contextWindow,
 
         availability: {
-            free: availability.free ?? false,
-            active: availability.active ?? true,
-            deprecated: availability.deprecated ?? false
+            free: availability.free ?? free,
+            active: availability.active ?? active,
+            deprecated: availability.deprecated ?? deprecated
         }
     };
 }
