@@ -1,6 +1,6 @@
 import { normalizeModel } from "../modelSchema.js";
 
-const GEMINI_API_URL =
+const GEMINI_MODELS_URL =
     "https://generativelanguage.googleapis.com/v1beta/models";
 
 export async function discoverGeminiModels() {
@@ -13,7 +13,7 @@ export async function discoverGeminiModels() {
     }
 
     const response = await fetch(
-        `${GEMINI_API_URL}?key=${encodeURIComponent(apiKey)}&pageSize=1000`
+        `${GEMINI_MODELS_URL}?key=${encodeURIComponent(apiKey)}&pageSize=1000`
     );
 
     if (!response.ok) {
@@ -53,12 +53,19 @@ export async function discoverGeminiModels() {
                 provider: "gemini",
 
                 capabilities: {
-                    text: true,
-                    code: true,
-                    vision: false,
                     toolCalling: false,
                     structuredOutput: false
                 },
+
+                modalities: {
+                    input: ["text"],
+                    output: ["text"]
+                },
+
+                tasks: [
+                    "chat",
+                    "code"
+                ],
 
                 contextWindow:
                     model.inputTokenLimit ??
@@ -72,24 +79,4 @@ export async function discoverGeminiModels() {
             });
         })
         .filter(Boolean);
-}
-
-function supportsVision(model) {
-    const methods = model.supportedGenerationMethods || [];
-
-    return (
-        methods.includes("generateContent") &&
-        (
-            model.inputTokenLimit != null ||
-            model.outputTokenLimit != null
-        )
-    );
-}
-
-function supportsToolCalling(model) {
-    return true;
-}
-
-function supportsStructuredOutput(model) {
-    return true;
 }
