@@ -42,14 +42,22 @@ export async function discoverGroqModels() {
                 provider: "groq",
 
                 capabilities: {
-                    text: true,
-                    code: true,
-                    vision: false,
                     toolCalling: true,
                     structuredOutput: true
                 },
 
-                contextWindow: model.context_window ?? null,
+                modalities: {
+                    input: ["text"],
+                    output: ["text"]
+                },
+
+                tasks: [
+                    "chat",
+                    "code"
+                ],
+
+                contextWindow:
+                    model.context_window ?? null,
 
                 free: true,
 
