@@ -3,7 +3,6 @@ import {generateGroq} from "./adapters/groq.js";
 import {generateCerebras} from "./adapters/cerebras.js";
 import {generateOpenRouter} from "./adapters/openrouter.js";
 import {generateMistral} from "./adapters/mistral.js";
-import {generateMistral} from "./adapters/mistral.js";
 import {generateNvidia} from "./adapters/nvidia.js";
 import {generateSambaNova} from "./adapters/sambanova.js";
 import {generateZai} from "./adapters/zai.js";
