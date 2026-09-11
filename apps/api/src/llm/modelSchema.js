@@ -2,29 +2,43 @@ export function normalizeModel({
     id,
     name = id,
     provider,
+
     capabilities = {},
+
+    modalities = {
+        input: ["text"],
+        output: ["text"]
+    },
+
+    tasks = [],
+
     contextWindow = null,
-    free = false,
-    active = true,
-    deprecated = false
+
+    availability = {}
 }) {
     return {
         id,
         name,
         provider,
+
         capabilities: {
-            text: capabilities.text ?? true,
-            code: capabilities.code ?? false,
-            vision: capabilities.vision ?? false,
             toolCalling: capabilities.toolCalling ?? false,
             structuredOutput: capabilities.structuredOutput ?? false
         },
+
+        modalities: {
+            input: modalities.input ?? ["text"],
+            output: modalities.output ?? ["text"]
+        },
+
+        tasks: [...new Set(tasks)],
+
         contextWindow,
-        
+
         availability: {
-            free,
-            active,
-            deprecated
+            free: availability.free ?? false,
+            active: availability.active ?? true,
+            deprecated: availability.deprecated ?? false
         }
     };
 }
