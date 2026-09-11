@@ -1,28 +1,36 @@
-import {normalizeModel} from "../modelSchema.js";
+import { normalizeModel } from "../modelSchema.js";
 
 const GROQ_MODELS_URL = "https://api.groq.com/openai/v1/models";
 
-export async function discoverGroqModels(){
-    const apiKey = process.env.GROQ_MODELS_URL;
+export async function discoverGroqModels() {
+    const apiKey = process.env.GROQ_API_KEY;
 
-    if(!apiKey){
-        return [];
+    if (!apiKey) {
+        const error = new Error("GROQ_API_KEY is not configured");
+        error.code = "PROVIDER_NOT_CONFIGURED";
+        throw error;
     }
 
     const response = await fetch(GROQ_MODELS_URL, {
         method: "GET",
         headers: {
-            Authorization: `Bearer ${apiKey}`,
+            Authorization: `Bearer ${apiKey}`
         }
     });
 
-    if(!response.ok){
-        const error = new Error(`Groq model discovery failed with status ${response.status}`);
+    if (!response.ok) {
+        const body = await response.text();
+
+        const error = new Error(
+            `Groq model discovery failed with status ${response.status}: ${body}`
+        );
+
         error.provider = "groq";
         error.statusCode = response.status;
+
         throw error;
     }
-    
+
     const data = await response.json();
 
     return (data.data || [])
@@ -32,6 +40,7 @@ export async function discoverGroqModels(){
                 id: model.id,
                 name: model.id,
                 provider: "groq",
+
                 capabilities: {
                     text: true,
                     code: true,
@@ -39,9 +48,14 @@ export async function discoverGroqModels(){
                     toolCalling: true,
                     structuredOutput: true
                 },
-                contextWindow: model.context_window,
+
+                contextWindow: model.context_window ?? null,
+
                 free: true,
-                active: true
+
+                active: true,
+
+                deprecated: false
             })
         );
 }
