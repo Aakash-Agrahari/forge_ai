@@ -13,7 +13,7 @@ import { discoverSambaNovaModels } from "./discovery/sambanova.js";
 import { discoverZaiModels } from "./discovery/zai.js";
 
 
-const DISCOVERY_STRATEGIES = new set ([
+const DISCOVERY_STRATEGIES = new Set ([
     "dynamic",
     "static_fallback"
 ]);
