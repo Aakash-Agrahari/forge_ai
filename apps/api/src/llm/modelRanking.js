@@ -3,14 +3,7 @@ import { getModelHealth } from "./modelHealth.js";
 export function scoreModel(model, requirements = {}) {
     let score = 0;
 
-    /*
-     * Task match is a preference, not an eligibility requirement.
-     *
-     * If we know the model supports the requested task,
-     * give it a strong boost.
-     *
-     * If we don't know, give it no penalty.
-     */
+    // Task match is a preference, not an eligibility requirement.
     if (requirements.task) {
         const tasks = model.tasks || [];
 
@@ -19,12 +12,7 @@ export function scoreModel(model, requirements = {}) {
         }
     }
 
-    /*
-     * Context window
-     *
-     * Larger context is useful, but should not dominate
-     * the ranking.
-     */
+    // Context window size is a preference, not an eligibility requirement.
     if (model.contextWindow) {
         score += Math.min(
             model.contextWindow / 100_000,
@@ -32,9 +20,7 @@ export function scoreModel(model, requirements = {}) {
         );
     }
 
-    /*
-     * Optional capability preferences.
-     */
+    // Optional capability preferences.
     if (requirements.toolCalling === true) {
         if (model.capabilities?.toolCalling === true) {
             score += 20;
@@ -47,9 +33,7 @@ export function scoreModel(model, requirements = {}) {
         }
     }
 
-    /*
-     * Modality preferences.
-     */
+    // Modality preferences.
     if (requirements.inputModality) {
         const input =
             model.modalities?.input || [];
@@ -68,9 +52,7 @@ export function scoreModel(model, requirements = {}) {
         }
     }
 
-    /*
-     * Prefer free models when requested.
-     */
+    // Prefer free models when requested.
     if (
         requirements.freeOnly === true &&
         model.availability?.free === true
@@ -78,9 +60,9 @@ export function scoreModel(model, requirements = {}) {
         score += 10;
     }
 
-    /*
-     * Historical health.
-     */
+    
+    //Historical health.
+    
     const health = getModelHealth(
         model.provider,
         model.id
