@@ -3,60 +3,84 @@ import { getModelHealth } from "./modelHealth.js";
 export function scoreModel(model, requirements = {}) {
     let score = 0;
 
-    // Larger context window is generally better
-    if (model.contextWindow) {
-        score += Math.min(model.contextWindow / 100_000, 10);
-    }
-
-    // Task match
+    /*
+     * Task match is a preference, not an eligibility requirement.
+     *
+     * If we know the model supports the requested task,
+     * give it a strong boost.
+     *
+     * If we don't know, give it no penalty.
+     */
     if (requirements.task) {
-        if ((model.tasks || []).includes(requirements.task)) {
+        const tasks = model.tasks || [];
+
+        if (tasks.includes(requirements.task)) {
             score += 40;
         }
     }
 
-    // Tool calling
+    /*
+     * Context window
+     *
+     * Larger context is useful, but should not dominate
+     * the ranking.
+     */
+    if (model.contextWindow) {
+        score += Math.min(
+            model.contextWindow / 100_000,
+            10
+        );
+    }
+
+    /*
+     * Optional capability preferences.
+     */
     if (requirements.toolCalling === true) {
         if (model.capabilities?.toolCalling === true) {
             score += 20;
         }
     }
 
-    // Structured output
     if (requirements.structuredOutput === true) {
         if (model.capabilities?.structuredOutput === true) {
             score += 15;
         }
     }
 
-    // Input modality
+    /*
+     * Modality preferences.
+     */
     if (requirements.inputModality) {
-        if (
-            (model.modalities?.input || []).includes(
-                requirements.inputModality
-            )
-        ) {
+        const input =
+            model.modalities?.input || [];
+
+        if (input.includes(requirements.inputModality)) {
             score += 15;
         }
     }
 
-    // Output modality
     if (requirements.outputModality) {
-        if (
-            (model.modalities?.output || []).includes(
-                requirements.outputModality
-            )
-        ) {
+        const output =
+            model.modalities?.output || [];
+
+        if (output.includes(requirements.outputModality)) {
             score += 15;
         }
     }
 
-    // Free models are preferred when requested
-    if (requirements.freeOnly && model.availability?.free) {
+    /*
+     * Prefer free models when requested.
+     */
+    if (
+        requirements.freeOnly === true &&
+        model.availability?.free === true
+    ) {
         score += 10;
     }
 
-    // Health
+    /*
+     * Historical health.
+     */
     const health = getModelHealth(
         model.provider,
         model.id
@@ -66,10 +90,6 @@ export function scoreModel(model, requirements = {}) {
         score += 20;
     }
 
-    if (health.status === "unhealthy") {
-        score -= 100;
-    }
-
     return score;
 }
 
@@ -77,7 +97,10 @@ export function rankModels(models, requirements = {}) {
     return [...models]
         .map((model) => ({
             ...model,
-            score: scoreModel(model, requirements)
+            score: scoreModel(
+                model,
+                requirements
+            )
         }))
         .sort((a, b) => b.score - a.score);
 }

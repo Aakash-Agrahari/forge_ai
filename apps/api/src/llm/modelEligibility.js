@@ -5,96 +5,33 @@ export function isModelEligible(model, requirements = {}) {
         return false;
     }
 
-    // Availability checks
+    // Model must be active unless explicitly disabled
     if (requirements.activeOnly !== false) {
-        if (!model.availability?.active) {
+        if (model.availability?.active !== true) {
             return false;
         }
     }
 
+    // Deprecated models are excluded by default
     if (requirements.excludeDeprecated !== false) {
-        if (model.availability?.deprecated) {
+        if (model.availability?.deprecated === true) {
             return false;
         }
     }
 
-    // Free-only requirement
+    // Free-tier requirement
     if (requirements.freeOnly === true) {
         if (model.availability?.free !== true) {
             return false;
         }
     }
 
-    // Health check
+    // Temporarily unhealthy models are excluded
     if (
         requirements.skipUnhealthy !== false &&
         !isModelHealthy(model.provider, model.id)
     ) {
         return false;
-    }
-
-    // Task requirements
-    if (requirements.task) {
-        const tasks = model.tasks || [];
-
-        if (!tasks.includes(requirements.task)) {
-            return false;
-        }
-    }
-
-    // Multiple acceptable tasks
-    if (requirements.tasks?.length) {
-        const tasks = model.tasks || [];
-
-        const hasRequiredTask = requirements.tasks.some((task) =>
-            tasks.includes(task)
-        );
-
-        if (!hasRequiredTask) {
-            return false;
-        }
-    }
-
-    // Input modality
-    if (requirements.inputModality) {
-        const inputModalities = model.modalities?.input || [];
-
-        if (!inputModalities.includes(requirements.inputModality)) {
-            return false;
-        }
-    }
-
-    // Output modality
-    if (requirements.outputModality) {
-        const outputModalities = model.modalities?.output || [];
-
-        if (!outputModalities.includes(requirements.outputModality)) {
-            return false;
-        }
-    }
-
-    // Tool calling
-    if (requirements.toolCalling === true) {
-        if (model.capabilities?.toolCalling !== true) {
-            return false;
-        }
-    }
-
-    // Structured output
-    if (requirements.structuredOutput === true) {
-        if (model.capabilities?.structuredOutput !== true) {
-            return false;
-        }
-    }
-
-    // Context window
-    if (requirements.minContextWindow) {
-        if (
-            !model.contextWindow ||
-            model.contextWindow < requirements.minContextWindow
-        ) {
-            return false;
-        }
     }
 
     return true;
