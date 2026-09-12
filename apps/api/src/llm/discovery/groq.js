@@ -3,13 +3,14 @@ import { normalizeModel } from "../modelSchema.js";
 const GROQ_MODELS_URL =
     "https://api.groq.com/openai/v1/models";
 
-function classifyGroqModel(model) {
-    const id = model.id;
+function inferGroqMetadata(model) {
+    const id = String(model.id || "").toLowerCase();
 
-    // Speech-to-text
+    // Speech-to-text models
     if (
-        id === "whisper-large-v3" ||
-        id === "whisper-large-v3-turbo"
+        id.includes("whisper") ||
+        id.includes("speech-to-text") ||
+        id.includes("stt")
     ) {
         return {
             tasks: ["speech_to_text"],
@@ -24,10 +25,10 @@ function classifyGroqModel(model) {
         };
     }
 
-    // Text-to-speech
+    // Text-to-speech models
     if (
-        id === "canopylabs/orpheus-v1-english" ||
-        id === "canopylabs/orpheus-arabic-saudi"
+        id.includes("tts") ||
+        id.includes("orpheus")
     ) {
         return {
             tasks: ["text_to_speech"],
@@ -42,10 +43,10 @@ function classifyGroqModel(model) {
         };
     }
 
-    // Prompt Guard
+    // Prompt/content safety models
     if (
-        id === "meta-llama/llama-prompt-guard-2-22m" ||
-        id === "meta-llama/llama-prompt-guard-2-86m"
+        id.includes("prompt-guard") ||
+        id.includes("safeguard")
     ) {
         return {
             tasks: ["content_safety"],
@@ -60,30 +61,8 @@ function classifyGroqModel(model) {
         };
     }
 
-    // Safety model
-    if (id === "openai/gpt-oss-safeguard-20b") {
-        return {
-            tasks: [
-                "chat",
-                "content_safety",
-                "code"
-            ],
-            modalities: {
-                input: ["text"],
-                output: ["text"]
-            },
-            capabilities: {
-                toolCalling: true,
-                structuredOutput: true
-            }
-        };
-    }
-
-    // Compound systems
-    if (
-        id === "groq/compound" ||
-        id === "groq/compound-mini"
-    ) {
+    // Compound models
+    if (id.includes("compound")) {
         return {
             tasks: [
                 "chat",
@@ -102,7 +81,7 @@ function classifyGroqModel(model) {
         };
     }
 
-    // General-purpose language models
+    // General-purpose language model
     return {
         tasks: [
             "chat",
@@ -160,10 +139,13 @@ export async function discoverGroqModels() {
         : [];
 
     return models
-        .filter((model) => model.active !== false)
         .map((model) => {
-            const classification =
-                classifyGroqModel(model);
+            if (!model?.id) {
+                return null;
+            }
+
+            const metadata =
+                inferGroqMetadata(model);
 
             return normalizeModel({
                 id: model.id,
@@ -171,13 +153,13 @@ export async function discoverGroqModels() {
                 provider: "groq",
 
                 capabilities:
-                    classification.capabilities,
+                    metadata.capabilities,
 
                 modalities:
-                    classification.modalities,
+                    metadata.modalities,
 
                 tasks:
-                    classification.tasks,
+                    metadata.tasks,
 
                 contextWindow:
                     model.context_window ?? null,
@@ -188,5 +170,6 @@ export async function discoverGroqModels() {
                     deprecated: false
                 }
             });
-        });
+        })
+        .filter(Boolean);
 }

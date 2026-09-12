@@ -3,17 +3,15 @@ import { normalizeModel } from "../modelSchema.js";
 const GEMINI_MODELS_URL =
     "https://generativelanguage.googleapis.com/v1beta/models";
 
-function classifyGeminiModel(model) {
-    const id = model.name?.replace(/^models\//, "");
-
-    if (!id) {
-        return null;
-    }
+function inferGeminiMetadata(model) {
+    const id = String(
+        model.name?.replace(/^models\//, "") || ""
+    ).toLowerCase();
 
     // Text-to-speech
     if (
-        id.includes("-tts") ||
-        id.includes("preview-tts")
+        id.includes("tts") ||
+        id.includes("text-to-speech")
     ) {
         return {
             tasks: ["text_to_speech"],
@@ -30,7 +28,8 @@ function classifyGeminiModel(model) {
 
     // Speech-to-text / transcription
     if (
-        id.includes("transcribe")
+        id.includes("transcribe") ||
+        id.includes("transcription")
     ) {
         return {
             tasks: ["speech_to_text"],
@@ -45,7 +44,7 @@ function classifyGeminiModel(model) {
         };
     }
 
-    // Image generation
+    // Image generation / image models
     if (
         id.includes("image") ||
         id.includes("nano-banana")
@@ -56,8 +55,14 @@ function classifyGeminiModel(model) {
                 "image_understanding"
             ],
             modalities: {
-                input: ["text", "image"],
-                output: ["image", "text"]
+                input: [
+                    "text",
+                    "image"
+                ],
+                output: [
+                    "image",
+                    "text"
+                ]
             },
             capabilities: {
                 toolCalling: false,
@@ -66,9 +71,10 @@ function classifyGeminiModel(model) {
         };
     }
 
-    // Music / audio generation
+    // Audio/music generation
     if (
-        id.startsWith("lyria-")
+        id.includes("lyria") ||
+        id.includes("music")
     ) {
         return {
             tasks: ["audio_generation"],
@@ -85,26 +91,8 @@ function classifyGeminiModel(model) {
 
     // Computer-use models
     if (
-        id.includes("computer-use")
-    ) {
-        return {
-            tasks: [
-                "computer_use",
-                "chat"
-            ],
-            modalities: {
-                input: ["text", "image"],
-                output: ["text"]
-            },
-            capabilities: {
-                toolCalling: true,
-                structuredOutput: true
-            }
-        };
-    }
-
-    // Robotics / VLM
-    if (
+        id.includes("computer-use") ||
+        id.includes("computer_use") ||
         id.includes("robotics")
     ) {
         return {
@@ -113,7 +101,10 @@ function classifyGeminiModel(model) {
                 "chat"
             ],
             modalities: {
-                input: ["text", "image"],
+                input: [
+                    "text",
+                    "image"
+                ],
                 output: ["text"]
             },
             capabilities: {
@@ -125,7 +116,8 @@ function classifyGeminiModel(model) {
 
     // Deep research models
     if (
-        id.includes("deep-research")
+        id.includes("deep-research") ||
+        id.includes("deep_research")
     ) {
         return {
             tasks: [
@@ -143,7 +135,7 @@ function classifyGeminiModel(model) {
         };
     }
 
-    // General Gemini / Gemma language models
+    // General-purpose language models
     return {
         tasks: [
             "chat",
@@ -200,7 +192,9 @@ export async function discoverGeminiModels() {
             const methods =
                 model.supportedGenerationMethods || [];
 
-            return methods.includes("generateContent");
+            return methods.includes(
+                "generateContent"
+            );
         })
         .map((model) => {
             const id =
@@ -210,12 +204,8 @@ export async function discoverGeminiModels() {
                 return null;
             }
 
-            const classification =
-                classifyGeminiModel(model);
-
-            if (!classification) {
-                return null;
-            }
+            const metadata =
+                inferGeminiMetadata(model);
 
             return normalizeModel({
                 id,
@@ -223,13 +213,13 @@ export async function discoverGeminiModels() {
                 provider: "gemini",
 
                 capabilities:
-                    classification.capabilities,
+                    metadata.capabilities,
 
                 modalities:
-                    classification.modalities,
+                    metadata.modalities,
 
                 tasks:
-                    classification.tasks,
+                    metadata.tasks,
 
                 contextWindow:
                     model.inputTokenLimit ?? null,
