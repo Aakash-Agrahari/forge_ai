@@ -63,17 +63,19 @@ router.get("/catalog", (req, res) => {
     });
 });
 
-router.get("/candidates", (req, res) => {
-    const models = selectModels({
-        freeOnly: true,
-        code: true,
-        toolCalling: true
-    });
+router.get("/candidates", (req, res, next) => {
+    try {
+        const models = selectModels({
+            freeOnly: true
+        });
 
-    return res.status(200).json({
-        success: true,
-        models
-    });
+        return res.status(200).json({
+            success: true,
+            models
+        });
+    } catch (error) {
+        next(error);
+    }
 });
 
 router.get("/health", async (req, res, next) => {
