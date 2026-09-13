@@ -1,3 +1,5 @@
+import { createProviderError } from "../providerError.js";
+
 const CEREBRAS_CHAT_URL =
     "https://api.cerebras.ai/v1/chat/completions";
 
@@ -42,23 +44,12 @@ export async function generateCerebras({
         const responseBody =
             await response.text();
 
-        const error = new Error(
-            `Cerebras request failed with status ${response.status}: ${responseBody}`
-        );
-
-        error.provider = "cerebras";
-        error.model = model;
-        error.statusCode = response.status;
-
-        const retryAfter = response.headers.get("retry-after");
-        if(retryAfter){
-            const retryAfterSeconds = Number(retryAfter);
-            if(Number.isFinite(retryAfterSeconds)){
-                error.retryAfterMs = retryAfterSeconds * 1000;
-            }
-        }
-
-        throw error;
+        throw createProviderError({
+            provider: "cerebras",
+            model,
+            response,
+            responseBody
+        });
     }
 
     const data = await response.json();
