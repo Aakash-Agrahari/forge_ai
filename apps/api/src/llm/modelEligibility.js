@@ -1,4 +1,5 @@
 import { isModelHealthy } from "./modelHealth.js";
+import { isModelQuotaAvailable } from "./modelQuota.js";
 
 export function isModelEligible(model, requirements = {}) {
     if (!model) {
@@ -30,6 +31,14 @@ export function isModelEligible(model, requirements = {}) {
     if (
         requirements.skipUnhealthy !== false &&
         !isModelHealthy(model.provider, model.id)
+    ) {
+        return false;
+    }
+
+    if (requirements.skipExhaustedQuota !== false && !isModelQuotaAvailable(
+        model.provider,
+        model.id
+       )
     ) {
         return false;
     }
