@@ -1,3 +1,5 @@
+import {createProviderError} from "../providerError.js";
+
 const GROQ_CHAT_URL =
     "https://api.groq.com/openai/v1/chat/completions";
 
@@ -38,26 +40,14 @@ export async function generateGroq({
     );
 
     if (!response.ok) {
-        const responseBody =
-            await response.text();
+        const responseBody = await response.text();
 
-        const error = new Error(
-            `Groq request failed with status ${response.status}: ${responseBody}`
-        );
-
-        error.provider = "groq";
-        error.model = model;
-        error.statusCode = response.status;
-
-        const retryAfter = response.headers.get("retry-after");
-        if(retryAfter){
-            const retryAfterSeconds = Number(retryAfter);
-            if(Number.isFinite(retryAfterSeconds)){
-                error.retryAfterMs = retryAfterSeconds * 1000;
-            }
-        }
-
-        throw error;
+        throw createProviderError({
+            provider: "groq",
+            model,
+            response,
+            responseBody
+        });
     }
 
     const data = await response.json();
