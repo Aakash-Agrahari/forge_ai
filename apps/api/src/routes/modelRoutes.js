@@ -122,9 +122,9 @@ router.post("/generate", async (req, res, next) => {
                 }
             ];
         } else {
-            models = selectModels({
+            models = selectModelsForRequest({
                 freeOnly: true,
-                code: true,
+                task: "code",
                 toolCalling: true
             });
         }
