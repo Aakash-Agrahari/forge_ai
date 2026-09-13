@@ -1,3 +1,5 @@
+import { createProviderError } from "../providerError.js";
+
 const NVIDIA_CHAT_URL =
     "https://integrate.api.nvidia.com/v1/chat/completions";
 
@@ -41,15 +43,12 @@ export async function generateNvidia({
     if (!response.ok) {
         const body = await response.text();
 
-        const error = new Error(
-            `NVIDIA request failed with status ${response.status}: ${body}`
-        );
-
-        error.provider = "nvidia";
-        error.model = model;
-        error.statusCode = response.status;
-
-        throw error;
+        throw createProviderError({
+            provider: "nvidia",
+            model,
+            response,
+            responseBody: body
+        });
     }
 
     const data = await response.json();
