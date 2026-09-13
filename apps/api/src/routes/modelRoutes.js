@@ -9,6 +9,7 @@ import { executeWithFallback } from "../llm/fallbackExecutor.js";
 import { executeProvider } from "../llm/providerExecutor.js";
 import {getAllModelHealth} from "../llm/modelHealth.js";
 import {selectModelsForRequest} from "../llm/modelSelectionService.js";
+import {getAllModelQuota} from "../llm/modelQuota.js";
 
 const router = Router();
 
@@ -149,6 +150,13 @@ router.post("/generate", async (req, res, next) => {
     } catch (error) {
         next(error);
     }
+});
+
+router.get("/quota", (req, res) => {
+    return res.status(200).json({
+        success: true,
+        models: getAllModelQuota()
+    });
 });
 
 export default router;
