@@ -1,3 +1,5 @@
+import { createProviderError } from "../providerError.js";
+
 const MISTRAL_CHAT_URL =
     "https://api.mistral.ai/v1/chat/completions";
 
@@ -40,27 +42,12 @@ export async function generateMistral({
     if (!response.ok) {
         const body = await response.text();
 
-        const error = new Error(
-            `Mistral request failed with status ${response.status}: ${body}`
-        );
-
-        error.provider = "mistral";
-        error.model = model;
-        error.statusCode = response.status;
-
-        const retryAfter =
-            response.headers.get("retry-after");
-
-        if (retryAfter) {
-            const seconds = Number(retryAfter);
-
-            if (Number.isFinite(seconds)) {
-                error.retryAfterMs =
-                    seconds * 1000;
-            }
-        }
-
-        throw error;
+        throw createProviderError({
+            provider: "mistral",
+            model,
+            response,
+            responseBody: body
+        });
     }
 
     const data = await response.json();
