@@ -22,7 +22,8 @@ export function classifyProviderError(error) {
             type: "model_unavailable",
             retryable: false,
             cooldownMs:
-                60 * 60 * 1000
+                60 * 60 * 1000,
+            quotaLikelyExceeded: false    
         };
     }
 
