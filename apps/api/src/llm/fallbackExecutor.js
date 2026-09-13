@@ -1,6 +1,7 @@
 import {executeProvider} from "./providerExecutor.js";
 import {markModelSuccess,markModelFailure} from "./modelHealth.js";
 import {classifyProviderError} from "./errorClassifier.js";
+import { markModelRequest, markModelQuotaExceeded } from "./modelQuota.js";
 
 export async function executeWithFallback({
     models,
@@ -28,6 +29,10 @@ export async function executeWithFallback({
 
     for (const model of models) {
         try {
+            markModelRequest(
+                model.provider,
+                model.id
+            );
             const result =
                 await executeProvider({
                     provider:
@@ -61,9 +66,26 @@ export async function executeWithFallback({
             };
         } catch (error) {
             const classification =
-                classifyProviderError(
-                    error
+                classifyProviderError(error);
+
+            if (classification.type === "rate_limit") {
+                const resetAt =
+                    classification.cooldownMs
+                        ? new Date(
+                            Date.now() +
+                            classification.cooldownMs
+                        ).toISOString()
+                        : null;
+
+                markModelQuotaExceeded(
+                    model.provider,
+                    model.id,
+                    {
+                        resetAt,
+                        errorType: classification.type
+                    }
                 );
+            }    
 
             markModelFailure(
                 model.provider,
