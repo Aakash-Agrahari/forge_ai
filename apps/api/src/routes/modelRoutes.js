@@ -3,11 +3,12 @@ import { Router } from "express";
 import requireAuth from "../middleware/auth.js";
 import {discoverAllModels} from "../llm/discoveryManager.js";
 import {getAllModels} from "../llm/modelCatalog.js";
-import { selectModels } from "../llm/modelSelector.js";
+//import { selectModels } from "../llm/modelSelector.js";
 import {getConfiguredProviders,selectProvider} from "../llm/modelRouter.js";
 import { executeWithFallback } from "../llm/fallbackExecutor.js";
 import { executeProvider } from "../llm/providerExecutor.js";
 import {getAllModelHealth} from "../llm/modelHealth.js";
+import {selectModelsForRequest} from "../llm/modelSelectionService.js";
 
 const router = Router();
 
@@ -65,8 +66,10 @@ router.get("/catalog", (req, res) => {
 
 router.get("/candidates", (req, res, next) => {
     try {
-        const models = selectModels({
-            freeOnly: true
+        const models = selectModelsForRequest({
+            task: "code",
+            freeOnly: true,
+            toolCalling: true
         });
 
         return res.status(200).json({
