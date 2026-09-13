@@ -41,7 +41,8 @@ export function classifyProviderError(error) {
             retryable: true,
             cooldownMs:
                 retryAfterMs ||
-                60 * 1000
+                60 * 1000,
+            quotaLikelyExceeded: true    
         };
     }
 
