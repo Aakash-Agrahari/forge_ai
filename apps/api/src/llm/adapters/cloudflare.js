@@ -1,3 +1,5 @@
+import { createProviderError } from "../providerError.js";
+
 const CLOUDFLARE_BASE_URL =
     "https://api.cloudflare.com/client/v4/accounts";
 
@@ -49,20 +51,12 @@ export async function generateCloudflare({
         const body =
             await response.text();
 
-        const error = new Error(
-            `Cloudflare request failed with status ${response.status}: ${body}`
-        );
-
-        error.provider =
-            "cloudflare";
-
-        error.model =
-            model;
-
-        error.statusCode =
-            response.status;
-
-        throw error;
+        throw createProviderError({
+            provider: "cloudflare",
+            model,
+            response,
+            responseBody: body
+        });
     }
 
     const data =
