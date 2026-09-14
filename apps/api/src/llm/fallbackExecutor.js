@@ -87,17 +87,19 @@ export async function executeWithFallback({
                 );
             }    
 
-            markModelFailure(
-                model.provider,
-                model.id,
+            if (
+                classification.type !== "authentication" &&
+                classification.type !== "configuration"
+            ) {
+                markModelFailure(
+                    model.provider,
+                    model.id,
                 {
-                    errorType:
-                        classification.type,
-
-                    cooldownMs:
-                        classification.cooldownMs
-                }
-            );
+                        errorType: classification.type,
+                        cooldownMs: classification.cooldownMs
+                    }
+                );
+            }
 
             failures.push({
                 provider:
