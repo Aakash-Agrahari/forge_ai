@@ -1,3 +1,5 @@
+import { createProviderError } from "../providerError.js";
+
 const GEMINI_BASE_URL =
     "https://generativelanguage.googleapis.com/v1beta/models";
 
@@ -79,15 +81,12 @@ export async function generateGemini({
         const responseBody =
             await response.text();
 
-        const error = new Error(
-            `Gemini request failed with status ${response.status}: ${responseBody}`
-        );
-
-        error.provider = "gemini";
-        error.model = model;
-        error.statusCode = response.status;
-
-        throw error;
+        throw createProviderError({
+            provider: "gemini",
+            model,
+            response,
+            responseBody
+        });
     }
 
     const data = await response.json();
