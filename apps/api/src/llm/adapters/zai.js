@@ -1,3 +1,5 @@
+import { createProviderError } from "../providerError.js";
+
 const ZAI_CHAT_URL =
     "https://api.z.ai/api/paas/v4/chat/completions";
 
@@ -44,15 +46,12 @@ export async function generateZai({
     if (!response.ok) {
         const body = await response.text();
 
-        const error = new Error(
-            `Z.ai request failed with status ${response.status}: ${body}`
-        );
-
-        error.provider = "zai";
-        error.model = model;
-        error.statusCode = response.status;
-
-        throw error;
+        throw createProviderError({
+            provider: "zai",
+            model,
+            response,
+            responseBody: body
+        });
     }
 
     const data = await response.json();
