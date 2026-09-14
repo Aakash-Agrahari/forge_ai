@@ -1,3 +1,5 @@
+import { createProviderError } from "../providerError.js";
+
 const COHERE_CHAT_URL =
     "https://api.cohere.com/v2/chat";
 
@@ -43,15 +45,12 @@ export async function generateCohere({
     if (!response.ok) {
         const body = await response.text();
 
-        const error = new Error(
-            `Cohere request failed with status ${response.status}: ${body}`
-        );
-
-        error.provider = "cohere";
-        error.model = model;
-        error.statusCode = response.status;
-
-        throw error;
+        throw createProviderError({
+            provider: "cohere",
+            model,
+            response,
+            responseBody: body
+        });
     }
 
     const data = await response.json();
