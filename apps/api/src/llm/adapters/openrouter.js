@@ -1,3 +1,5 @@
+import { createProviderError } from "../providerError.js";
+
 const OPENROUTER_CHAT_URL =
     "https://openrouter.ai/api/v1/chat/completions";
 
@@ -17,14 +19,6 @@ export async function generateOpenRouter({
 
         error.code = "PROVIDER_NOT_CONFIGURED";
         error.provider = "openrouter";
-
-        const retryAfter = response.headers.get("retry-after");
-        if(retryAfter){
-            const retryAfterSeconds = Number(retryAfter);
-            if(Number.isFinite(retryAfterSeconds)){
-                error.retryAfterMs = retryAfterSeconds * 1000;
-            }
-        }
 
         throw error;
     }
@@ -52,15 +46,12 @@ export async function generateOpenRouter({
         const responseBody =
             await response.text();
 
-        const error = new Error(
-            `OpenRouter request failed with status ${response.status}: ${responseBody}`
-        );
-
-        error.provider = "openrouter";
-        error.model = model;
-        error.statusCode = response.status;
-
-        throw error;
+        throw createProviderError({
+            provider: "openrouter",
+            model,
+            response,
+            responseBody
+        });
     }
 
     const data = await response.json();
