@@ -1,3 +1,5 @@
+import { createProviderError } from "../providerError.js";
+
 const HF_CHAT_URL =
     "https://router.huggingface.co/v1/chat/completions";
 
@@ -43,15 +45,12 @@ export async function generateHuggingFace({
     if (!response.ok) {
         const body = await response.text();
 
-        const error = new Error(
-            `Hugging Face request failed with status ${response.status}: ${body}`
-        );
-
-        error.provider = "huggingface";
-        error.model = model;
-        error.statusCode = response.status;
-
-        throw error;
+        throw createProviderError({
+            provider: "huggingface",
+            model,
+            response,
+            responseBody: body
+        });
     }
 
     const data = await response.json();
