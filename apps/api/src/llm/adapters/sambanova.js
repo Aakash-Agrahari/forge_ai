@@ -1,3 +1,5 @@
+import { createProviderError } from "../providerError.js";
+
 const SAMBANOVA_CHAT_URL =
     "https://api.sambanova.ai/v1/chat/completions";
 
@@ -42,15 +44,12 @@ export async function generateSambaNova({
     if (!response.ok) {
         const body = await response.text();
 
-        const error = new Error(
-            `SambaNova request failed with status ${response.status}: ${body}`
-        );
-
-        error.provider = "sambanova";
-        error.model = model;
-        error.statusCode = response.status;
-
-        throw error;
+        throw createProviderError({
+            provider: "sambanova",
+            model,
+            response,
+            responseBody: body
+        });
     }
 
     const data = await response.json();
