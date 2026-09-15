@@ -1,5 +1,5 @@
 import { registerAgentTools } from "./tools/index.js";
-import { executeTool } from "./toolRegistry.js";
+import { executeTool } from "./toolRegistery.js";
 
 console.log("1. Test script started");
 
