@@ -81,14 +81,22 @@ model Conversation {
 model Message {
   id             String   @id @default(cuid())
   conversationId String
+
   role           String
   content        String
+
+  toolCallId     String?
+  toolName       String?
+  toolArguments  Json?
+  toolResult     Json?
+
   createdAt      DateTime @default(now())
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId])
   @@index([createdAt])
+  @@index([toolCallId])
 }
 
 model AgentRun {
