@@ -7097,6 +7097,8 @@ export namespace Prisma {
     conversationId: string | null
     role: string | null
     content: string | null
+    toolCallId: string | null
+    toolName: string | null
     createdAt: Date | null
   }
 
@@ -7105,6 +7107,8 @@ export namespace Prisma {
     conversationId: string | null
     role: string | null
     content: string | null
+    toolCallId: string | null
+    toolName: string | null
     createdAt: Date | null
   }
 
@@ -7113,6 +7117,10 @@ export namespace Prisma {
     conversationId: number
     role: number
     content: number
+    toolCallId: number
+    toolName: number
+    toolArguments: number
+    toolResult: number
     createdAt: number
     _all: number
   }
@@ -7123,6 +7131,8 @@ export namespace Prisma {
     conversationId?: true
     role?: true
     content?: true
+    toolCallId?: true
+    toolName?: true
     createdAt?: true
   }
 
@@ -7131,6 +7141,8 @@ export namespace Prisma {
     conversationId?: true
     role?: true
     content?: true
+    toolCallId?: true
+    toolName?: true
     createdAt?: true
   }
 
@@ -7139,6 +7151,10 @@ export namespace Prisma {
     conversationId?: true
     role?: true
     content?: true
+    toolCallId?: true
+    toolName?: true
+    toolArguments?: true
+    toolResult?: true
     createdAt?: true
     _all?: true
   }
@@ -7220,6 +7236,10 @@ export namespace Prisma {
     conversationId: string
     role: string
     content: string
+    toolCallId: string | null
+    toolName: string | null
+    toolArguments: JsonValue | null
+    toolResult: JsonValue | null
     createdAt: Date
     _count: MessageCountAggregateOutputType | null
     _min: MessageMinAggregateOutputType | null
@@ -7245,6 +7265,10 @@ export namespace Prisma {
     conversationId?: boolean
     role?: boolean
     content?: boolean
+    toolCallId?: boolean
+    toolName?: boolean
+    toolArguments?: boolean
+    toolResult?: boolean
     createdAt?: boolean
     conversation?: boolean | ConversationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["message"]>
@@ -7254,6 +7278,10 @@ export namespace Prisma {
     conversationId?: boolean
     role?: boolean
     content?: boolean
+    toolCallId?: boolean
+    toolName?: boolean
+    toolArguments?: boolean
+    toolResult?: boolean
     createdAt?: boolean
     conversation?: boolean | ConversationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["message"]>
@@ -7263,6 +7291,10 @@ export namespace Prisma {
     conversationId?: boolean
     role?: boolean
     content?: boolean
+    toolCallId?: boolean
+    toolName?: boolean
+    toolArguments?: boolean
+    toolResult?: boolean
     createdAt?: boolean
     conversation?: boolean | ConversationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["message"]>
@@ -7272,10 +7304,14 @@ export namespace Prisma {
     conversationId?: boolean
     role?: boolean
     content?: boolean
+    toolCallId?: boolean
+    toolName?: boolean
+    toolArguments?: boolean
+    toolResult?: boolean
     createdAt?: boolean
   }
 
-  export type MessageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "conversationId" | "role" | "content" | "createdAt", ExtArgs["result"]["message"]>
+  export type MessageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "conversationId" | "role" | "content" | "toolCallId" | "toolName" | "toolArguments" | "toolResult" | "createdAt", ExtArgs["result"]["message"]>
   export type MessageInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     conversation?: boolean | ConversationDefaultArgs<ExtArgs>
   }
@@ -7296,6 +7332,10 @@ export namespace Prisma {
       conversationId: string
       role: string
       content: string
+      toolCallId: string | null
+      toolName: string | null
+      toolArguments: Prisma.JsonValue | null
+      toolResult: Prisma.JsonValue | null
       createdAt: Date
     }, ExtArgs["result"]["message"]>
     composites: {}
@@ -7725,6 +7765,10 @@ export namespace Prisma {
     readonly conversationId: FieldRef<"Message", 'String'>
     readonly role: FieldRef<"Message", 'String'>
     readonly content: FieldRef<"Message", 'String'>
+    readonly toolCallId: FieldRef<"Message", 'String'>
+    readonly toolName: FieldRef<"Message", 'String'>
+    readonly toolArguments: FieldRef<"Message", 'Json'>
+    readonly toolResult: FieldRef<"Message", 'Json'>
     readonly createdAt: FieldRef<"Message", 'DateTime'>
   }
     
@@ -9325,6 +9369,10 @@ export namespace Prisma {
     conversationId: 'conversationId',
     role: 'role',
     content: 'content',
+    toolCallId: 'toolCallId',
+    toolName: 'toolName',
+    toolArguments: 'toolArguments',
+    toolResult: 'toolResult',
     createdAt: 'createdAt'
   };
 
@@ -9353,6 +9401,14 @@ export namespace Prisma {
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+  export const NullableJsonNullValueInput: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull
+  };
+
+  export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
   export const QueryMode: {
     default: 'default',
     insensitive: 'insensitive'
@@ -9367,6 +9423,15 @@ export namespace Prisma {
   };
 
   export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+  export const JsonNullValueFilter: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull,
+    AnyNull: typeof AnyNull
+  };
+
+  export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
 
   /**
@@ -9399,6 +9464,20 @@ export namespace Prisma {
    * Reference to a field of type 'DateTime[]'
    */
   export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Json'
+   */
+  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+  /**
+   * Reference to a field of type 'QueryMode'
+   */
+  export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 
@@ -9738,6 +9817,10 @@ export namespace Prisma {
     conversationId?: StringFilter<"Message"> | string
     role?: StringFilter<"Message"> | string
     content?: StringFilter<"Message"> | string
+    toolCallId?: StringNullableFilter<"Message"> | string | null
+    toolName?: StringNullableFilter<"Message"> | string | null
+    toolArguments?: JsonNullableFilter<"Message">
+    toolResult?: JsonNullableFilter<"Message">
     createdAt?: DateTimeFilter<"Message"> | Date | string
     conversation?: XOR<ConversationScalarRelationFilter, ConversationWhereInput>
   }
@@ -9747,6 +9830,10 @@ export namespace Prisma {
     conversationId?: SortOrder
     role?: SortOrder
     content?: SortOrder
+    toolCallId?: SortOrderInput | SortOrder
+    toolName?: SortOrderInput | SortOrder
+    toolArguments?: SortOrderInput | SortOrder
+    toolResult?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     conversation?: ConversationOrderByWithRelationInput
   }
@@ -9759,6 +9846,10 @@ export namespace Prisma {
     conversationId?: StringFilter<"Message"> | string
     role?: StringFilter<"Message"> | string
     content?: StringFilter<"Message"> | string
+    toolCallId?: StringNullableFilter<"Message"> | string | null
+    toolName?: StringNullableFilter<"Message"> | string | null
+    toolArguments?: JsonNullableFilter<"Message">
+    toolResult?: JsonNullableFilter<"Message">
     createdAt?: DateTimeFilter<"Message"> | Date | string
     conversation?: XOR<ConversationScalarRelationFilter, ConversationWhereInput>
   }, "id">
@@ -9768,6 +9859,10 @@ export namespace Prisma {
     conversationId?: SortOrder
     role?: SortOrder
     content?: SortOrder
+    toolCallId?: SortOrderInput | SortOrder
+    toolName?: SortOrderInput | SortOrder
+    toolArguments?: SortOrderInput | SortOrder
+    toolResult?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     _count?: MessageCountOrderByAggregateInput
     _max?: MessageMaxOrderByAggregateInput
@@ -9782,6 +9877,10 @@ export namespace Prisma {
     conversationId?: StringWithAggregatesFilter<"Message"> | string
     role?: StringWithAggregatesFilter<"Message"> | string
     content?: StringWithAggregatesFilter<"Message"> | string
+    toolCallId?: StringNullableWithAggregatesFilter<"Message"> | string | null
+    toolName?: StringNullableWithAggregatesFilter<"Message"> | string | null
+    toolArguments?: JsonNullableWithAggregatesFilter<"Message">
+    toolResult?: JsonNullableWithAggregatesFilter<"Message">
     createdAt?: DateTimeWithAggregatesFilter<"Message"> | Date | string
   }
 
@@ -10187,6 +10286,10 @@ export namespace Prisma {
     id?: string
     role: string
     content: string
+    toolCallId?: string | null
+    toolName?: string | null
+    toolArguments?: NullableJsonNullValueInput | InputJsonValue
+    toolResult?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     conversation: ConversationCreateNestedOneWithoutMessagesInput
   }
@@ -10196,6 +10299,10 @@ export namespace Prisma {
     conversationId: string
     role: string
     content: string
+    toolCallId?: string | null
+    toolName?: string | null
+    toolArguments?: NullableJsonNullValueInput | InputJsonValue
+    toolResult?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
   }
 
@@ -10203,6 +10310,10 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
+    toolCallId?: NullableStringFieldUpdateOperationsInput | string | null
+    toolName?: NullableStringFieldUpdateOperationsInput | string | null
+    toolArguments?: NullableJsonNullValueInput | InputJsonValue
+    toolResult?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     conversation?: ConversationUpdateOneRequiredWithoutMessagesNestedInput
   }
@@ -10212,6 +10323,10 @@ export namespace Prisma {
     conversationId?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
+    toolCallId?: NullableStringFieldUpdateOperationsInput | string | null
+    toolName?: NullableStringFieldUpdateOperationsInput | string | null
+    toolArguments?: NullableJsonNullValueInput | InputJsonValue
+    toolResult?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -10220,6 +10335,10 @@ export namespace Prisma {
     conversationId: string
     role: string
     content: string
+    toolCallId?: string | null
+    toolName?: string | null
+    toolArguments?: NullableJsonNullValueInput | InputJsonValue
+    toolResult?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
   }
 
@@ -10227,6 +10346,10 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
+    toolCallId?: NullableStringFieldUpdateOperationsInput | string | null
+    toolName?: NullableStringFieldUpdateOperationsInput | string | null
+    toolArguments?: NullableJsonNullValueInput | InputJsonValue
+    toolResult?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -10235,6 +10358,10 @@ export namespace Prisma {
     conversationId?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
+    toolCallId?: NullableStringFieldUpdateOperationsInput | string | null
+    toolName?: NullableStringFieldUpdateOperationsInput | string | null
+    toolArguments?: NullableJsonNullValueInput | InputJsonValue
+    toolResult?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -10641,6 +10768,29 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
+  export type JsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type ConversationScalarRelationFilter = {
     is?: ConversationWhereInput
@@ -10652,6 +10802,10 @@ export namespace Prisma {
     conversationId?: SortOrder
     role?: SortOrder
     content?: SortOrder
+    toolCallId?: SortOrder
+    toolName?: SortOrder
+    toolArguments?: SortOrder
+    toolResult?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -10660,6 +10814,8 @@ export namespace Prisma {
     conversationId?: SortOrder
     role?: SortOrder
     content?: SortOrder
+    toolCallId?: SortOrder
+    toolName?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -10668,7 +10824,35 @@ export namespace Prisma {
     conversationId?: SortOrder
     role?: SortOrder
     content?: SortOrder
+    toolCallId?: SortOrder
+    toolName?: SortOrder
     createdAt?: SortOrder
+  }
+  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedJsonNullableFilter<$PrismaModel>
+    _max?: NestedJsonNullableFilter<$PrismaModel>
   }
 
   export type AgentRunCountOrderByAggregateInput = {
@@ -11189,6 +11373,29 @@ export namespace Prisma {
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
   }
+  export type NestedJsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type SessionCreateWithoutUserInput = {
     id?: string
@@ -11608,6 +11815,10 @@ export namespace Prisma {
     id?: string
     role: string
     content: string
+    toolCallId?: string | null
+    toolName?: string | null
+    toolArguments?: NullableJsonNullValueInput | InputJsonValue
+    toolResult?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
   }
 
@@ -11615,6 +11826,10 @@ export namespace Prisma {
     id?: string
     role: string
     content: string
+    toolCallId?: string | null
+    toolName?: string | null
+    toolArguments?: NullableJsonNullValueInput | InputJsonValue
+    toolResult?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
   }
 
@@ -11713,6 +11928,10 @@ export namespace Prisma {
     conversationId?: StringFilter<"Message"> | string
     role?: StringFilter<"Message"> | string
     content?: StringFilter<"Message"> | string
+    toolCallId?: StringNullableFilter<"Message"> | string | null
+    toolName?: StringNullableFilter<"Message"> | string | null
+    toolArguments?: JsonNullableFilter<"Message">
+    toolResult?: JsonNullableFilter<"Message">
     createdAt?: DateTimeFilter<"Message"> | Date | string
   }
 
@@ -11986,6 +12205,10 @@ export namespace Prisma {
     id?: string
     role: string
     content: string
+    toolCallId?: string | null
+    toolName?: string | null
+    toolArguments?: NullableJsonNullValueInput | InputJsonValue
+    toolResult?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
   }
 
@@ -12003,6 +12226,10 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
+    toolCallId?: NullableStringFieldUpdateOperationsInput | string | null
+    toolName?: NullableStringFieldUpdateOperationsInput | string | null
+    toolArguments?: NullableJsonNullValueInput | InputJsonValue
+    toolResult?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -12010,6 +12237,10 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
+    toolCallId?: NullableStringFieldUpdateOperationsInput | string | null
+    toolName?: NullableStringFieldUpdateOperationsInput | string | null
+    toolArguments?: NullableJsonNullValueInput | InputJsonValue
+    toolResult?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -12017,6 +12248,10 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
+    toolCallId?: NullableStringFieldUpdateOperationsInput | string | null
+    toolName?: NullableStringFieldUpdateOperationsInput | string | null
+    toolArguments?: NullableJsonNullValueInput | InputJsonValue
+    toolResult?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
