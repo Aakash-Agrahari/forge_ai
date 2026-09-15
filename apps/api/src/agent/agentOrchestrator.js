@@ -9,7 +9,7 @@ import {
 
 import {
     executeTool
-} from "./toolRegistry.js";
+} from "./toolRegistery.js";
 
 export async function runAgent({
     runId,
