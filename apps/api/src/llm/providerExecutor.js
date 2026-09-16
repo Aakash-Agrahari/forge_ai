@@ -126,6 +126,8 @@ export async function executeProvider({
     provider,
     model,
     messages,
+    tools = [],
+    toolChoice = "auto",
     temperature,
     maxTokens
 }) {
@@ -148,6 +150,8 @@ export async function executeProvider({
     return adapter.generate({
         model,
         messages,
+        tools,
+        toolChoice,
         temperature,
         maxTokens
     });
