@@ -100,21 +100,23 @@ export async function executeWithFallback({
             }
 
             failures.push({
-                provider:
-                    model.provider,
+                provider: model.provider,
+                model: model.id,
 
-                model:
-                    model.id,
-
-                errorType:
-                    classification.type,
+                errorType: classification.type,
 
                 statusCode:
-                    error.statusCode ??
-                    null,
+                    error.statusCode ?? null,
 
-                message:
-                    error.message
+                message: error.message,
+
+                cause: error.cause
+                    ? {
+                        name: error.cause.name ?? null,
+                        code: error.cause.code ?? null,
+                        message: error.cause.message ?? String(error.cause)
+                    }
+                    : null
             });
 
             continue;
