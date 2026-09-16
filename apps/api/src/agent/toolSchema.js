@@ -1,4 +1,4 @@
-import { getAllTools } from "./toolRegistery";
+import { getAllTools } from "./toolRegistery.js";
 
 export function getAgentTools(){
     return getAllTools().map((tool) => ({
