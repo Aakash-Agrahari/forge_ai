@@ -1,9 +1,13 @@
-export function normalizeAgentModelResult(result){
+export function normalizeAgentModelResult(result) {
     return {
         provider: result.provider,
         model: result.model,
+
         content: result.content ?? "",
-        toolCalls: [],
+
+        toolCalls: Array.isArray(result.toolCalls)
+            ? result.toolCalls.map(normalizeToolCall)
+            : [],
 
         usage: result.usage ?? {
             inputTokens: null,
@@ -11,10 +15,45 @@ export function normalizeAgentModelResult(result){
             totalTokens: null
         },
 
-        finishReason : result.finishReason ?? null,
+        finishReason: result.finishReason ?? null,
 
         raw: result.raw ?? null,
 
         fallback: result.fallback ?? null
     };
+}
+
+function normalizeToolCall(toolCall) {
+    return {
+        id:
+            toolCall.id ??
+            toolCall.toolCallId ??
+            null,
+
+        name:
+            toolCall.name ??
+            toolCall.function?.name ??
+            null,
+
+        arguments:
+            normalizeArguments(
+                toolCall.arguments ??
+                toolCall.function?.arguments ??
+                {}
+            )
+    };
+}
+
+function normalizeArguments(argumentsValue) {
+    if (typeof argumentsValue === "string") {
+        try {
+            return JSON.parse(argumentsValue);
+        } catch {
+            return {
+                raw: argumentsValue
+            };
+        }
+    }
+
+    return argumentsValue ?? {};
 }
