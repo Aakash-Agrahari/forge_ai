@@ -6,6 +6,8 @@ import { markModelRequest, markModelQuotaExceeded } from "./modelQuota.js";
 export async function executeWithFallback({
     models,
     messages,
+    tools = [],
+    toolChoice = "auto",
     temperature,
     maxTokens
 }) {
@@ -35,16 +37,12 @@ export async function executeWithFallback({
             );
             const result =
                 await executeProvider({
-                    provider:
-                        model.provider,
-
-                    model:
-                        model.id,
-
+                    provider: model.provider,
+                    model:model.id,
                     messages,
-
+                    tools,
+                    toolChoice,
                     temperature,
-
                     maxTokens
                 });
 
