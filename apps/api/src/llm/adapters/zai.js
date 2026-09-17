@@ -1,4 +1,5 @@
 import { createProviderError } from "../providerError.js";
+import { normalizeOpenAIToolCalls } from "./openaiToolCalls.js";
 
 const ZAI_CHAT_URL =
     "https://api.z.ai/api/paas/v4/chat/completions";

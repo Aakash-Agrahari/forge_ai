@@ -1,4 +1,5 @@
 import { createProviderError } from "../providerError.js";
+import { normalizeOpenAIToolCalls } from "./openaiToolCalls.js";
 
 const SAMBANOVA_CHAT_URL =
     "https://api.sambanova.ai/v1/chat/completions";

@@ -1,4 +1,5 @@
 import { createProviderError } from "../providerError.js";
+import { normalizeOpenAIToolCalls } from "./openaiToolCalls.js";
 
 const NVIDIA_CHAT_URL =
     "https://integrate.api.nvidia.com/v1/chat/completions";

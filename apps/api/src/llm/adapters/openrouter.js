@@ -1,4 +1,5 @@
 import { createProviderError } from "../providerError.js";
+import { normalizeOpenAIToolCalls } from "./openaiToolCalls.js";
 
 const OPENROUTER_CHAT_URL =
     "https://openrouter.ai/api/v1/chat/completions";

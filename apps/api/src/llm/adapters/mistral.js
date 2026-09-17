@@ -1,4 +1,5 @@
 import { createProviderError } from "../providerError.js";
+import { normalizeOpenAIToolCalls } from "./openaiToolCalls.js";
 
 const MISTRAL_CHAT_URL =
     "https://api.mistral.ai/v1/chat/completions";

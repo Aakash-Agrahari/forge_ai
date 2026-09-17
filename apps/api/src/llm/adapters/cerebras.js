@@ -1,4 +1,5 @@
 import { createProviderError } from "../providerError.js";
+import { normalizeOpenAIToolCalls } from "./openaiToolCalls.js";
 
 const CEREBRAS_CHAT_URL =
     "https://api.cerebras.ai/v1/chat/completions";
