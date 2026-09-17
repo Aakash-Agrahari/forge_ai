@@ -44,16 +44,16 @@ function normalizeToolCall(toolCall) {
     };
 }
 
-function normalizeArguments(argumentsValue) {
-    if (typeof argumentsValue === "string") {
+function normalizeArguments(value) {
+    if (typeof value === "string") {
         try {
-            return JSON.parse(argumentsValue);
+            return JSON.parse(value);
         } catch {
             return {
-                raw: argumentsValue
+                raw: value
             };
         }
     }
 
-    return argumentsValue ?? {};
+    return value ?? {};
 }
