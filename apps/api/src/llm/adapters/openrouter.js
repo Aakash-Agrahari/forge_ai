@@ -1,5 +1,9 @@
 import { createProviderError } from "../providerError.js";
-import { normalizeOpenAIToolCalls } from "./openaiToolCalls.js";
+
+import {
+    normalizeOpenAIToolCalls,
+    convertToolsToOpenAIFormat
+} from "./openaiToolCalls.js";
 
 const OPENROUTER_CHAT_URL =
     "https://openrouter.ai/api/v1/chat/completions";
@@ -7,6 +11,8 @@ const OPENROUTER_CHAT_URL =
 export async function generateOpenRouter({
     model,
     messages,
+    tools = [],
+    toolChoice = "auto",
     temperature = 0.2,
     maxTokens = 8192
 }) {
@@ -24,22 +30,34 @@ export async function generateOpenRouter({
         throw error;
     }
 
+    const requestBody = {
+        model,
+        messages,
+        temperature,
+        max_tokens: maxTokens
+    };
+
+    const openAITools =
+        convertToolsToOpenAIFormat(tools);
+
+    if (openAITools.length > 0) {
+        requestBody.tools = openAITools;
+        requestBody.tool_choice = toolChoice;
+    }
+
     const response = await fetch(
         OPENROUTER_CHAT_URL,
         {
             method: "POST",
+
             headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${apiKey}`,
                 "HTTP-Referer": "http://localhost:3000",
                 "X-Title": "ForgeAI"
             },
-            body: JSON.stringify({
-                model,
-                messages,
-                temperature,
-                max_tokens: maxTokens
-            })
+
+            body: JSON.stringify(requestBody)
         }
     );
 
@@ -57,26 +75,36 @@ export async function generateOpenRouter({
 
     const data = await response.json();
 
-    const assistantMessage = data.choices?.[0]?.message ?? {};
+    const assistantMessage =
+        data.choices?.[0]?.message ?? {};
+
     return {
         provider: "openrouter",
+
         model,
+
         content:
             assistantMessage.content ?? "",
+
         toolCalls:
             normalizeOpenAIToolCalls(
                 assistantMessage
             ),
+
         usage: {
             inputTokens:
                 data.usage?.prompt_tokens ?? null,
+
             outputTokens:
                 data.usage?.completion_tokens ?? null,
+
             totalTokens:
                 data.usage?.total_tokens ?? null
         },
+
         finishReason:
             data.choices?.[0]?.finish_reason ?? null,
+
         raw: data
     };
 }
