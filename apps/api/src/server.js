@@ -2,6 +2,9 @@ import app from "./app.js";
 import env from "./config/env.js";
 import logger from "./utils/logger.js";
 import { discoverAllModels } from "./llm/discoveryManager.js";
+import { registerAgentTools } from "./agent/tools/index.js";
+
+registerAgentTools();
 
 const startServer = async () => {
     try {
