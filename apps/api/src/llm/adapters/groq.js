@@ -1,4 +1,5 @@
 import {createProviderError} from "../providerError.js";
+import { normalizeOpenAIToolCalls } from "./openaiToolCalls.js";
 
 const GROQ_CHAT_URL =
     "https://api.groq.com/openai/v1/chat/completions";
@@ -52,11 +53,14 @@ export async function generateGroq({
 
     const data = await response.json();
 
+    const assistantMessage = data.choices?.[0]?.message ?? {};
+
     return {
         provider: "groq",
         model,
         content:
-            data.choices?.[0]?.message?.content || "",
+            assistantMessage.content ?? "",
+        toolCalls: normalizeOpenAIToolCalls(assistantMessage),    
         usage: {
             inputTokens:
                 data.usage?.prompt_tokens ?? null,
