@@ -7,9 +7,15 @@ import {
     completeAgentState
 } from "./agentState.js";
 
-import {
-    executeTool
-} from "./toolRegistery.js";
+import { executeTool } from "./toolRegistery.js";
+import { getAgentTools } from "./toolSchema.js";
+import { createAgentModelRequest } from "./agentModelRequest.js";
+import { normalizeAgentModelResult } from "./agentModel.js";
+
+import { selectModelsForRequest } from "../llm/modelSelectionService.js";
+import { executeWithFallback } from "../llm/fallbackExecutor.js";
+
+const MAX_ITERATIONS = 10;
 
 export async function runAgent({
     runId,
@@ -17,64 +23,142 @@ export async function runAgent({
     conversationId,
     messages
 }) {
-    const state =
-        createAgentState({
-            runId,
-            projectId,
-            conversationId
-        });
+    const state = createAgentState({
+        runId,
+        projectId,
+        conversationId
+    });
 
     try {
-        
-        //Initialize conversation
         for (const message of messages) {
             addMessage(state, message);
         }
 
-        // Start first agent iteration
-        incrementIteration(state);
+        const tools = getAgentTools();
 
-        //Temporary tool execution test - This is intentionally temporary.Later the LLM will decide which tool to call.
-        const toolName = "list_files";
-
-        const toolInput = {};
-
-        recordToolCall(state, {
-            name: toolName,
-            input: toolInput,
-            iteration: state.iteration
+        const models = selectModelsForRequest({
+            task: "code",
+            freeOnly: true,
+            toolCalling: true
         });
 
-        const toolResult =
-            await executeTool(
-                toolName,
-                toolInput,
-                {
-                    projectId,
-                    conversationId,
-                    runId
-                }
+        if (models.length === 0) {
+            const error = new Error(
+                "No eligible tool-calling models available"
             );
 
-        //Store tool result
-        addMessage(state, {
-            role: "tool",
-            toolName,
-            content: JSON.stringify(
-                toolResult
-            )
-        });
+            error.code = "NO_TOOL_CALLING_MODELS";
 
-        //Complete temporary run
-        completeAgentState(
-            state,
-            "completed"
+            throw error;
+        }
+
+        while (state.iteration < MAX_ITERATIONS) {
+            incrementIteration(state);
+
+            const request =
+                createAgentModelRequest({
+                    messages: state.messages,
+                    tools,
+                    toolChoice: "auto",
+                    temperature: 0.2,
+                    maxTokens: 8192
+                });
+
+            const rawResult =
+                await executeWithFallback({
+                    models,
+
+                    messages:
+                        request.messages,
+
+                    tools:
+                        request.tools,
+
+                    toolChoice:
+                        request.toolChoice,
+
+                    temperature:
+                        request.temperature,
+
+                    maxTokens:
+                        request.maxTokens
+                });
+
+            const result =
+                normalizeAgentModelResult(
+                    rawResult
+                );
+
+            addMessage(state, {
+                role: "assistant",
+                content: result.content,
+                toolCalls: result.toolCalls
+            });
+
+            if (
+                !result.toolCalls ||
+                result.toolCalls.length === 0
+            ) {
+                completeAgentState(
+                    state,
+                    "completed"
+                );
+
+                return {
+                    state,
+                    result
+                };
+            }
+
+            for (const toolCall of result.toolCalls) {
+                if (!toolCall.name) {
+                    const error = new Error(
+                        "Model returned a tool call without a tool name"
+                    );
+
+                    error.code =
+                        "INVALID_TOOL_CALL";
+
+                    throw error;
+                }
+
+                recordToolCall(state, {
+                    id: toolCall.id,
+                    name: toolCall.name,
+                    input: toolCall.arguments,
+                    iteration: state.iteration
+                });
+
+                const toolResult =
+                    await executeTool(
+                        toolCall.name,
+                        toolCall.arguments,
+                        {
+                            projectId,
+                            conversationId,
+                            runId
+                        }
+                    );
+
+                addMessage(state, {
+                    role: "tool",
+                    toolCallId: toolCall.id,
+                    toolName: toolCall.name,
+                    content:
+                        JSON.stringify(
+                            toolResult
+                        )
+                });
+            }
+        }
+
+        const error = new Error(
+            `Agent exceeded maximum iterations (${MAX_ITERATIONS})`
         );
 
-        return {
-            state,
-            result: toolResult
-        };
+        error.code = "MAX_AGENT_ITERATIONS";
+
+        throw error;
 
     } catch (error) {
         recordError(state, error);
