@@ -10,3 +10,18 @@ export function normalizeOpenAIToolCalls(message){
         arguments: toolCall.function?.arguments ?? "{}"
     }));
 }  
+
+export function convertToolsToOpenAIFormat(tools){
+    if(!Array.isArray(tools) || tools.length === 0){
+        return [];
+    }
+
+    return tools.map((tool) => ({
+        type: "function",
+        function: {
+            name: tool.name,
+            description: tool.description,
+            parameters: tool.inputSchema
+        }
+    }));
+}
