@@ -61,9 +61,9 @@ export async function generateCerebras({
         model,
         content: assistantMessage.content ??"",
         toolCalls:
-        normalizeOpenAIToolCalls(
-            assistantMessage
-        ),
+            normalizeOpenAIToolCalls(
+                assistantMessage
+            ),
         usage: {
             inputTokens:
                 data.usage?.prompt_tokens ?? null,
