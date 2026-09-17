@@ -55,11 +55,15 @@ export async function generateCerebras({
 
     const data = await response.json();
 
+    const assistantMessage = data.choices?.[0]?.message ?? {};
     return {
         provider: "cerebras",
         model,
-        content:
-            data.choices?.[0]?.message?.content || "",
+        content: assistantMessage.content ??"",
+        toolCalls:
+        normalizeOpenAIToolCalls(
+            assistantMessage
+        ),
         usage: {
             inputTokens:
                 data.usage?.prompt_tokens ?? null,
