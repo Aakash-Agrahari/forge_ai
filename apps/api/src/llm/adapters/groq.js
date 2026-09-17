@@ -1,5 +1,9 @@
-import {createProviderError} from "../providerError.js";
-import { normalizeOpenAIToolCalls } from "./openaiToolCalls.js";
+import { createProviderError } from "../providerError.js";
+
+import {
+    normalizeOpenAIToolCalls,
+    convertToolsToOpenAIFormat
+} from "./openaiToolCalls.js";
 
 const GROQ_CHAT_URL =
     "https://api.groq.com/openai/v1/chat/completions";
@@ -7,6 +11,8 @@ const GROQ_CHAT_URL =
 export async function generateGroq({
     model,
     messages,
+    tools = [],
+    toolChoice = "auto",
     temperature = 0.2,
     maxTokens = 8192
 }) {
@@ -23,25 +29,38 @@ export async function generateGroq({
         throw error;
     }
 
+    const requestBody = {
+        model,
+        messages,
+        temperature,
+        max_tokens: maxTokens
+    };
+
+    const openAITools =
+        convertToolsToOpenAIFormat(tools);
+
+    if (openAITools.length > 0) {
+        requestBody.tools = openAITools;
+        requestBody.tool_choice = toolChoice;
+    }
+
     const response = await fetch(
         GROQ_CHAT_URL,
         {
             method: "POST",
+
             headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${apiKey}`
             },
-            body: JSON.stringify({
-                model,
-                messages,
-                temperature,
-                max_tokens: maxTokens
-            })
+
+            body: JSON.stringify(requestBody)
         }
     );
 
     if (!response.ok) {
-        const responseBody = await response.text();
+        const responseBody =
+            await response.text();
 
         throw createProviderError({
             provider: "groq",
@@ -53,24 +72,36 @@ export async function generateGroq({
 
     const data = await response.json();
 
-    const assistantMessage = data.choices?.[0]?.message ?? {};
+    const assistantMessage =
+        data.choices?.[0]?.message ?? {};
 
     return {
         provider: "groq",
+
         model,
+
         content:
             assistantMessage.content ?? "",
-        toolCalls: normalizeOpenAIToolCalls(assistantMessage),    
+
+        toolCalls:
+            normalizeOpenAIToolCalls(
+                assistantMessage
+            ),
+
         usage: {
             inputTokens:
                 data.usage?.prompt_tokens ?? null,
+
             outputTokens:
                 data.usage?.completion_tokens ?? null,
+
             totalTokens:
                 data.usage?.total_tokens ?? null
         },
+
         finishReason:
             data.choices?.[0]?.finish_reason ?? null,
+
         raw: data
     };
 }
