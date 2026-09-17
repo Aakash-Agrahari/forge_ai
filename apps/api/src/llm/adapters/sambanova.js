@@ -55,11 +55,16 @@ export async function generateSambaNova({
 
     const data = await response.json();
 
+    const assistantMessage = data.choices?.[0]?.message ?? {};
     return {
         provider: "sambanova",
         model,
         content:
-            data.choices?.[0]?.message?.content || "",
+            assistantMessage.content ?? "",
+        toolCalls:
+            normalizeOpenAIToolCalls(
+                assistantMessage
+            ),
         usage: {
             inputTokens:
                 data.usage?.prompt_tokens ?? null,
