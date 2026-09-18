@@ -92,7 +92,9 @@ export async function runAgent({
             addMessage(state, {
                 role: "assistant",
                 content: result.content,
-                toolCalls: result.toolCalls
+                toolCalls: result.toolCalls,
+                provider: result.provider,
+                model: result.model
             });
 
             if (
