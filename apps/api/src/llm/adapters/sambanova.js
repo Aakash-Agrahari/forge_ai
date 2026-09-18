@@ -2,7 +2,8 @@ import { createProviderError } from "../providerError.js";
 
 import {
     normalizeOpenAIToolCalls,
-    convertToolsToOpenAIFormat
+    convertToolsToOpenAIFormat,
+    convertMessagesToOpenAIFormat
 } from "./openaiToolCalls.js";
 
 const SAMBANOVA_CHAT_URL =
@@ -32,8 +33,14 @@ export async function generateSambaNova({
 
     const requestBody = {
         model,
-        messages,
+
+        messages:
+            convertMessagesToOpenAIFormat(
+                messages
+            ),
+
         temperature,
+
         max_tokens: maxTokens
     };
 
