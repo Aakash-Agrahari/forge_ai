@@ -61,23 +61,36 @@ export async function generateGemini({
                     }
 
                     if (
-                        Array.isArray(
-                            message.toolCalls
-                        )
+                        Array.isArray(message.toolCalls)
                     ) {
                         for (
                             const toolCall
                             of message.toolCalls
                         ) {
-                            parts.push({
-                                functionCall: {
-                                    name:
-                                        toolCall.name,
+                            const providerData =
+                                toolCall.providerData;
+
+                            const functionCall =
+                                providerData?.functionCall ?? {
+                                    name: toolCall.name,
                                     args:
-                                        toolCall.arguments ??
-                                        {}
-                                }
-                            });
+                                        toolCall.arguments ?? {}
+                                };
+
+                            const functionCallPart = {
+                                functionCall
+                            };
+
+                            if (
+                                providerData?.thoughtSignature
+                            ) {
+                                functionCallPart.thoughtSignature =
+                                    providerData.thoughtSignature;
+                            }
+
+                            parts.push(
+                                functionCallPart
+                            );
                         }
                     }
 
@@ -110,12 +123,14 @@ export async function generateGemini({
                         parts: [
                             {
                                 functionResponse: {
-                                    name:
-                                        normalizeGeminiToolName(
-                                            message.toolName
-                                        ),
-                                    response:
-                                        toolResult
+                                    name: normalizeGeminiToolName(
+                                        message.toolName
+                                    ),
+
+                                    id:
+                                        message.toolCallId ?? undefined,
+
+                                    response: toolResult
                                 }
                             }
                         ]
