@@ -238,7 +238,16 @@ export async function generateGemini({
 
                     arguments:
                         part.functionCall.args ??
-                        {}
+                        {},
+
+                    providerData: {
+                        functionCall:
+                            part.functionCall,
+
+                        thoughtSignature:
+                            part.thoughtSignature ??
+                            null
+                    }
                 })
             );
 
