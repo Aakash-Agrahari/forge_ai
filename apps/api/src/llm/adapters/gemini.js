@@ -6,10 +6,13 @@ const GEMINI_BASE_URL =
 export async function generateGemini({
     model,
     messages,
+    tools = [],
+    toolChoice = "auto",
     temperature = 0.2,
     maxTokens = 8192
 }) {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey =
+        process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
         const error = new Error(
@@ -22,38 +25,116 @@ export async function generateGemini({
         throw error;
     }
 
-    const systemMessages = messages.filter(
-        (message) => message.role === "system"
-    );
+    const systemMessages =
+        messages.filter(
+            (message) =>
+                message.role === "system"
+        );
 
-    const conversationMessages = messages.filter(
-        (message) => message.role !== "system"
-    );
+    const conversationMessages =
+        messages.filter(
+            (message) =>
+                message.role !== "system"
+        );
 
     const systemInstruction =
         systemMessages.length > 0
             ? {
-                  parts: systemMessages.map((message) => ({
-                      text: message.content
-                  }))
-              }
+                parts: systemMessages.map(
+                    (message) => ({
+                        text: message.content
+                    })
+                )
+            }
             : undefined;
 
-    const contents = conversationMessages.map(
-        (message) => ({
-            role:
-                message.role === "assistant"
-                    ? "model"
-                    : "user",
-            parts: [
-                {
-                    text: message.content
-                }
-            ]
-        })
-    );
+    const contents =
+        conversationMessages.map(
+            (message) => {
+                if (message.role === "assistant") {
+                    const parts = [];
 
-    const body = {
+                    if (message.content) {
+                        parts.push({
+                            text: message.content
+                        });
+                    }
+
+                    if (
+                        Array.isArray(
+                            message.toolCalls
+                        )
+                    ) {
+                        for (
+                            const toolCall
+                            of message.toolCalls
+                        ) {
+                            parts.push({
+                                functionCall: {
+                                    name:
+                                        toolCall.name,
+                                    args:
+                                        toolCall.arguments ??
+                                        {}
+                                }
+                            });
+                        }
+                    }
+
+                    return {
+                        role: "model",
+                        parts
+                    };
+                }
+
+                if (message.role === "tool") {
+                    let toolResult = {};
+
+                    try {
+                        toolResult =
+                            typeof message.content ===
+                            "string"
+                                ? JSON.parse(
+                                    message.content
+                                )
+                                : message.content ?? {};
+                    } catch {
+                        toolResult = {
+                            result:
+                                message.content
+                        };
+                    }
+
+                    return {
+                        role: "user",
+                        parts: [
+                            {
+                                functionResponse: {
+                                    name:
+                                        normalizeGeminiToolName(
+                                            message.toolName
+                                        ),
+                                    response:
+                                        toolResult
+                                }
+                            }
+                        ]
+                    };
+                }
+
+                return {
+                    role: "user",
+                    parts: [
+                        {
+                            text:
+                                message.content ?? ""
+                        }
+                    ]
+                };
+            }
+        );
+
+    const requestBody = {
         contents,
 
         generationConfig: {
@@ -63,19 +144,45 @@ export async function generateGemini({
     };
 
     if (systemInstruction) {
-        body.systemInstruction = systemInstruction;
+        requestBody.systemInstruction =
+            systemInstruction;
     }
 
-    const response = await fetch(
-        `${GEMINI_BASE_URL}/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(body)
-        }
-    );
+    if (
+        Array.isArray(tools) &&
+        tools.length > 0
+    ) {
+        requestBody.tools = [
+            {
+                functionDeclarations:
+                    tools.map((tool) => ({
+                        name: tool.name,
+                        description:
+                            tool.description,
+                        parameters:
+                            tool.inputSchema
+                    }))
+            }
+        ];
+    }
+
+    const response =
+        await fetch(
+            `${GEMINI_BASE_URL}/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body:
+                    JSON.stringify(
+                        requestBody
+                    )
+            }
+        );
 
     if (!response.ok) {
         const responseBody =
@@ -89,27 +196,100 @@ export async function generateGemini({
         });
     }
 
-    const data = await response.json();
+    const data =
+        await response.json();
 
-    const content =
-        data.candidates?.[0]?.content?.parts
-            ?.map((part) => part.text || "")
-            .join("") || "";
+    const parts =
+        data.candidates?.[0]
+            ?.content?.parts ?? [];
+
+    const textParts =
+        parts
+            .filter(
+                (part) =>
+                    typeof part.text ===
+                    "string"
+            )
+            .map(
+                (part) =>
+                    part.text
+            );
+
+    const functionCalls =
+        parts
+            .filter(
+                (part) =>
+                    part.functionCall
+            )
+            .map(
+                (part) => ({
+                    id:
+                        part.functionCall.id ??
+                        null,
+
+                    name:
+                        normalizeGeminiToolName(
+                            part.functionCall.name
+                        ),
+
+                    arguments:
+                        part.functionCall.args ??
+                        {}
+                })
+            );
 
     return {
         provider: "gemini",
+
         model,
-        content,
+
+        content:
+            textParts.join(""),
+
+        toolCalls:
+            functionCalls,
+
         usage: {
             inputTokens:
-                data.usageMetadata?.promptTokenCount ?? null,
+                data.usageMetadata
+                    ?.promptTokenCount ??
+                null,
+
             outputTokens:
-                data.usageMetadata?.candidatesTokenCount ?? null,
+                data.usageMetadata
+                    ?.candidatesTokenCount ??
+                null,
+
             totalTokens:
-                data.usageMetadata?.totalTokenCount ?? null
+                data.usageMetadata
+                    ?.totalTokenCount ??
+                null
         },
+
         finishReason:
-            data.candidates?.[0]?.finishReason ?? null,
+            data.candidates?.[0]
+                ?.finishReason ??
+            null,
+
         raw: data
     };
+}
+
+function normalizeGeminiToolName(name) {
+    if (
+        typeof name !== "string"
+    ) {
+        return name;
+    }
+
+    if (
+        name.startsWith("mcp__")
+    ) {
+        const parts =
+            name.split("__");
+
+        return parts[parts.length - 1];
+    }
+
+    return name;
 }
