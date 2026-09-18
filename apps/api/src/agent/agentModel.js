@@ -19,6 +19,8 @@ export function normalizeAgentModelResult(result) {
 
         raw: result.raw ?? null,
 
+        providerData: result.providerData ?? null,
+
         fallback: result.fallback ?? null
     };
 }
@@ -40,7 +42,10 @@ function normalizeToolCall(toolCall) {
                 toolCall.arguments ??
                 toolCall.function?.arguments ??
                 {}
-            )
+            ),
+
+        providerData:
+            toolCall.providerData ?? null
     };
 }
 
