@@ -157,10 +157,14 @@ export async function generateGemini({
                 functionDeclarations:
                     tools.map((tool) => ({
                         name: tool.name,
+
                         description:
                             tool.description,
+
                         parameters:
-                            tool.inputSchema
+                            convertToolSchemaForGemini(
+                                tool.inputSchema
+                            )
                     }))
             }
         ];
@@ -292,4 +296,52 @@ function normalizeGeminiToolName(name) {
     }
 
     return name;
+}
+
+function convertToolSchemaForGemini(schema) {
+    if (!schema || typeof schema !== "object") {
+        return schema;
+    }
+
+    const result = {};
+
+    for (const [key, value] of Object.entries(schema)) {
+
+        //Gemini does not accept additionalProperties in this function declaration schema.
+         
+        if (key === "additionalProperties") {
+            continue;
+        }
+
+        if (
+            value &&
+            typeof value === "object" &&
+            !Array.isArray(value)
+        ) {
+            result[key] =
+                convertToolSchemaForGemini(
+                    value
+                );
+
+            continue;
+        }
+
+        if (Array.isArray(value)) {
+            result[key] =
+                value.map((item) =>
+                    item &&
+                    typeof item === "object"
+                        ? convertToolSchemaForGemini(
+                            item
+                        )
+                        : item
+                );
+
+            continue;
+        }
+
+        result[key] = value;
+    }
+
+    return result;
 }
