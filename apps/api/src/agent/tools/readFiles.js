@@ -1,5 +1,7 @@
 import { createTool } from "./toolContract.js";
 import { getProjectFiles } from "../../services/fileService.js";
+import {validateProjectPath} from "../projectPath.js";
+
 
 export const readFileTool =
     createTool({
@@ -44,6 +46,8 @@ export const readFileTool =
 
                 throw error;
             }
+
+            const path = validateProjectPath(input.path);
 
             const files = await getProjectFiles(
                 context.projectId
