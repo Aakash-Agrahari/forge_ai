@@ -3,6 +3,7 @@ import {
     incrementIteration,
     addMessage,
     recordToolCall,
+    recordFileChange,
     recordError,
     completeAgentState
 } from "./agentState.js";
@@ -141,6 +142,17 @@ export async function runAgent({
                             runId
                         }
                     );
+
+                if (
+                    toolCall.name === "write_file" &&
+                    toolResult?.success &&
+                    toolResult?.file?.path
+                ) {
+                    recordFileChange(
+                        state,
+                        toolResult.file.path
+                    );
+                }    
 
                 addMessage(state, {
                     role: "tool",
