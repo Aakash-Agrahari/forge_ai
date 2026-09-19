@@ -138,7 +138,7 @@ export async function upsertProjectFile({
             id: true,
             projectId: true,
             path: true,
-            content: ture,
+            content: true,
             createdAt: true,
             updatedAt: true
         }
