@@ -1,5 +1,6 @@
 import { createTool } from "./toolContract.js";
 import { upsertProjectFile } from "../../services/fileService.js";
+import { validateProjectPath } from "../projectPath.js";
 
 export const writeFileTool =
     createTool({
@@ -61,9 +62,11 @@ export const writeFileTool =
                 throw error;
             }
 
+            const path = validateProjectPath(input.path);
+
             const file = await upsertProjectFile({
                 projectId: context.projectId,
-                path: input.path,
+                path,
                 content: input.content
             });
 
