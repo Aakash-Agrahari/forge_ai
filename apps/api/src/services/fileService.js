@@ -118,3 +118,29 @@ export async function deleteProjectFile({
 
     return true;
 }
+
+export async function upsertProjectFile({
+    projectId, path, content
+}) {
+    return prisma.projectFile.upsert({
+        where: {
+            projectId_path: {
+                projectId, path
+            }
+        },
+        create: {
+            projectId, path, content
+        },
+        update: {
+            content
+        },
+        select: {
+            id: true,
+            projectId: true,
+            path: true,
+            content: ture,
+            createdAt: true,
+            updatedAt: true
+        }
+    });
+}
