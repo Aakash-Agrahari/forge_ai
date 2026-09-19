@@ -28,7 +28,7 @@ const result = await runAgent({
         {
             role: "user",
             content:
-                "Read the contents of src/App.jsx using the read_file tool and tell me what this file does."
+                "Update src/App.jsx so that the App component displays a heading saying 'Hello from ForgeAI!' instead of 'Hello ForgeAI'. Use the write_file tool to make the change."
         }
     ]
 });
