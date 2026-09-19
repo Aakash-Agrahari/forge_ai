@@ -28,7 +28,7 @@ const result = await runAgent({
         {
             role: "user",
             content:
-                "List all the files in my project. Use the list_files tool to find them."
+                "Read the contents of src/App.jsx using the read_file tool and tell me what this file does."
         }
     ]
 });
