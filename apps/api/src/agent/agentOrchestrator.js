@@ -35,6 +35,12 @@ export async function runAgent({
     try {
         for (const message of messages) {
             addMessage(state, message);
+
+            await createMessage({
+                conversationId,
+                role: message.role,
+                content: message.content ?? ""
+            });
         }
 
         const tools = getAgentTools();
