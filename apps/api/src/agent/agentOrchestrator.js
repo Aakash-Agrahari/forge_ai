@@ -43,6 +43,14 @@ export async function runAgent({
             });
         }
 
+        await updateAgentRun({
+            runId,
+            conversationId,
+            data: {
+                status: "running"
+            }
+        });
+
         const tools = getAgentTools();
 
         const models = selectModelsForRequest({
