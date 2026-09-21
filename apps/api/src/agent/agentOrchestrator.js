@@ -34,18 +34,22 @@ export async function runAgent({
     });
 
     try {
-        // 1. Save incoming user messages
+        /*
+         * Messages already exist in the database.
+         * Load them into the in-memory agent state,
+         * but do not persist them again.
+         */
         for (const message of messages) {
-            addMessage(state, message);
-
-            await createMessage({
-                conversationId,
+            addMessage(state, {
                 role: message.role,
-                content: message.content ?? ""
+                content: message.content ?? "",
+                toolCallId: message.toolCallId ?? null,
+                toolName: message.toolName ?? null,
+                toolArguments: message.toolArguments ?? null,
+                toolResult: message.toolResult ?? null
             });
         }
 
-        // 2. Mark AgentRun as running
         await updateAgentRun({
             runId,
             conversationId,
@@ -54,10 +58,8 @@ export async function runAgent({
             }
         });
 
-        // 3. Get available agent tools
         const tools = getAgentTools();
 
-        // 4. Select eligible models
         const models = selectModelsForRequest({
             task: "code",
             freeOnly: true,
@@ -75,7 +77,6 @@ export async function runAgent({
             throw error;
         }
 
-        // 5. Agent loop
         while (state.iteration < MAX_ITERATIONS) {
             incrementIteration(state);
 
@@ -87,7 +88,6 @@ export async function runAgent({
                 maxTokens: 8192
             });
 
-            // 6. Execute model with fallback
             const rawResult = await executeWithFallback({
                 models,
                 messages: request.messages,
@@ -97,11 +97,8 @@ export async function runAgent({
                 maxTokens: request.maxTokens
             });
 
-            const result = normalizeAgentModelResult(
-                rawResult
-            );
+            const result = normalizeAgentModelResult(rawResult);
 
-            // 7. Add assistant response to in-memory state
             addMessage(state, {
                 role: "assistant",
                 content: result.content,
@@ -110,19 +107,13 @@ export async function runAgent({
                 model: result.model
             });
 
-            // 8. Persist assistant message
-            if (
-                !result.toolCalls ||
-                result.toolCalls.length === 0
-            ) {
-                // Normal assistant response
+            if (!result.toolCalls || result.toolCalls.length === 0) {
                 await createMessage({
                     conversationId,
                     role: "assistant",
                     content: result.content ?? ""
                 });
             } else {
-                // Assistant response containing tool calls
                 for (const toolCall of result.toolCalls) {
                     await createMessage({
                         conversationId,
@@ -135,15 +126,8 @@ export async function runAgent({
                 }
             }
 
-            // 9. If there are no tool calls, agent is finished
-            if (
-                !result.toolCalls ||
-                result.toolCalls.length === 0
-            ) {
-                completeAgentState(
-                    state,
-                    "completed"
-                );
+            if (!result.toolCalls || result.toolCalls.length === 0) {
+                completeAgentState(state, "completed");
 
                 await updateAgentRun({
                     runId,
@@ -162,7 +146,6 @@ export async function runAgent({
                 };
             }
 
-            // 10. Execute each tool call
             for (const toolCall of result.toolCalls) {
                 if (!toolCall.name) {
                     const error = new Error(
@@ -174,7 +157,6 @@ export async function runAgent({
                     throw error;
                 }
 
-                // Record tool call in agent state
                 recordToolCall(state, {
                     id: toolCall.id,
                     name: toolCall.name,
@@ -182,7 +164,6 @@ export async function runAgent({
                     iteration: state.iteration
                 });
 
-                // Execute tool
                 const toolResult = await executeTool(
                     toolCall.name,
                     toolCall.arguments,
@@ -193,7 +174,6 @@ export async function runAgent({
                     }
                 );
 
-                // 11. Track changed files
                 if (
                     toolCall.name === "write_file" &&
                     toolResult?.success &&
@@ -205,7 +185,6 @@ export async function runAgent({
                     );
                 }
 
-                // 12. Persist tool result
                 await createMessage({
                     conversationId,
                     role: "tool",
@@ -215,7 +194,6 @@ export async function runAgent({
                     toolResult
                 });
 
-                // 13. Add tool result to in-memory state
                 addMessage(state, {
                     role: "tool",
                     toolCallId: toolCall.id,
@@ -225,7 +203,6 @@ export async function runAgent({
             }
         }
 
-        // 14. Maximum iterations exceeded
         const error = new Error(
             `Agent exceeded maximum iterations (${MAX_ITERATIONS})`
         );
@@ -234,21 +211,11 @@ export async function runAgent({
         error.statusCode = 503;
 
         throw error;
-
     } catch (error) {
+        recordError(state, error);
 
-        // 15. Record failure in agent state
-        recordError(
-            state,
-            error
-        );
+        completeAgentState(state, "failed");
 
-        completeAgentState(
-            state,
-            "failed"
-        );
-
-        // 16. Persist failure in AgentRun
         await updateAgentRun({
             runId,
             conversationId,
