@@ -29,7 +29,7 @@ export async function runSandboxCommand({
             maxBuffer: limits.maxOutputBytes,
             windowsHide: true 
         });
-        return createSandbocResult({
+        return createSandboxResult({
             success: true,
             exitCode: 0,
             stdout: result.stdout,
