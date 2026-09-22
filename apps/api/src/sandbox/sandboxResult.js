@@ -7,7 +7,7 @@ export function createSandboxResult({
     timeOut = false
 }) {
     return {
-        success = Boolean(success),
+        success: Boolean(success),
         exitCode,
         stdout,
         stderr,
