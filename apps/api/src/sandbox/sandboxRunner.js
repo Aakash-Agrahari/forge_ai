@@ -1,6 +1,12 @@
-import {validateSandboxCommand,getSandboxLimits} from "./sandboxPolicy.js";
+import {
+    validateSandboxCommand,
+    getSandboxLimits
+} from "./sandboxPolicy.js";
+
 import { createSandboxResult } from "./sandboxResult.js";
-import { executeLocalCommand } from "./backends/localExecutionBackend.js";
+import { localExecutionBackend } from "./backends/localExecutionBackend.js";
+
+const executionBackend = localExecutionBackend;
 
 export async function runSandboxCommand({
     command,
@@ -8,14 +14,18 @@ export async function runSandboxCommand({
     timeoutMs = 30_000,
     maxOutputBytes = 1_000_000
 }) {
-    const validatedCommand = validateSandboxCommand(command);
+    const validatedCommand =
+        validateSandboxCommand(command);
 
     const limits = getSandboxLimits({
         timeoutMs,
         maxOutputBytes
     });
 
-    if (typeof cwd !== "string" || !cwd.trim()) {
+    if (
+        typeof cwd !== "string" ||
+        !cwd.trim()
+    ) {
         const error = new Error(
             "Sandbox working directory is required"
         );
@@ -25,12 +35,13 @@ export async function runSandboxCommand({
         throw error;
     }
 
-    const result = await executeLocalCommand({
-        command: validatedCommand,
-        cwd,
-        timeoutMs: limits.timeoutMs,
-        maxOutputBytes: limits.maxOutputBytes
-    });
+    const result =
+        await executionBackend.execute({
+            command: validatedCommand,
+            cwd,
+            timeoutMs: limits.timeoutMs,
+            maxOutputBytes: limits.maxOutputBytes
+        });
 
     return createSandboxResult(result);
 }
