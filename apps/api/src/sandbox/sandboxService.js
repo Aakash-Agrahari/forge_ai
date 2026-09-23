@@ -5,6 +5,7 @@ import path from "node:path";
 import { getProjectFiles } from "../services/fileService.js";
 import { validateProjectPath } from "../agent/projectPath.js";
 import { runSandboxCommand } from "./sandboxRunner.js";
+import { getSandboxConfig } from "./sandboxConfig.js";
 
 function createWorkspacePath() {
     return path.join(
@@ -26,14 +27,16 @@ async function writeProjectFiles({
     files
 }) {
     for (const file of files) {
-        const relativePath = validateProjectPath(file.path);
+        const relativePath =
+            validateProjectPath(file.path);
 
         const targetPath = path.join(
             workspacePath,
             ...relativePath.split("/")
         );
 
-        const parentDirectory = path.dirname(targetPath);
+        const parentDirectory =
+            path.dirname(targetPath);
 
         await fs.mkdir(parentDirectory, {
             recursive: true
@@ -70,12 +73,19 @@ export async function executeProjectCommand({
         throw error;
     }
 
-    const files = await getProjectFiles(projectId);
+    const files =
+        await getProjectFiles(projectId);
 
-    const workspacePath = createWorkspacePath();
+    const workspacePath =
+        createWorkspacePath();
+
+    const sandboxConfig =
+        getSandboxConfig();
 
     try {
-        await createWorkspace(workspacePath);
+        await createWorkspace(
+            workspacePath
+        );
 
         await writeProjectFiles({
             workspacePath,
@@ -86,9 +96,12 @@ export async function executeProjectCommand({
             command,
             cwd: workspacePath,
             timeoutMs,
-            maxOutputBytes
+            maxOutputBytes,
+            backend: sandboxConfig.backend
         });
     } finally {
-        await removeWorkspace(workspacePath);
+        await removeWorkspace(
+            workspacePath
+        );
     }
 }
