@@ -4,15 +4,16 @@ import {
 } from "./sandboxPolicy.js";
 
 import { createSandboxResult } from "./sandboxResult.js";
-import { localExecutionBackend } from "./backends/localExecutionBackend.js";
+import { getExecutionBackend } from "./executionBackendFactory.js";
 
-const executionBackend = localExecutionBackend;
+const DEFAULT_BACKEND = "local";
 
 export async function runSandboxCommand({
     command,
     cwd,
     timeoutMs = 30_000,
-    maxOutputBytes = 1_000_000
+    maxOutputBytes = 1_000_000,
+    backend = DEFAULT_BACKEND
 }) {
     const validatedCommand =
         validateSandboxCommand(command);
@@ -34,6 +35,9 @@ export async function runSandboxCommand({
 
         throw error;
     }
+
+    const executionBackend =
+        getExecutionBackend(backend);
 
     const result =
         await executionBackend.execute({
