@@ -1,6 +1,8 @@
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
 
+import { createExecutionBackend } from "./executionBackend.js";
+
 const execAsync = promisify(exec);
 
 function limitOutput(value, maxOutputBytes) {
@@ -19,8 +21,11 @@ function limitOutput(value, maxOutputBytes) {
         .toString("utf8");
 }
 
-export async function executeLocalCommand({
-    command, cwd, timeoutMs, maxOutputBytes
+async function execute({
+    command,
+    cwd,
+    timeoutMs,
+    maxOutputBytes
 }) {
     const startedAt = Date.now();
 
@@ -35,21 +40,44 @@ export async function executeLocalCommand({
         return {
             success: true,
             exitCode: 0,
-            stdout: limitOutput(result.stdout, maxOutputBytes),
-            stderr: limitOutput(result.stderr, maxOutputBytes),
+            stdout: limitOutput(
+                result.stdout,
+                maxOutputBytes
+            ),
+            stderr: limitOutput(
+                result.stderr,
+                maxOutputBytes
+            ),
             durationMs: Date.now() - startedAt,
             timedOut: false
         };
     } catch (error) {
-        const timedOut = error?.killed === true || error?.signal === "SIGTERM";
+        const timedOut =
+            error?.killed === true ||
+            error?.signal === "SIGTERM";
 
         return {
             success: false,
-            exitCode: typeof error?.code === "number" ? error.code: null,
-            stdout: limitOutput(error?.stdout ?? "", maxOutputBytes),
-            stderr: limitOutput(error?.stderr ?? error?.message ?? "", maxOutputBytes),
+            exitCode:
+                typeof error?.code === "number"
+                    ? error.code
+                    : null,
+            stdout: limitOutput(
+                error?.stdout ?? "",
+                maxOutputBytes
+            ),
+            stderr: limitOutput(
+                error?.stderr ?? error?.message ?? "",
+                maxOutputBytes
+            ),
             durationMs: Date.now() - startedAt,
             timedOut
         };
     }
 }
+
+export const localExecutionBackend =
+    createExecutionBackend({
+        name: "local",
+        execute
+    });
