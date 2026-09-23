@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { getProjectFiles } from "../services/fileService.js";
+import { validateProjectPath } from "../agent/projectPath.js";
 import { runSandboxCommand } from "./sandboxRunner.js";
 
 function createWorkspacePath() {
@@ -25,7 +26,7 @@ async function writeProjectFiles({
     files
 }) {
     for (const file of files) {
-        const relativePath = file.path;
+        const relativePath = validateProjectPath(file.path);
 
         const targetPath = path.join(
             workspacePath,
