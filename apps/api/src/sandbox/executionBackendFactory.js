@@ -7,7 +7,7 @@ const backends = new Map([
 ]);
 
 export function getExecutionBackend(name = "local"){
-    const backend = backend.get(name);
+    const backend = backends.get(name);
 
     if(!backend){
         const error = new Error(`UNknown sandbox execution backend: ${name}`);
