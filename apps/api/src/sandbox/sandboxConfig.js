@@ -2,7 +2,8 @@ const DEFAULT_BACKEND = "local";
 
 const SUPPORTED_BACKENDS = new Set([
     "local",
-    "isolated"
+    "isolated",
+    "docker"
 ]);
 
 export function getSandboxConfig() {
