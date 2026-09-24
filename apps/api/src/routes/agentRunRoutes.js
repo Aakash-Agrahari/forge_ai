@@ -82,18 +82,26 @@ router.post(
                     req.params.conversationId
             });
 
-            const result = await runAgent({
+            runAgent({
                 runId: run.id,
                 projectId: req.params.projectId,
                 conversationId:
                     req.params.conversationId,
                 messages
+            }).catch((error) => {
+                console.error(
+                    `Agent run ${run.id} failed:`,
+                    error
+                );
             });
 
-            return res.status(201).json({
+            return res.status(202).json({
                 success: true,
-                run: result.state,
-                result: result.result
+                run: {
+                    id: run.id,
+                    conversationId: run.conversationId,
+                    status: run.status
+                }
             });
         } catch (error) {
             next(error);
