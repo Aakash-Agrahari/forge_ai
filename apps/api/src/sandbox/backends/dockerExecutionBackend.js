@@ -108,7 +108,7 @@ async function execute({
     }
 }
 
-export const dockerExecutionBacked = createExecutionBackend({
+export const dockerExecutionBackend = createExecutionBackend({
     name: "docker",
     execute
 });
