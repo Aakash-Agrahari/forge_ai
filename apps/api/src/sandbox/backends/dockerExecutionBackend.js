@@ -29,32 +29,41 @@ async function execute({
     const startedAt = Date.now();
 
     const dockerArguments = [
-        "run",
-        "--rm",
-        "--network",
-        "none",
-        "--memory",
-        "512m",
-        "--cpus",
-        "1",
-        "--pids-limit",
-        "128",
-        "read-only",
-        "--tmpfs",
-        "/tmp:rw,noexec,nosuid,size=64m",
-        "--tmpfs",
-        "/workspace/node_modules:rw,nosuid,size=256m",
-        "workdir",
-        "/workspace",
-        "--volume",
-        `${cwd}:/workspace:rw`,
+    "run",
+    "--rm",
 
-        DOCKER_IMAGE,
+    "--network",
+    "none",
 
-        "sh",
-        "-lc",
-        command
-    ];
+    "--memory",
+    "512m",
+
+    "--cpus",
+    "1",
+
+    "--pids-limit",
+    "128",
+
+    "--read-only",
+
+    "--tmpfs",
+    "/tmp:rw,noexec,nosuid,size=64m",
+
+    "--tmpfs",
+    "/workspace/node_modules:rw,nosuid,size=256m",
+
+    "--workdir",
+    "/workspace",
+
+    "--volume",
+    `${cwd}:/workspace:rw`,
+
+    DOCKER_IMAGE,
+
+    "sh",
+    "-lc",
+    command
+];
 
     try {
         const result = await execFileAsync(
