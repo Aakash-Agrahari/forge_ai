@@ -32,6 +32,11 @@ export async function runAgent({
         conversationId
     });
 
+    addMessage(state, {
+        role: "system",
+        content: AGENT_SYSTEM_PROMPT
+    });
+
     try {
         /*
          * Messages already exist in the database.
