@@ -4,6 +4,7 @@ import {readFileTool} from "./readFiles.js";
 import {writeFileTool} from "./writeFiles.js";
 import {deleteFileTool} from "./deleteFiles.js";
 import {runCommandTool} from "./runCommand.js";
+import {searchFilesTool} from "./searchFiles.js";
 
 export function registerAgentTools(){
     registerTool(listFilesTool);
@@ -11,4 +12,5 @@ export function registerAgentTools(){
     registerTool(writeFileTool);
     registerTool(deleteFileTool);
     registerTool(runCommandTool);
+    registerTool(searchFilesTool);
 }
