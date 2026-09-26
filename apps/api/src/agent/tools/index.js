@@ -6,6 +6,7 @@ import {deleteFileTool} from "./deleteFiles.js";
 import {runCommandTool} from "./runCommand.js";
 import {searchFilesTool} from "./searchFiles.js";
 import {replaceInFileTool} from "./replaceInFile.js";
+import {insertInFileTool} from "./insertInFile.js";
 
 export function registerAgentTools(){
     registerTool(listFilesTool);
@@ -15,4 +16,5 @@ export function registerAgentTools(){
     registerTool(runCommandTool);
     registerTool(searchFilesTool);
     registerTool(replaceInFileTool);
+    registerTool(insertInFileTool);
 }
