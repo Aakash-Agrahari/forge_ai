@@ -95,6 +95,40 @@ export async function updateProjectFile({
     });
 }
 
+export async function renameProjectFile({
+    projectId,
+    fileId,
+    path
+}) {
+    const existingFile = await prisma.projectFile.findFirst({
+        where: {
+            id: fileId,
+            projectId
+        }
+    });
+
+    if (!existingFile) {
+        return null;
+    }
+
+    return prisma.projectFile.update({
+        where: {
+            id: fileId
+        },
+        data: {
+            path
+        },
+        select: {
+            id: true,
+            projectId: true,
+            path: true,
+            content: true,
+            createdAt: true,
+            updatedAt: true
+        }
+    });
+}
+
 export async function deleteProjectFile({
     projectId,
     fileId
