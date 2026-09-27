@@ -8,6 +8,7 @@ import {searchFilesTool} from "./searchFiles.js";
 import {replaceInFileTool} from "./replaceInFile.js";
 import {insertInFileTool} from "./insertInFile.js";
 import { createFileTool } from "./createFile.js";
+import { renameFileTool } from "./renameFile.js";
 
 export function registerAgentTools(){
     registerTool(listFilesTool);
@@ -19,4 +20,5 @@ export function registerAgentTools(){
     registerTool(replaceInFileTool);
     registerTool(insertInFileTool);
     registerTool(createFileTool);
+    registerTool(renameFileTool);
 }
