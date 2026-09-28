@@ -103,6 +103,20 @@ export async function runAgent({
 
             const result = normalizeAgentModelResult(rawResult);
 
+            console.log(
+                `[ForgeAI Agent] Iteration ${state.iteration}`,
+                JSON.stringify(
+                    {
+                        provider: result.provider,
+                        model: result.model,
+                        content: result.content,
+                        toolCalls: result.toolCalls
+                    },
+                    null,
+                    2
+                )
+            );
+
             addMessage(state, {
                 role: "assistant",
                 content: result.content,
@@ -176,6 +190,11 @@ export async function runAgent({
                         conversationId,
                         runId
                     }
+                );
+
+                console.log(
+                    `[ForgeAI Agent] Tool result: ${toolCall.name}`,
+                    JSON.stringify(toolResult, null, 2)
                 );
 
                 if (
