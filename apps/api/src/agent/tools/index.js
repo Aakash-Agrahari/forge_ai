@@ -10,6 +10,7 @@ import {insertInFileTool} from "./insertInFile.js";
 import { createFileTool } from "./createFile.js";
 import { renameFileTool } from "./renameFile.js";
 import {moveFileTool} from "./moveFile.js";
+import {copyFileTool} from "./copyFile.js";
 
 export function registerAgentTools(){
     registerTool(listFilesTool);
@@ -23,4 +24,5 @@ export function registerAgentTools(){
     registerTool(createFileTool);
     registerTool(renameFileTool);
     registerTool(moveFileTool);
+    registerTool(copyFileTool);
 }
