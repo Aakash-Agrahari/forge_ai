@@ -1,12 +1,12 @@
 import { createTool } from "./toolContract.js";
-import { getProjectFile } from "../../services/fileService.js";
+import { getProjectFiles } from "../../services/fileService.js";
 import { validateProjectPath } from "../projectPath.js";
 
 export const verifyJavaScriptTool = createTool({
     name: "verify_javascript",
 
     description:
-        "Verify that a JavaScript file contains a requested function and optionally verify its expected return expression without executing arbitrary code.",
+        "Verify that a JavaScript file exists and contains a requested function. Optionally verify that the expected return expression is present.",
 
     inputSchema: {
         type: "object",
@@ -16,18 +16,25 @@ export const verifyJavaScriptTool = createTool({
                 description:
                     "Project-relative path to the JavaScript file."
             },
+
             functionName: {
                 type: "string",
                 description:
                     "Name of the function that must exist."
             },
+
             expectedReturn: {
                 type: "string",
                 description:
-                    "Optional expected return expression or value that should appear in the function."
+                    "Optional expected return expression or text that should appear in the function."
             }
         },
-        required: ["filePath", "functionName"],
+
+        required: [
+            "filePath",
+            "functionName"
+        ],
+
         additionalProperties: false
     },
 
@@ -75,23 +82,29 @@ export const verifyJavaScriptTool = createTool({
             throw error;
         }
 
-        const file = await getProjectFile({
-            projectId: context.projectId,
-            fileId: null,
-            path: relativePath
-        });
+        const files =
+            await getProjectFiles(context.projectId);
+
+        const file =
+            files.find(
+                (projectFile) =>
+                    projectFile.path === relativePath
+            );
 
         if (!file) {
             return {
-                success: false,
+                success: true,
                 verified: false,
                 filePath: relativePath,
                 functionName: input.functionName,
-                error: "File not found"
+                functionFound: false,
+                expectedReturnFound: false,
+                reason: "File not found"
             };
         }
 
-        const content = file.content ?? "";
+        const content =
+            file.content ?? "";
 
         const escapedFunctionName =
             input.functionName.replace(
@@ -99,8 +112,24 @@ export const verifyJavaScriptTool = createTool({
                 "\\$&"
             );
 
+        /*
+         * Supports common JavaScript function forms:
+         *
+         * function greet(name) {}
+         *
+         * const greet = function(name) {}
+         *
+         * const greet = (name) => {}
+         *
+         * const greet = name => {}
+         */
+
         const functionPattern = new RegExp(
-            `(?:function\\s+${escapedFunctionName}\\s*\\(|(?:const|let|var)\\s+${escapedFunctionName}\\s*=\\s*(?:async\\s*)?(?:function|\\([^)]*\\)\\s*=>|[^=]+=>))`,
+            [
+                `function\\s+${escapedFunctionName}\\s*\\(`,
+                `(?:const|let|var)\\s+${escapedFunctionName}\\s*=\\s*(?:async\\s+)?function\\s*\\(`,
+                `(?:const|let|var)\\s+${escapedFunctionName}\\s*=\\s*(?:async\\s+)?(?:\\([^)]*\\)|[A-Za-z_$][\\w$]*)\\s*=>`
+            ].join("|"),
             "m"
         );
 
@@ -113,7 +142,12 @@ export const verifyJavaScriptTool = createTool({
                 verified: false,
                 filePath: relativePath,
                 functionName: input.functionName,
-                reason: "Requested function was not found"
+                functionFound: false,
+                expectedReturn:
+                    input.expectedReturn ?? null,
+                expectedReturnFound: false,
+                reason:
+                    "Requested function was not found in the file"
             };
         }
 
@@ -124,21 +158,22 @@ export const verifyJavaScriptTool = createTool({
                 content.includes(input.expectedReturn);
         }
 
+        const verified =
+            functionFound &&
+            expectedReturnFound;
+
         return {
             success: true,
-            verified:
-                functionFound &&
-                expectedReturnFound,
+            verified,
             filePath: relativePath,
             functionName: input.functionName,
             functionFound,
             expectedReturn:
                 input.expectedReturn ?? null,
             expectedReturnFound,
-            message:
-                functionFound && expectedReturnFound
-                    ? "JavaScript function verified successfully"
-                    : "JavaScript verification failed"
+            message: verified
+                ? "JavaScript function verified successfully"
+                : "JavaScript verification failed"
         };
     }
 });
