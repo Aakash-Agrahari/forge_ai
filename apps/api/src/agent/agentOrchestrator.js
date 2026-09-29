@@ -212,15 +212,31 @@ export async function runAgent({
                     iteration: state.iteration
                 });
 
-                const toolResult = await executeTool(
-                    toolCall.name,
-                    toolCall.arguments,
-                    {
-                        projectId,
-                        conversationId,
-                        runId
-                    }
-                );
+                let toolResult;
+
+                try {
+                    toolResult = await executeTool(
+                        toolCall.name,
+                        toolCall.arguments,
+                        {
+                            projectId,
+                            conversationId,
+                            runId
+                        }
+                    );
+                } catch (toolError) {
+                    toolResult = {
+                        success: false,
+                        error: {
+                            code: toolError.code ?? "TOOL_EXECUTION_ERROR",
+                            message:
+                                toolError.message ??
+                                "Tool execution failed"
+                        }
+                    };
+
+                    recordError(state, toolError);
+                }
 
                 console.log(
                     `[ForgeAI Agent] Tool result: ${toolCall.name}`,
