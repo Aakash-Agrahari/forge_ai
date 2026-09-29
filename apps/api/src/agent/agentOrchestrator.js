@@ -20,6 +20,8 @@ import { AGENT_SYSTEM_PROMPT } from "./agentSystemPrompt.js";
 
 const MAX_ITERATIONS = 10;
 
+const MAX_IDENTICAL_TOOL_CALLS = 3;
+
 export async function runAgent({
     runId,
     projectId,
@@ -31,6 +33,8 @@ export async function runAgent({
         projectId,
         conversationId
     });
+
+    const toolCallHistory = new Map();
 
     addMessage(state, {
         role: "system",
@@ -171,6 +175,32 @@ export async function runAgent({
                     );
 
                     error.code = "INVALID_TOOL_CALL";
+
+                    throw error;
+                }
+
+                const toolCallKey = JSON.stringify({
+                    name: toolCall.name,
+                    arguments: toolCall.arguments
+                });
+
+                const previousCount =
+                    toolCallHistory.get(toolCallKey) ?? 0;
+
+                const currentCount = previousCount + 1;
+
+                toolCallHistory.set(
+                    toolCallKey,
+                    currentCount
+                );
+
+                if (currentCount > MAX_IDENTICAL_TOOL_CALLS) {
+                    const error = new Error(
+                        `Agent repeated the same tool call too many times: ${toolCall.name}`
+                    );
+
+                    error.code = "REPEATED_TOOL_CALL";
+                    error.statusCode = 503;
 
                     throw error;
                 }
