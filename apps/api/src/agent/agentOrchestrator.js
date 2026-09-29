@@ -17,6 +17,7 @@ import { executeWithFallback } from "../llm/fallbackExecutor.js";
 import { createMessage } from "../services/messageService.js";
 import { updateAgentRun } from "../services/agentRunService.js";
 import { AGENT_SYSTEM_PROMPT } from "./agentSystemPrompt.js";
+import { validateToolCall } from "./toolCallValidator.js";
 
 const MAX_ITERATIONS = 10;
 
@@ -169,14 +170,58 @@ export async function runAgent({
             }
 
             for (const toolCall of result.toolCalls) {
-                if (!toolCall.name) {
-                    const error = new Error(
-                        "Model returned a tool call without a tool name"
+                for (const toolCall of result.toolCalls) {
+                    const validatedToolCall =
+                        validateToolCall(toolCall);
+
+                    recordToolCall(state, {
+                        id: validatedToolCall.id,
+                        name: validatedToolCall.name,
+                        input: validatedToolCall.arguments,
+                        iteration: state.iteration
+                    });
+
+                    const toolResult = await executeTool(
+                        validatedToolCall.name,
+                        validatedToolCall.arguments,
+                        {
+                            projectId,
+                            conversationId,
+                            runId
+                        }
                     );
 
-                    error.code = "INVALID_TOOL_CALL";
+                    console.log(
+                        `[ForgeAI Agent] Tool result: ${validatedToolCall.name}`,
+                        JSON.stringify(toolResult, null, 2)
+                    );
 
-                    throw error;
+                    if (
+                        validatedToolCall.name === "write_file" &&
+                        toolResult?.success &&
+                        toolResult?.file?.path
+                    ) {
+                        recordFileChange(
+                            state,
+                            toolResult.file.path
+                        );
+                    }
+
+                    await createMessage({
+                        conversationId,
+                        role: "tool",
+                        content: JSON.stringify(toolResult),
+                        toolCallId: validatedToolCall.id,
+                        toolName: validatedToolCall.name,
+                        toolResult
+                    });
+
+                    addMessage(state, {
+                        role: "tool",
+                        toolCallId: validatedToolCall.id,
+                        toolName: validatedToolCall.name,
+                        content: JSON.stringify(toolResult)
+                    });
                 }
 
                 const toolCallKey = JSON.stringify({
