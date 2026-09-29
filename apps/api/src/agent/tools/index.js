@@ -11,6 +11,7 @@ import { createFileTool } from "./createFile.js";
 import { renameFileTool } from "./renameFile.js";
 import {moveFileTool} from "./moveFile.js";
 import {copyFileTool} from "./copyFile.js";
+import { verifyJavaScriptTool } from "./verifyJavaScript.js";
 
 export function registerAgentTools(){
     registerTool(listFilesTool);
@@ -25,4 +26,5 @@ export function registerAgentTools(){
     registerTool(renameFileTool);
     registerTool(moveFileTool);
     registerTool(copyFileTool);
+    registerTool(verifyJavaScriptTool);
 }
