@@ -238,10 +238,13 @@ export async function runAgent({
                     );
                 }
 
+                const serializedToolResult =
+                    JSON.stringify(toolResult);
+
                 await createMessage({
                     conversationId,
                     role: "tool",
-                    content: JSON.stringify(toolResult),
+                    content: serializedToolResult,
                     toolCallId: toolCall.id,
                     toolName: toolCall.name,
                     toolResult
@@ -251,7 +254,16 @@ export async function runAgent({
                     role: "tool",
                     toolCallId: toolCall.id,
                     toolName: toolCall.name,
-                    content: JSON.stringify(toolResult)
+                    content: serializedToolResult
+                });
+
+                const toolStatus = toolResult?.success
+                    ? `Tool "${toolCall.name}" completed successfully. Use this result as evidence. Do not repeat the same tool call unless the project state has changed or additional information is required.`
+                    : `Tool "${toolCall.name}" failed. Inspect the returned error, determine the cause, and take a different corrective action if possible.`;
+
+                addMessage(state, {
+                    role: "system",
+                    content: toolStatus
                 });
             }
         }
