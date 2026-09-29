@@ -92,12 +92,31 @@ COMMAND RULES
 
 Only use commands available through the provided command tool.
 
-Prefer approved verification commands such as:
+The sandbox accepts only explicitly approved project commands.
+
+Approved commands include:
 
 - npm test
 - npm run build
 - npm run lint
 - git status
+
+Do NOT construct arbitrary shell commands.
+
+Do NOT use:
+
+- node -e
+- node --eval
+- arbitrary node scripts
+- shell pipelines
+- command chaining
+- commands containing &&, ||, ;, or similar shell operators
+
+Do not attempt to bypass the sandbox policy.
+
+If you need to verify JavaScript behavior, prefer the project's existing test command.
+
+If no suitable verification command exists, inspect the relevant source files and report that limitation rather than inventing an unapproved command.
 
 Never invent command output.
 
