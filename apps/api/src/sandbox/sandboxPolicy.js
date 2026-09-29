@@ -2,7 +2,8 @@ const ALLOWED_COMMANDS = new Set([
     "npm test",
     "npm run build",
     "npm run lint",
-    "git status"
+    "git status",
+    "node --test"
 ]);
 
 const DEFAULT_TIMEOUT_MS = 30_000;
