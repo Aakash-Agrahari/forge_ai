@@ -16,6 +16,8 @@ export function createAgentState({
 
         toolCalls: [],
 
+        verificationResults: [],
+
         filesChanged: [],
 
         errors: [],
@@ -45,6 +47,20 @@ export function recordToolCall(state, toolCall) {
     });
 
     return state;
+}
+
+export function recordVerificationResult(state, result) {
+    state.verificationResults.push({
+        verified: result?.verified ?? false,
+        filePath: result?.filePath ?? null,
+        functionName: result?.functionName ?? null,
+        expectedReturn: result?.expectedReturn ?? null,
+        functionFound: result?.functionFound ?? false,
+        expectedReturnFound: result?.expectedReturnFound ?? false,
+        message: result?.message ?? null,
+        reason: result?.reason ?? null,
+        iteration: state.iteration
+    });
 }
 
 export function recordFileChange(state, file) {
