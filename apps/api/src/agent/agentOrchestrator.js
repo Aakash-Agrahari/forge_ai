@@ -6,6 +6,7 @@ import {
     recordFileChange,
     recordError,
     recordVerificationResult,
+    recordExecutionResult,
     completeAgentState
 } from "./agentState.js";
 
@@ -280,7 +281,32 @@ export async function runAgent({
                     );
                 }
 
-                
+                if (validatedToolCall.name === "execute_javascript") {
+                    recordExecutionResult(
+                        state,
+                        toolResult
+                    );
+                }
+
+                if (validatedToolCall.name === "execute_javascript") {
+                    const executionStatus =
+                        toolResult?.success &&
+                        toolResult?.exitCode === 0 &&
+                        !toolResult?.timeOut
+                            ? "JavaScript execution succeeded. The program ran successfully."
+                            : "JavaScript execution failed. Inspect stdout and stderr, determine the cause, repair the relevant file, and execute it again.";
+
+                    addMessage(state, {
+                        role: "system",
+                        content: executionStatus
+                    });
+
+                    console.log(
+                        "[ForgeAI Agent] Execution status:",
+                        executionStatus
+                    );
+                }
+              
                 //Persist the tool result.
                 
                 const serializedToolResult =
