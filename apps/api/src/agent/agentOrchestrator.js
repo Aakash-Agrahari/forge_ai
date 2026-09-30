@@ -317,10 +317,15 @@ export async function runAgent({
                  * Give the model explicit feedback about the
                  * result of the tool it just used.
                  */
-                const toolStatus = toolResult?.success
-                    ? `Tool "${validatedToolCall.name}" completed successfully. Use this result as evidence. Do not repeat the same tool call unless the project state has changed or additional information is required.`
-                    : `Tool "${validatedToolCall.name}" failed. Inspect the returned error, determine the cause, and take a different corrective action if possible.`;
-
+                const toolStatus =
+                    validatedToolCall.name === "verify_javascript"
+                        ? toolResult?.verified
+                            ? "JavaScript verification passed. The requested implementation has been verified."
+                            : "JavaScript verification failed. Inspect the verification result, repair the relevant file, and run verification again."
+                        : toolResult?.success
+                            ? `Tool "${validatedToolCall.name}" completed successfully. Use this result as evidence. Do not repeat the same tool call unless the project state has changed or additional information is required.`
+                            : `Tool "${validatedToolCall.name}" failed. Inspect the returned error, determine the cause, and take a different corrective action if possible.`;
+                            
                 addMessage(state, {
                     role: "system",
                     content: toolStatus
