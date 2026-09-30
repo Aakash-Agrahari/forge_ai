@@ -20,7 +20,6 @@ import { AGENT_SYSTEM_PROMPT } from "./agentSystemPrompt.js";
 import { validateToolCall } from "./toolCallValidator.js";
 
 const MAX_ITERATIONS = 10;
-
 const MAX_IDENTICAL_TOOL_CALLS = 3;
 
 export async function runAgent({
@@ -130,26 +129,17 @@ export async function runAgent({
                 model: result.model
             });
 
+            /*
+             * If the model has finished without requesting a tool,
+             * the agent run is complete.
+             */
             if (!result.toolCalls || result.toolCalls.length === 0) {
                 await createMessage({
                     conversationId,
                     role: "assistant",
                     content: result.content ?? ""
                 });
-            } else {
-                for (const toolCall of result.toolCalls) {
-                    await createMessage({
-                        conversationId,
-                        role: "assistant",
-                        content: result.content ?? "",
-                        toolCallId: toolCall.id,
-                        toolName: toolCall.name,
-                        toolArguments: toolCall.arguments
-                    });
-                }
-            }
 
-            if (!result.toolCalls || result.toolCalls.length === 0) {
                 completeAgentState(state, "completed");
 
                 await updateAgentRun({
@@ -169,79 +159,54 @@ export async function runAgent({
                 };
             }
 
+            /*
+             * Persist the assistant's tool calls.
+             */
             for (const toolCall of result.toolCalls) {
-                for (const toolCall of result.toolCalls) {
-                    const validatedToolCall =
-                        validateToolCall(toolCall);
+                await createMessage({
+                    conversationId,
+                    role: "assistant",
+                    content: result.content ?? "",
+                    toolCallId: toolCall.id,
+                    toolName: toolCall.name,
+                    toolArguments: toolCall.arguments
+                });
+            }
 
-                    recordToolCall(state, {
-                        id: validatedToolCall.id,
-                        name: validatedToolCall.name,
-                        input: validatedToolCall.arguments,
-                        iteration: state.iteration
-                    });
-
-                    const toolResult = await executeTool(
-                        validatedToolCall.name,
-                        validatedToolCall.arguments,
-                        {
-                            projectId,
-                            conversationId,
-                            runId
-                        }
-                    );
-
-                    console.log(
-                        `[ForgeAI Agent] Tool result: ${validatedToolCall.name}`,
-                        JSON.stringify(toolResult, null, 2)
-                    );
-
-                    if (
-                        validatedToolCall.name === "write_file" &&
-                        toolResult?.success &&
-                        toolResult?.file?.path
-                    ) {
-                        recordFileChange(
-                            state,
-                            toolResult.file.path
-                        );
-                    }
-
-                    await createMessage({
-                        conversationId,
-                        role: "tool",
-                        content: JSON.stringify(toolResult),
-                        toolCallId: validatedToolCall.id,
-                        toolName: validatedToolCall.name,
-                        toolResult
-                    });
-
-                    addMessage(state, {
-                        role: "tool",
-                        toolCallId: validatedToolCall.id,
-                        toolName: validatedToolCall.name,
-                        content: JSON.stringify(toolResult)
-                    });
-                }
+            /*
+             * Execute each requested tool exactly once.
+             */
+            for (const toolCall of result.toolCalls) {
+                /*
+                 * Validate the model-generated tool call before
+                 * executing anything.
+                 */
+                const validatedToolCall =
+                    validateToolCall(toolCall);
 
                 const toolCallKey = JSON.stringify({
-                    name: toolCall.name,
-                    arguments: toolCall.arguments
+                    name: validatedToolCall.name,
+                    arguments: validatedToolCall.arguments
                 });
 
                 const previousCount =
                     toolCallHistory.get(toolCallKey) ?? 0;
 
-                const currentCount = previousCount + 1;
+                const currentCount =
+                    previousCount + 1;
 
                 toolCallHistory.set(
                     toolCallKey,
                     currentCount
                 );
 
+                /*
+                 * Prevent the model from endlessly repeating
+                 * exactly the same operation.
+                 */
                 if (currentCount > MAX_IDENTICAL_TOOL_CALLS) {
                     const error = new Error(
-                        `Agent repeated the same tool call too many times: ${toolCall.name}`
+                        `Agent repeated the same tool call too many times: ${validatedToolCall.name}`
                     );
 
                     error.code = "REPEATED_TOOL_CALL";
@@ -251,9 +216,9 @@ export async function runAgent({
                 }
 
                 recordToolCall(state, {
-                    id: toolCall.id,
-                    name: toolCall.name,
-                    input: toolCall.arguments,
+                    id: validatedToolCall.id,
+                    name: validatedToolCall.name,
+                    input: validatedToolCall.arguments,
                     iteration: state.iteration
                 });
 
@@ -261,8 +226,8 @@ export async function runAgent({
 
                 try {
                     toolResult = await executeTool(
-                        toolCall.name,
-                        toolCall.arguments,
+                        validatedToolCall.name,
+                        validatedToolCall.arguments,
                         {
                             projectId,
                             conversationId,
@@ -273,7 +238,9 @@ export async function runAgent({
                     toolResult = {
                         success: false,
                         error: {
-                            code: toolError.code ?? "TOOL_EXECUTION_ERROR",
+                            code:
+                                toolError.code ??
+                                "TOOL_EXECUTION_ERROR",
                             message:
                                 toolError.message ??
                                 "Tool execution failed"
@@ -284,12 +251,15 @@ export async function runAgent({
                 }
 
                 console.log(
-                    `[ForgeAI Agent] Tool result: ${toolCall.name}`,
+                    `[ForgeAI Agent] Tool result: ${validatedToolCall.name}`,
                     JSON.stringify(toolResult, null, 2)
                 );
 
+                /*
+                 * Track files modified by write_file.
+                 */
                 if (
-                    toolCall.name === "write_file" &&
+                    validatedToolCall.name === "write_file" &&
                     toolResult?.success &&
                     toolResult?.file?.path
                 ) {
@@ -299,6 +269,9 @@ export async function runAgent({
                     );
                 }
 
+                /*
+                 * Persist the tool result.
+                 */
                 const serializedToolResult =
                     JSON.stringify(toolResult);
 
@@ -306,21 +279,30 @@ export async function runAgent({
                     conversationId,
                     role: "tool",
                     content: serializedToolResult,
-                    toolCallId: toolCall.id,
-                    toolName: toolCall.name,
+                    toolCallId: validatedToolCall.id,
+                    toolName: validatedToolCall.name,
                     toolResult
                 });
 
+                /*
+                 * Add the tool result back into the agent's
+                 * in-memory conversation so the next model
+                 * iteration can reason over it.
+                 */
                 addMessage(state, {
                     role: "tool",
-                    toolCallId: toolCall.id,
-                    toolName: toolCall.name,
+                    toolCallId: validatedToolCall.id,
+                    toolName: validatedToolCall.name,
                     content: serializedToolResult
                 });
 
+                /*
+                 * Give the model explicit feedback about the
+                 * result of the tool it just used.
+                 */
                 const toolStatus = toolResult?.success
-                    ? `Tool "${toolCall.name}" completed successfully. Use this result as evidence. Do not repeat the same tool call unless the project state has changed or additional information is required.`
-                    : `Tool "${toolCall.name}" failed. Inspect the returned error, determine the cause, and take a different corrective action if possible.`;
+                    ? `Tool "${validatedToolCall.name}" completed successfully. Use this result as evidence. Do not repeat the same tool call unless the project state has changed or additional information is required.`
+                    : `Tool "${validatedToolCall.name}" failed. Inspect the returned error, determine the cause, and take a different corrective action if possible.`;
 
                 addMessage(state, {
                     role: "system",
@@ -329,6 +311,9 @@ export async function runAgent({
             }
         }
 
+        /*
+         * The agent reached the safety iteration limit.
+         */
         const error = new Error(
             `Agent exceeded maximum iterations (${MAX_ITERATIONS})`
         );
