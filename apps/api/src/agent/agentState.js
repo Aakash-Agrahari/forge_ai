@@ -18,6 +18,8 @@ export function createAgentState({
 
         verificationResults: [],
 
+        executionResults: [],
+
         filesChanged: [],
 
         errors: [],
@@ -61,6 +63,21 @@ export function recordVerificationResult(state, result) {
         reason: result?.reason ?? null,
         iteration: state.iteration
     });
+}
+
+export function recordExecutionResult(state, result) {
+    state.executionResults.push({
+        success: result?.success ?? false,
+        filePath: result?.filePath ?? null,
+        exitCode: result?.exitCode ?? null,
+        stdout: result?.stdout ?? "",
+        stderr: result?.stderr ?? "",
+        timeOut: result?.timeOut ?? false,
+        durationMs: result?.durationMs ?? null,
+        iteration: state.iteration
+    });
+
+    return state;
 }
 
 export function recordFileChange(state, file) {
