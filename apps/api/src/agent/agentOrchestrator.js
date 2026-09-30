@@ -130,10 +130,7 @@ export async function runAgent({
                 model: result.model
             });
 
-            /*
-             * If the model has finished without requesting a tool,
-             * the agent run is complete.
-             */
+            //If the model has finished without requesting a tool, the agent run is complete.
             if (!result.toolCalls || result.toolCalls.length === 0) {
                 await createMessage({
                     conversationId,
@@ -160,9 +157,7 @@ export async function runAgent({
                 };
             }
 
-            /*
-             * Persist the assistant's tool calls.
-             */
+            //Persist the assistant's tool calls.
             for (const toolCall of result.toolCalls) {
                 await createMessage({
                     conversationId,
@@ -174,14 +169,9 @@ export async function runAgent({
                 });
             }
 
-            /*
-             * Execute each requested tool exactly once.
-             */
+            //Execute each requested tool exactly once.
             for (const toolCall of result.toolCalls) {
-                /*
-                 * Validate the model-generated tool call before
-                 * executing anything.
-                 */
+                //Validate the model-generated tool call before executing anything.
                 const validatedToolCall =
                     validateToolCall(toolCall);
 
@@ -201,10 +191,7 @@ export async function runAgent({
                     currentCount
                 );
 
-                /*
-                 * Prevent the model from endlessly repeating
-                 * exactly the same operation.
-                 */
+                //Prevent the model from endlessly repeating exactly the same operation
                 if (currentCount > MAX_IDENTICAL_TOOL_CALLS) {
                     const error = new Error(
                         `Agent repeated the same tool call too many times: ${validatedToolCall.name}`
@@ -272,9 +259,9 @@ export async function runAgent({
                     JSON.stringify(toolResult, null, 2)
                 );
 
-                /*
-                 * Track files modified by write_file.
-                 */
+                
+                //Track files modified by write_file.
+                 
                 if (
                     validatedToolCall.name === "write_file" &&
                     toolResult?.success &&
@@ -293,9 +280,9 @@ export async function runAgent({
                     );
                 }
 
-                /*
-                 * Persist the tool result.
-                 */
+                
+                //Persist the tool result.
+                
                 const serializedToolResult =
                     JSON.stringify(toolResult);
 
@@ -308,11 +295,8 @@ export async function runAgent({
                     toolResult
                 });
 
-                /*
-                 * Add the tool result back into the agent's
-                 * in-memory conversation so the next model
-                 * iteration can reason over it.
-                 */
+                
+                //Add the tool result back into the agent's in-memory conversation so the next model iteration can reason over it.
                 addMessage(state, {
                     role: "tool",
                     toolCallId: validatedToolCall.id,
@@ -320,10 +304,8 @@ export async function runAgent({
                     content: serializedToolResult
                 });
 
-                /*
-                 * Give the model explicit feedback about the
-                 * result of the tool it just used.
-                 */
+                
+                //Give the model explicit feedback about the result of the tool it just used.
                 const toolStatus =
                     validatedToolCall.name === "verify_javascript"
                         ? toolResult?.verified
@@ -340,9 +322,9 @@ export async function runAgent({
             }
         }
 
-        /*
-         * The agent reached the safety iteration limit.
-         */
+        
+        //The agent reached the safety iteration limit.
+        
         const error = new Error(
             `Agent exceeded maximum iterations (${MAX_ITERATIONS})`
         );
