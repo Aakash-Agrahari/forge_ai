@@ -5,6 +5,7 @@ import {
     recordToolCall,
     recordFileChange,
     recordError,
+     recordVerificationResult,
     completeAgentState
 } from "./agentState.js";
 
@@ -248,6 +249,22 @@ export async function runAgent({
                     };
 
                     recordError(state, toolError);
+                }
+
+                if (validatedToolCall.name === "verify_javascript") {
+                    const verificationStatus = toolResult?.verified
+                        ? "JavaScript verification passed."
+                        : "JavaScript verification failed. Inspect the verification result and repair the file if necessary.";
+
+                    addMessage(state, {
+                        role: "system",
+                        content: verificationStatus
+                    });
+
+                    console.log(
+                        "[ForgeAI Agent] Verification status:",
+                        verificationStatus
+                    );
                 }
 
                 console.log(
