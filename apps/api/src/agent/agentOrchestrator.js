@@ -286,6 +286,13 @@ export async function runAgent({
                     );
                 }
 
+                if (toolCall.name === "verify_javascript") {
+                    recordVerificationResult(
+                        state,
+                        toolResult
+                    );
+                }
+
                 /*
                  * Persist the tool result.
                  */
@@ -325,7 +332,7 @@ export async function runAgent({
                         : toolResult?.success
                             ? `Tool "${validatedToolCall.name}" completed successfully. Use this result as evidence. Do not repeat the same tool call unless the project state has changed or additional information is required.`
                             : `Tool "${validatedToolCall.name}" failed. Inspect the returned error, determine the cause, and take a different corrective action if possible.`;
-                            
+
                 addMessage(state, {
                     role: "system",
                     content: toolStatus
