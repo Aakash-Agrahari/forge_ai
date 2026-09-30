@@ -63,6 +63,8 @@ export function recordVerificationResult(state, result) {
         reason: result?.reason ?? null,
         iteration: state.iteration
     });
+
+    return state;
 }
 
 export function recordExecutionResult(state, result) {
@@ -72,8 +74,8 @@ export function recordExecutionResult(state, result) {
         exitCode: result?.exitCode ?? null,
         stdout: result?.stdout ?? "",
         stderr: result?.stderr ?? "",
-        timeOut: result?.timeOut ?? false,
         durationMs: result?.durationMs ?? null,
+        timeOut: result?.timeOut ?? false,
         iteration: state.iteration
     });
 
