@@ -273,7 +273,7 @@ export async function runAgent({
                     );
                 }
 
-                if (toolCall.name === "verify_javascript") {
+                if (validatedToolCall.name === "verify_javascript") {
                     recordVerificationResult(
                         state,
                         toolResult
