@@ -5,7 +5,7 @@ import {
     recordToolCall,
     recordFileChange,
     recordError,
-     recordVerificationResult,
+    recordVerificationResult,
     completeAgentState
 } from "./agentState.js";
 
