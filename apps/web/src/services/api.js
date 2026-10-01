@@ -28,6 +28,7 @@ async function apiRequest(endpoint, options = {}) {
 
     if (!response.ok) {
         const error = new Error(
+            data?.error?.message ||
             data?.message ||
             data?.error ||
             `Request failed with status ${response.status}`
@@ -42,11 +43,19 @@ async function apiRequest(endpoint, options = {}) {
     return data;
 }
 
+/* =========================
+   AUTH
+========================= */
+
 export async function getCurrentUser() {
     return apiRequest("/auth/me");
 }
 
-export async function registerUser({ name, email, password }) {
+export async function registerUser({
+    name,
+    email,
+    password,
+}) {
     return apiRequest("/auth/register", {
         method: "POST",
 
@@ -58,7 +67,10 @@ export async function registerUser({ name, email, password }) {
     });
 }
 
-export async function loginUser({ email, password }) {
+export async function loginUser({
+    email,
+    password,
+}) {
     return apiRequest("/auth/login", {
         method: "POST",
 
@@ -72,5 +84,48 @@ export async function loginUser({ email, password }) {
 export async function logoutUser() {
     return apiRequest("/auth/logout", {
         method: "POST",
+    });
+}
+
+/* =========================
+   PROJECTS
+========================= */
+
+export async function getProjects() {
+    return apiRequest("/projects");
+}
+
+export async function getProject(projectId) {
+    return apiRequest(`/projects/${projectId}`);
+}
+
+export async function createProject({
+    name,
+    description,
+}) {
+    return apiRequest("/projects", {
+        method: "POST",
+
+        body: JSON.stringify({
+            name,
+            description,
+        }),
+    });
+}
+
+export async function updateProject(
+    projectId,
+    data
+) {
+    return apiRequest(`/projects/${projectId}`, {
+        method: "PATCH",
+
+        body: JSON.stringify(data),
+    });
+}
+
+export async function deleteProject(projectId) {
+    return apiRequest(`/projects/${projectId}`, {
+        method: "DELETE",
     });
 }
