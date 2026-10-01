@@ -1329,3 +1329,31 @@ button {
         grid-template-columns: 1fr;
     }
 }
+
+/*WORKSPACE NAVIGATION*/
+.back-to-projects {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid #292e36;
+    border-radius: 6px;
+    background: #15191f;
+    color: #858d99;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.back-to-projects:hover {
+    background: #1b2027;
+    border-color: #383f49;
+    color: #e5e8ec;
+}
+
+.project-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
