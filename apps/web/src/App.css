@@ -12,8 +12,8 @@ button {
 }
 
 .forgeai-app {
-    height: 100vh;
     width: 100%;
+    height: 100dvh;
     display: flex;
     flex-direction: column;
     background: #0b0d10;
@@ -129,6 +129,7 @@ button {
     min-height: 0;
     display: grid;
     grid-template-columns: 220px minmax(0, 1fr) 360px;
+    overflow: hidden;
 }
 
 /* =========================
@@ -137,6 +138,7 @@ button {
 
 .sidebar {
     position: relative;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     border-right: 1px solid #20242b;
@@ -249,6 +251,7 @@ button {
 
 .sidebar-bottom {
     margin-top: auto;
+    flex-shrink: 0;
     padding: 12px;
     border-top: 1px solid #20242b;
 }
@@ -294,9 +297,11 @@ button {
 
 .editor-panel {
     min-width: 0;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     background: #0b0e12;
+    overflow: hidden;
 }
 
 .editor-tabs {
@@ -383,7 +388,7 @@ button {
 }
 
 .code-editor {
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
     display: flex;
     overflow: auto;
@@ -417,6 +422,7 @@ button {
 .editor-statusbar {
     height: 25px;
     min-height: 25px;
+    flex-shrink: 0;
     display: flex;
     justify-content: flex-end;
     align-items: center;
@@ -433,15 +439,18 @@ button {
 
 .agent-panel {
     min-width: 0;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     border-left: 1px solid #20242b;
     background: #101318;
+    overflow: hidden;
 }
 
 .agent-header {
     height: 81px;
     min-height: 81px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -479,7 +488,7 @@ button {
 }
 
 .conversation {
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
     padding: 20px 17px;
@@ -556,7 +565,8 @@ button {
 }
 
 .agent-input-area {
-    padding: 12px;
+    flex-shrink: 0;
+    padding: 10px 12px 12px;
     border-top: 1px solid #20242b;
 }
 
@@ -572,9 +582,11 @@ button {
 }
 
 .agent-input-wrapper textarea {
+    display: block;
     width: 100%;
+    height: 68px;
     resize: none;
-    padding: 11px 12px 5px;
+    padding: 10px 12px 5px;
     border: none;
     outline: none;
     background: transparent;
@@ -588,6 +600,7 @@ button {
 }
 
 .input-footer {
+    height: 35px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -605,6 +618,7 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
     border-radius: 6px;
     background: #e4e7eb;
     color: #101318;
@@ -615,6 +629,36 @@ button {
 
 .send-button:hover {
     background: #ffffff;
+}
+
+/* =========================
+   SCROLLBARS
+========================= */
+
+.conversation::-webkit-scrollbar,
+.code-editor::-webkit-scrollbar,
+.file-tree::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+
+.conversation::-webkit-scrollbar-track,
+.code-editor::-webkit-scrollbar-track,
+.file-tree::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.conversation::-webkit-scrollbar-thumb,
+.code-editor::-webkit-scrollbar-thumb,
+.file-tree::-webkit-scrollbar-thumb {
+    background: #292e36;
+    border-radius: 10px;
+}
+
+.conversation::-webkit-scrollbar-thumb:hover,
+.code-editor::-webkit-scrollbar-thumb:hover,
+.file-tree::-webkit-scrollbar-thumb:hover {
+    background: #363c46;
 }
 
 /* =========================
