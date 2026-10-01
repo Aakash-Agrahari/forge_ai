@@ -731,6 +731,14 @@ function Workspace({
 
                 <div className="project-name">
 
+                    <button
+                        className="back-to-projects"
+                        onClick={onBackToDashboard}
+                        title="Back to projects"
+                    >
+                        ←
+                    </button>
+
                     <span className="status-dot"></span>
 
                     {projectName}
