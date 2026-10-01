@@ -617,12 +617,23 @@ function ProjectDashboard({
                     <div className="projects-grid">
 
                         {projects.map((project) => (
-                            <button
+                            <div
                                 key={project.id}
                                 className="project-card"
+                                role="button"
+                                tabIndex={0}
                                 onClick={() =>
                                     onOpenProject(project)
                                 }
+                                onKeyDown={(event) => {
+                                    if (
+                                        event.key === "Enter" ||
+                                        event.key === " "
+                                    ) {
+                                        event.preventDefault();
+                                        onOpenProject(project);
+                                    }
+                                }}
                             >
 
                                 <div className="project-card-top">
@@ -676,7 +687,7 @@ function ProjectDashboard({
 
                                 </div>
 
-                            </button>
+                            </div>
                         ))}
 
                     </div>
@@ -696,6 +707,7 @@ function Workspace({
     user,
     project,
     onLogout,
+    onBackToDashboard,
 }) {
     const [activeFile, setActiveFile] =
         useState("src/App.jsx");
