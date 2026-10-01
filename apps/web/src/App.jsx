@@ -6,15 +6,14 @@ import {
     loginUser,
     registerUser,
     logoutUser,
+    getProjects,
+    createProject,
+    deleteProject,
 } from "./services/api";
 
-const initialFiles = [
-    { name: "src", type: "folder", open: true },
-    { name: "App.jsx", type: "file", path: "src/App.jsx" },
-    { name: "main.jsx", type: "file", path: "src/main.jsx" },
-    { name: "index.css", type: "file", path: "src/index.css" },
-    { name: "package.json", type: "file", path: "package.json" },
-];
+/* =========================
+   AUTH SCREEN
+========================= */
 
 function AuthScreen({ onAuthenticated }) {
     const [mode, setMode] = useState("login");
@@ -75,6 +74,7 @@ function AuthScreen({ onAuthenticated }) {
             <div className="auth-card">
 
                 <div className="auth-brand">
+
                     <div className="auth-brand-mark">
                         F
                     </div>
@@ -88,9 +88,11 @@ function AuthScreen({ onAuthenticated }) {
                             Autonomous AI Engineer
                         </div>
                     </div>
+
                 </div>
 
                 <div className="auth-heading">
+
                     <h1>
                         {mode === "login"
                             ? "Welcome back"
@@ -102,6 +104,7 @@ function AuthScreen({ onAuthenticated }) {
                             ? "Sign in to continue building with ForgeAI."
                             : "Create your ForgeAI workspace and start building."}
                     </p>
+
                 </div>
 
                 <form
@@ -111,6 +114,7 @@ function AuthScreen({ onAuthenticated }) {
 
                     {mode === "register" && (
                         <div className="form-field">
+
                             <label htmlFor="name">
                                 Name
                             </label>
@@ -126,10 +130,12 @@ function AuthScreen({ onAuthenticated }) {
                                 autoComplete="name"
                                 required
                             />
+
                         </div>
                     )}
 
                     <div className="form-field">
+
                         <label htmlFor="email">
                             Email
                         </label>
@@ -145,9 +151,11 @@ function AuthScreen({ onAuthenticated }) {
                             autoComplete="email"
                             required
                         />
+
                     </div>
 
                     <div className="form-field">
+
                         <label htmlFor="password">
                             Password
                         </label>
@@ -167,6 +175,7 @@ function AuthScreen({ onAuthenticated }) {
                             }
                             required
                         />
+
                     </div>
 
                     {error && (
@@ -190,6 +199,7 @@ function AuthScreen({ onAuthenticated }) {
                 </form>
 
                 <div className="auth-switch">
+
                     {mode === "login" ? (
                         <>
                             <span>
@@ -221,6 +231,7 @@ function AuthScreen({ onAuthenticated }) {
                             </button>
                         </>
                     )}
+
                 </div>
 
             </div>
@@ -229,12 +240,471 @@ function AuthScreen({ onAuthenticated }) {
     );
 }
 
-function Workspace({ user, onLogout }) {
+/* =========================
+   PROJECT DASHBOARD
+========================= */
+
+function ProjectDashboard({
+    user,
+    onOpenProject,
+    onLogout,
+}) {
+    const [projects, setProjects] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    const [showCreateForm, setShowCreateForm] =
+        useState(false);
+
+    const [projectName, setProjectName] =
+        useState("");
+
+    const [projectDescription, setProjectDescription] =
+        useState("");
+
+    const [creating, setCreating] =
+        useState(false);
+
+    const [deletingProjectId, setDeletingProjectId] =
+        useState(null);
+
+    async function loadProjects() {
+        setLoading(true);
+        setError("");
+
+        try {
+            const response = await getProjects();
+
+            setProjects(response?.projects || []);
+        } catch (requestError) {
+            setError(
+                requestError.message ||
+                "Unable to load your projects."
+            );
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        loadProjects();
+    }, []);
+
+    async function handleCreateProject(event) {
+        event.preventDefault();
+
+        if (!projectName.trim()) {
+            return;
+        }
+
+        setCreating(true);
+        setError("");
+
+        try {
+            const response = await createProject({
+                name: projectName.trim(),
+                description:
+                    projectDescription.trim() || undefined,
+            });
+
+            const newProject = response?.project;
+
+            if (newProject) {
+                setProjects((currentProjects) => [
+                    newProject,
+                    ...currentProjects,
+                ]);
+
+                setProjectName("");
+                setProjectDescription("");
+                setShowCreateForm(false);
+
+                onOpenProject(newProject);
+            }
+        } catch (requestError) {
+            setError(
+                requestError.message ||
+                "Unable to create the project."
+            );
+        } finally {
+            setCreating(false);
+        }
+    }
+
+    async function handleDeleteProject(
+        event,
+        projectId
+    ) {
+        event.stopPropagation();
+
+        const confirmed = window.confirm(
+            "Delete this project? This cannot be undone."
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        setDeletingProjectId(projectId);
+        setError("");
+
+        try {
+            await deleteProject(projectId);
+
+            setProjects((currentProjects) =>
+                currentProjects.filter(
+                    (project) =>
+                        project.id !== projectId
+                )
+            );
+        } catch (requestError) {
+            setError(
+                requestError.message ||
+                "Unable to delete the project."
+            );
+        } finally {
+            setDeletingProjectId(null);
+        }
+    }
+
+    function formatDate(dateValue) {
+        if (!dateValue) {
+            return "Recently";
+        }
+
+        const date = new Date(dateValue);
+
+        if (Number.isNaN(date.getTime())) {
+            return "Recently";
+        }
+
+        return date.toLocaleDateString(
+            undefined,
+            {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+            }
+        );
+    }
+
+    return (
+        <div className="dashboard-page">
+
+            <header className="dashboard-header">
+
+                <div className="dashboard-brand">
+
+                    <div className="brand-mark">
+                        F
+                    </div>
+
+                    <div>
+                        <div className="brand-name">
+                            ForgeAI
+                        </div>
+
+                        <div className="brand-subtitle">
+                            Autonomous AI Engineer
+                        </div>
+                    </div>
+
+                </div>
+
+                <div className="dashboard-user">
+
+                    <div className="dashboard-user-info">
+                        <span>
+                            {user?.name ||
+                                user?.email ||
+                                "Developer"}
+                        </span>
+
+                        <small>
+                            Workspace
+                        </small>
+                    </div>
+
+                    <button
+                        className="dashboard-logout"
+                        onClick={onLogout}
+                    >
+                        Sign out
+                    </button>
+
+                </div>
+
+            </header>
+
+            <main className="dashboard-content">
+
+                <div className="dashboard-title-row">
+
+                    <div>
+
+                        <div className="dashboard-eyebrow">
+                            WORKSPACE
+                        </div>
+
+                        <h1>
+                            Your Projects
+                        </h1>
+
+                        <p>
+                            Build, modify, and ship
+                            applications with ForgeAI.
+                        </p>
+
+                    </div>
+
+                    <button
+                        className="create-project-button"
+                        onClick={() =>
+                            setShowCreateForm(true)
+                        }
+                    >
+                        <span>+</span>
+                        New Project
+                    </button>
+
+                </div>
+
+                {error && (
+                    <div className="dashboard-error">
+                        {error}
+                    </div>
+                )}
+
+                {showCreateForm && (
+                    <div className="create-project-card">
+
+                        <div className="create-project-heading">
+                            <div>
+                                <h2>
+                                    Create a project
+                                </h2>
+
+                                <p>
+                                    Start a new ForgeAI
+                                    workspace.
+                                </p>
+                            </div>
+
+                            <button
+                                className="close-create-button"
+                                onClick={() =>
+                                    setShowCreateForm(false)
+                                }
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <form
+                            className="create-project-form"
+                            onSubmit={handleCreateProject}
+                        >
+
+                            <div className="form-field">
+
+                                <label htmlFor="project-name">
+                                    Project name
+                                </label>
+
+                                <input
+                                    id="project-name"
+                                    type="text"
+                                    value={projectName}
+                                    onChange={(event) =>
+                                        setProjectName(
+                                            event.target.value
+                                        )
+                                    }
+                                    placeholder="My awesome project"
+                                    required
+                                />
+
+                            </div>
+
+                            <div className="form-field">
+
+                                <label htmlFor="project-description">
+                                    Description
+                                </label>
+
+                                <textarea
+                                    id="project-description"
+                                    value={projectDescription}
+                                    onChange={(event) =>
+                                        setProjectDescription(
+                                            event.target.value
+                                        )
+                                    }
+                                    placeholder="What are you building?"
+                                    rows="3"
+                                />
+
+                            </div>
+
+                            <div className="create-project-actions">
+
+                                <button
+                                    type="button"
+                                    className="cancel-project-button"
+                                    onClick={() =>
+                                        setShowCreateForm(false)
+                                    }
+                                >
+                                    Cancel
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    className="submit-project-button"
+                                    disabled={creating}
+                                >
+                                    {creating
+                                        ? "Creating..."
+                                        : "Create Project"}
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+                )}
+
+                {loading ? (
+                    <div className="projects-loading">
+                        <div className="loading-mark">
+                            F
+                        </div>
+
+                        <span>
+                            Loading projects...
+                        </span>
+                    </div>
+                ) : projects.length === 0 ? (
+                    <div className="projects-empty">
+
+                        <div className="empty-icon">
+                            +
+                        </div>
+
+                        <h2>
+                            No projects yet
+                        </h2>
+
+                        <p>
+                            Create your first project
+                            and start building with
+                            ForgeAI.
+                        </p>
+
+                        <button
+                            className="create-project-button"
+                            onClick={() =>
+                                setShowCreateForm(true)
+                            }
+                        >
+                            <span>+</span>
+                            Create your first project
+                        </button>
+
+                    </div>
+                ) : (
+                    <div className="projects-grid">
+
+                        {projects.map((project) => (
+                            <button
+                                key={project.id}
+                                className="project-card"
+                                onClick={() =>
+                                    onOpenProject(project)
+                                }
+                            >
+
+                                <div className="project-card-top">
+
+                                    <div className="project-icon">
+                                        F
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        className="project-delete-button"
+                                        onClick={(event) =>
+                                            handleDeleteProject(
+                                                event,
+                                                project.id
+                                            )
+                                        }
+                                        disabled={
+                                            deletingProjectId ===
+                                            project.id
+                                        }
+                                        title="Delete project"
+                                    >
+                                        ×
+                                    </button>
+
+                                </div>
+
+                                <div className="project-card-name">
+                                    {project.name}
+                                </div>
+
+                                <div className="project-card-description">
+                                    {project.description ||
+                                        "No description provided."}
+                                </div>
+
+                                <div className="project-card-footer">
+
+                                    <span>
+                                        Updated{" "}
+                                        {formatDate(
+                                            project.updatedAt ||
+                                                project.createdAt
+                                        )}
+                                    </span>
+
+                                    <span>
+                                        Open →
+                                    </span>
+
+                                </div>
+
+                            </button>
+                        ))}
+
+                    </div>
+                )}
+
+            </main>
+
+        </div>
+    );
+}
+
+/* =========================
+   WORKSPACE
+========================= */
+
+function Workspace({
+    user,
+    project,
+    onLogout,
+}) {
     const [activeFile, setActiveFile] =
         useState("src/App.jsx");
 
     const [message, setMessage] =
         useState("");
+
+    const projectName =
+        project?.name || "ForgeAI Project";
 
     return (
         <div className="forgeai-app">
@@ -260,15 +730,21 @@ function Workspace({ user, onLogout }) {
                 </div>
 
                 <div className="project-name">
+
                     <span className="status-dot"></span>
-                    ForgeAI Project
+
+                    {projectName}
+
                 </div>
 
                 <div className="topbar-actions">
 
                     <span className="agent-status">
+
                         <span className="status-dot"></span>
+
                         Agent Ready
+
                     </span>
 
                     <button
@@ -318,6 +794,7 @@ function Workspace({ user, onLogout }) {
                         <div className="file-tree">
 
                             <div className="tree-item folder">
+
                                 <span className="tree-icon">
                                     ⌄
                                 </span>
@@ -325,36 +802,100 @@ function Workspace({ user, onLogout }) {
                                 <span>
                                     src
                                 </span>
+
                             </div>
 
-                            {initialFiles
-                                .filter(
-                                    (file) =>
-                                        file.type === "file"
-                                )
-                                .map((file) => (
-                                    <button
-                                        key={file.path}
-                                        className={`tree-item file ${
-                                            activeFile === file.path
-                                                ? "active"
-                                                : ""
-                                        }`}
-                                        onClick={() =>
-                                            setActiveFile(
-                                                file.path
-                                            )
-                                        }
-                                    >
-                                        <span className="tree-icon">
-                                            ◇
-                                        </span>
+                            <button
+                                className={`tree-item file ${
+                                    activeFile ===
+                                    "src/App.jsx"
+                                        ? "active"
+                                        : ""
+                                }`}
+                                onClick={() =>
+                                    setActiveFile(
+                                        "src/App.jsx"
+                                    )
+                                }
+                            >
+                                <span className="tree-icon">
+                                    ◇
+                                </span>
 
-                                        <span>
-                                            {file.name}
-                                        </span>
-                                    </button>
-                                ))}
+                                <span>
+                                    App.jsx
+                                </span>
+
+                            </button>
+
+                            <button
+                                className={`tree-item file ${
+                                    activeFile ===
+                                    "src/main.jsx"
+                                        ? "active"
+                                        : ""
+                                }`}
+                                onClick={() =>
+                                    setActiveFile(
+                                        "src/main.jsx"
+                                    )
+                                }
+                            >
+                                <span className="tree-icon">
+                                    ◇
+                                </span>
+
+                                <span>
+                                    main.jsx
+                                </span>
+
+                            </button>
+
+                            <button
+                                className={`tree-item file ${
+                                    activeFile ===
+                                    "src/index.css"
+                                        ? "active"
+                                        : ""
+                                }`}
+                                onClick={() =>
+                                    setActiveFile(
+                                        "src/index.css"
+                                    )
+                                }
+                            >
+                                <span className="tree-icon">
+                                    ◇
+                                </span>
+
+                                <span>
+                                    index.css
+                                </span>
+
+                            </button>
+
+                            <button
+                                className={`tree-item file ${
+                                    activeFile ===
+                                    "package.json"
+                                        ? "active"
+                                        : ""
+                                }`}
+                                onClick={() =>
+                                    setActiveFile(
+                                        "package.json"
+                                    )
+                                }
+                            >
+                                <span className="tree-icon">
+                                    ◇
+                                </span>
+
+                                <span>
+                                    package.json
+                                </span>
+
+                            </button>
 
                         </div>
 
@@ -365,11 +906,13 @@ function Workspace({ user, onLogout }) {
                         <div className="sidebar-user">
 
                             <div className="avatar">
+
                                 {(user?.name ||
                                     user?.email ||
                                     "U")
                                     .charAt(0)
                                     .toUpperCase()}
+
                             </div>
 
                             <div className="user-info">
@@ -423,6 +966,7 @@ function Workspace({ user, onLogout }) {
                     <div className="editor-toolbar">
 
                         <div className="breadcrumb">
+
                             <span>
                                 {activeFile.includes("/")
                                     ? activeFile.split("/")[0]
@@ -434,6 +978,7 @@ function Workspace({ user, onLogout }) {
                             <strong>
                                 {activeFile.split("/").pop()}
                             </strong>
+
                         </div>
 
                         <div className="editor-actions">
@@ -499,6 +1044,7 @@ export default App;`}
                     </div>
 
                     <div className="editor-statusbar">
+
                         <span>
                             JavaScript React
                         </span>
@@ -510,6 +1056,7 @@ export default App;`}
                         <span>
                             LF
                         </span>
+
                     </div>
 
                 </section>
@@ -644,14 +1191,22 @@ export default App;`}
     );
 }
 
+/* =========================
+   APP
+========================= */
+
 function App() {
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [project, setProject] = useState(null);
+
+    const [loading, setLoading] =
+        useState(true);
 
     useEffect(() => {
         async function loadCurrentUser() {
             try {
-                const response = await getCurrentUser();
+                const response =
+                    await getCurrentUser();
 
                 const authenticatedUser =
                     response?.user ||
@@ -660,7 +1215,7 @@ function App() {
                     response;
 
                 setUser(authenticatedUser);
-            } catch (error) {
+            } catch {
                 setUser(null);
             } finally {
                 setLoading(false);
@@ -675,6 +1230,7 @@ function App() {
             await logoutUser();
         } finally {
             setUser(null);
+            setProject(null);
         }
     }
 
@@ -688,9 +1244,18 @@ function App() {
         setUser(authenticatedUser);
     }
 
+    function handleOpenProject(selectedProject) {
+        setProject(selectedProject);
+    }
+
+    function handleBackToDashboard() {
+        setProject(null);
+    }
+
     if (loading) {
         return (
             <div className="auth-loading">
+
                 <div className="loading-mark">
                     F
                 </div>
@@ -698,6 +1263,7 @@ function App() {
                 <div className="loading-text">
                     Loading ForgeAI...
                 </div>
+
             </div>
         );
     }
@@ -705,7 +1271,21 @@ function App() {
     if (!user) {
         return (
             <AuthScreen
-                onAuthenticated={handleAuthenticated}
+                onAuthenticated={
+                    handleAuthenticated
+                }
+            />
+        );
+    }
+
+    if (!project) {
+        return (
+            <ProjectDashboard
+                user={user}
+                onOpenProject={
+                    handleOpenProject
+                }
+                onLogout={handleLogout}
             />
         );
     }
@@ -713,7 +1293,11 @@ function App() {
     return (
         <Workspace
             user={user}
+            project={project}
             onLogout={handleLogout}
+            onBackToDashboard={
+                handleBackToDashboard
+            }
         />
     );
 }
