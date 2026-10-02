@@ -1132,22 +1132,32 @@ function Workspace({
                             </span>
 
                             <span className="tree-file-content">
-                                <span className="tree-file-name">
-                                    {getFileName(
-                                        file.path
-                                    )}
-                                </span>
+                              <span className="tree-file-name">
+                                  {getFileName(
+                                      file.path
+                                  )}
 
-                                {getDirectory(
-                                    file.path
-                                ) !== "root" && (
-                                    <span className="tree-file-directory">
-                                        {getDirectory(
-                                            file.path
-                                        )}
-                                    </span>
-                                )}
-                            </span>
+                                  {file.id === activeFileId &&
+                                      hasUnsavedChanges && (
+                                          <span
+                                              className="tree-unsaved-indicator"
+                                              title="Unsaved changes"
+                                          >
+                                              ●
+                                          </span>
+                                      )}
+                              </span>
+
+                              {getDirectory(
+                                  file.path
+                              ) !== "root" && (
+                                  <span className="tree-file-directory">
+                                      {getDirectory(
+                                          file.path
+                                      )}
+                                  </span>
+                              )}
+                          </span>
                         </button>
                     );
                 })}
