@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Editor from "@monaco-editor/react";
 import "./App.css";
 
@@ -729,6 +729,8 @@ function Workspace({
 
     const [message, setMessage] = useState("");
 
+    const saveFileRef = useRef(null);
+
     const projectName =
         project?.name || "ForgeAI Project";
 
@@ -924,6 +926,8 @@ function Workspace({
             }, 2000);
         }
     }
+
+    saveFileRef.current = handleSaveFile;
 
     /*
      * =========================
@@ -1437,14 +1441,19 @@ function Workspace({
                                   onChange={(value) =>
                                       setFileContent(value ?? "")
                                   }
-                                  onMount={(editor) => {
-                                      editor.addCommand(
-                                          2048 | 49,
-                                          () => {
-                                              handleSaveFile();
-                                          }
-                                      );
-                                  }}
+                                  onMount={(editor, monaco) => {
+                                    editor.addAction({
+                                        id: "forgeai-save-file",
+                                        label: "Save File",
+                                        keybindings: [
+                                            monaco.KeyMod.CtrlCmd |
+                                                monaco.KeyCode.KeyS,
+                                        ],
+                                        run: () => {
+                                            saveFileRef.current?.();
+                                        },
+                                    });
+                                }}
                                   options={{
                                       automaticLayout: true,
                                       fontSize: 13,
