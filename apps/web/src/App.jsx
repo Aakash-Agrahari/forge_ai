@@ -9,6 +9,9 @@ import {
     getProjects,
     createProject,
     deleteProject,
+    getProjectFiles,
+    getProjectFile,
+    updateProjectFile,
 } from "./services/api";
 
 /* =========================
@@ -709,14 +712,380 @@ function Workspace({
     onLogout,
     onBackToDashboard,
 }) {
-    const [activeFile, setActiveFile] =
-        useState("src/App.jsx");
+    const [files, setFiles] = useState([]);
+    const [activeFileId, setActiveFileId] = useState(null);
+    const [activeFile, setActiveFile] = useState(null);
 
-    const [message, setMessage] =
-        useState("");
+    const [fileContent, setFileContent] = useState("");
+    const [originalContent, setOriginalContent] = useState("");
+
+    const [loadingFiles, setLoadingFiles] = useState(true);
+    const [loadingFile, setLoadingFile] = useState(false);
+    const [saving, setSaving] = useState(false);
+
+    const [error, setError] = useState("");
+    const [saveMessage, setSaveMessage] = useState("");
+
+    const [message, setMessage] = useState("");
 
     const projectName =
         project?.name || "ForgeAI Project";
+
+    /*
+     * =========================
+     * LOAD PROJECT FILES
+     * =========================
+     */
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadFiles() {
+            if (!project?.id) {
+                return;
+            }
+
+            setLoadingFiles(true);
+            setError("");
+            setSaveMessage("");
+
+            try {
+                const response =
+                    await getProjectFiles(project.id);
+
+                if (cancelled) {
+                    return;
+                }
+
+                const projectFiles =
+                    response?.files || [];
+
+                setFiles(projectFiles);
+
+                if (projectFiles.length > 0) {
+                    setActiveFileId(
+                        projectFiles[0].id
+                    );
+                } else {
+                    setActiveFileId(null);
+                    setActiveFile(null);
+                    setFileContent("");
+                    setOriginalContent("");
+                }
+            } catch (requestError) {
+                if (!cancelled) {
+                    setError(
+                        requestError.message ||
+                        "Unable to load project files."
+                    );
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoadingFiles(false);
+                }
+            }
+        }
+
+        loadFiles();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [project?.id]);
+
+    /*
+     * =========================
+     * LOAD ACTIVE FILE
+     * =========================
+     */
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadActiveFile() {
+            if (!project?.id || !activeFileId) {
+                return;
+            }
+
+            setLoadingFile(true);
+            setError("");
+            setSaveMessage("");
+
+            try {
+                const response =
+                    await getProjectFile(
+                        project.id,
+                        activeFileId
+                    );
+
+                if (cancelled) {
+                    return;
+                }
+
+                const file =
+                    response?.file || null;
+
+                if (!file) {
+                    throw new Error(
+                        "File could not be loaded."
+                    );
+                }
+
+                setActiveFile(file);
+                setFileContent(
+                    file.content || ""
+                );
+                setOriginalContent(
+                    file.content || ""
+                );
+            } catch (requestError) {
+                if (!cancelled) {
+                    setError(
+                        requestError.message ||
+                        "Unable to load the file."
+                    );
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoadingFile(false);
+                }
+            }
+        }
+
+        loadActiveFile();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [project?.id, activeFileId]);
+
+    /*
+     * =========================
+     * SAVE FILE
+     * =========================
+     */
+
+    async function handleSaveFile() {
+        if (!project?.id || !activeFileId) {
+            return;
+        }
+
+        setSaving(true);
+        setError("");
+        setSaveMessage("");
+
+        try {
+            const response =
+                await updateProjectFile(
+                    project.id,
+                    activeFileId,
+                    fileContent
+                );
+
+            const updatedFile =
+                response?.file || null;
+
+            if (updatedFile) {
+                setActiveFile(updatedFile);
+
+                setFileContent(
+                    updatedFile.content || ""
+                );
+
+                setOriginalContent(
+                    updatedFile.content || ""
+                );
+
+                setFiles((currentFiles) =>
+                    currentFiles.map((file) =>
+                        file.id === updatedFile.id
+                            ? updatedFile
+                            : file
+                    )
+                );
+            } else {
+                setOriginalContent(
+                    fileContent
+                );
+            }
+
+            setSaveMessage("Saved");
+        } catch (requestError) {
+            setError(
+                requestError.message ||
+                "Unable to save the file."
+            );
+        } finally {
+            setSaving(false);
+
+            window.setTimeout(() => {
+                setSaveMessage("");
+            }, 2000);
+        }
+    }
+
+    /*
+     * =========================
+     * KEYBOARD SAVE
+     * =========================
+     */
+
+    function handleEditorKeyDown(event) {
+        if (
+            (event.ctrlKey || event.metaKey) &&
+            event.key.toLowerCase() === "s"
+        ) {
+            event.preventDefault();
+            handleSaveFile();
+        }
+    }
+
+    /*
+     * =========================
+     * FILE HELPERS
+     * =========================
+     */
+
+    function getFileName(path) {
+        return path.split("/").pop();
+    }
+
+    function getDirectory(path) {
+        const parts = path.split("/");
+
+        if (parts.length === 1) {
+            return "root";
+        }
+
+        return parts.slice(0, -1).join("/");
+    }
+
+    function getFileIcon(path) {
+        if (path.endsWith(".jsx")) {
+            return "◇";
+        }
+
+        if (path.endsWith(".js")) {
+            return "◇";
+        }
+
+        if (path.endsWith(".json")) {
+            return "{}";
+        }
+
+        if (path.endsWith(".css")) {
+            return "#";
+        }
+
+        if (path.endsWith(".html")) {
+            return "<>";
+        }
+
+        if (path.endsWith(".md")) {
+            return "M";
+        }
+
+        return "◇";
+    }
+
+    /*
+     * =========================
+     * RENDER FILE TREE
+     * =========================
+     */
+
+    function renderFileTree() {
+        if (loadingFiles) {
+            return (
+                <div className="file-tree-status">
+                    Loading files...
+                </div>
+            );
+        }
+
+        if (files.length === 0) {
+            return (
+                <div className="file-tree-status">
+                    This project has no files yet.
+                </div>
+            );
+        }
+
+        const sortedFiles = [...files].sort(
+            (a, b) =>
+                a.path.localeCompare(b.path)
+        );
+
+        return (
+            <div className="file-tree">
+                {sortedFiles.map((file) => {
+                    const isActive =
+                        file.id === activeFileId;
+
+                    return (
+                        <button
+                            key={file.id}
+                            className={`tree-item file ${
+                                isActive
+                                    ? "active"
+                                    : ""
+                            }`}
+                            onClick={() =>
+                                setActiveFileId(file.id)
+                            }
+                            title={file.path}
+                        >
+                            <span className="tree-icon">
+                                {getFileIcon(
+                                    file.path
+                                )}
+                            </span>
+
+                            <span className="tree-file-content">
+                                <span className="tree-file-name">
+                                    {getFileName(
+                                        file.path
+                                    )}
+                                </span>
+
+                                {getDirectory(
+                                    file.path
+                                ) !== "root" && (
+                                    <span className="tree-file-directory">
+                                        {getDirectory(
+                                            file.path
+                                        )}
+                                    </span>
+                                )}
+                            </span>
+                        </button>
+                    );
+                })}
+            </div>
+        );
+    }
+
+    /*
+     * =========================
+     * LINE NUMBERS
+     * =========================
+     */
+
+    function renderLineNumbers() {
+        const lineCount =
+            fileContent.length === 0
+                ? 1
+                : fileContent.split("\n").length;
+
+        return Array.from(
+            { length: lineCount },
+            (_, index) => (
+                <span key={index}>
+                    {index + 1}
+                </span>
+            )
+        );
+    }
 
     return (
         <div className="forgeai-app">
@@ -790,9 +1159,12 @@ function Workspace({
                             </span>
                         </div>
 
-                        <button className="new-project-button">
+                        <button
+                            className="new-project-button"
+                            onClick={onBackToDashboard}
+                        >
                             <span>+</span>
-                            New Project
+                            Projects
                         </button>
 
                     </div>
@@ -805,119 +1177,16 @@ function Workspace({
                                 PROJECT
                             </span>
 
-                            <button className="small-icon-button">
+                            <button
+                                className="small-icon-button"
+                                title="Create file"
+                            >
                                 +
                             </button>
 
                         </div>
 
-                        <div className="file-tree">
-
-                            <div className="tree-item folder">
-
-                                <span className="tree-icon">
-                                    ⌄
-                                </span>
-
-                                <span>
-                                    src
-                                </span>
-
-                            </div>
-
-                            <button
-                                className={`tree-item file ${
-                                    activeFile ===
-                                    "src/App.jsx"
-                                        ? "active"
-                                        : ""
-                                }`}
-                                onClick={() =>
-                                    setActiveFile(
-                                        "src/App.jsx"
-                                    )
-                                }
-                            >
-                                <span className="tree-icon">
-                                    ◇
-                                </span>
-
-                                <span>
-                                    App.jsx
-                                </span>
-
-                            </button>
-
-                            <button
-                                className={`tree-item file ${
-                                    activeFile ===
-                                    "src/main.jsx"
-                                        ? "active"
-                                        : ""
-                                }`}
-                                onClick={() =>
-                                    setActiveFile(
-                                        "src/main.jsx"
-                                    )
-                                }
-                            >
-                                <span className="tree-icon">
-                                    ◇
-                                </span>
-
-                                <span>
-                                    main.jsx
-                                </span>
-
-                            </button>
-
-                            <button
-                                className={`tree-item file ${
-                                    activeFile ===
-                                    "src/index.css"
-                                        ? "active"
-                                        : ""
-                                }`}
-                                onClick={() =>
-                                    setActiveFile(
-                                        "src/index.css"
-                                    )
-                                }
-                            >
-                                <span className="tree-icon">
-                                    ◇
-                                </span>
-
-                                <span>
-                                    index.css
-                                </span>
-
-                            </button>
-
-                            <button
-                                className={`tree-item file ${
-                                    activeFile ===
-                                    "package.json"
-                                        ? "active"
-                                        : ""
-                                }`}
-                                onClick={() =>
-                                    setActiveFile(
-                                        "package.json"
-                                    )
-                                }
-                            >
-                                <span className="tree-icon">
-                                    ◇
-                                </span>
-
-                                <span>
-                                    package.json
-                                </span>
-
-                            </button>
-
-                        </div>
+                        {renderFileTree()}
 
                     </div>
 
@@ -927,9 +1196,11 @@ function Workspace({
 
                             <div className="avatar">
 
-                                {(user?.name ||
+                                {(
+                                    user?.name ||
                                     user?.email ||
-                                    "U")
+                                    "U"
+                                )
                                     .charAt(0)
                                     .toUpperCase()}
 
@@ -970,10 +1241,16 @@ function Workspace({
                         <div className="editor-tab active">
 
                             <span className="tab-icon">
-                                ◇
+                                {activeFile
+                                    ? getFileIcon(
+                                          activeFile.path
+                                      )
+                                    : "◇"}
                             </span>
 
-                            {activeFile}
+                            {activeFile
+                                ? activeFile.path
+                                : "No file selected"}
 
                             <span className="tab-close">
                                 ×
@@ -988,85 +1265,134 @@ function Workspace({
                         <div className="breadcrumb">
 
                             <span>
-                                {activeFile.includes("/")
-                                    ? activeFile.split("/")[0]
+                                {activeFile
+                                    ? getDirectory(
+                                          activeFile.path
+                                      )
                                     : "root"}
                             </span>
 
                             <span>/</span>
 
                             <strong>
-                                {activeFile.split("/").pop()}
+                                {activeFile
+                                    ? getFileName(
+                                          activeFile.path
+                                      )
+                                    : "No file"}
                             </strong>
 
                         </div>
 
                         <div className="editor-actions">
 
-                            <button className="editor-action">
+                            {saveMessage && (
+                                <span className="save-message">
+                                    {saveMessage}
+                                </span>
+                            )}
+
+                            <button
+                                className="editor-action"
+                                disabled={!activeFile}
+                            >
                                 Run
                             </button>
 
-                            <button className="editor-action primary">
-                                Save
+                            <button
+                                className="editor-action primary"
+                                onClick={
+                                    handleSaveFile
+                                }
+                                disabled={
+                                    !activeFile ||
+                                    saving ||
+                                    fileContent ===
+                                        originalContent
+                                }
+                            >
+                                {saving
+                                    ? "Saving..."
+                                    : "Save"}
                             </button>
 
                         </div>
 
                     </div>
 
+                    {error && (
+                        <div className="editor-error">
+                            {error}
+                        </div>
+                    )}
+
                     <div className="code-editor">
 
-                        <div className="line-numbers">
+                        {loadingFile ? (
+                            <div className="editor-loading">
+                                Loading file...
+                            </div>
+                        ) : !activeFile ? (
+                            <div className="editor-empty">
 
-                            {Array.from(
-                                { length: 18 },
-                                (_, index) => (
-                                    <span key={index}>
-                                        {index + 1}
-                                    </span>
-                                )
-                            )}
+                                <div className="editor-empty-icon">
+                                    F
+                                </div>
 
-                        </div>
+                                <h3>
+                                    No file selected
+                                </h3>
 
-                        <pre className="code-content">
+                                <p>
+                                    Select a project file
+                                    from the sidebar.
+                                </p>
 
-                            <code>
-{`import { useState } from "react";
+                            </div>
+                        ) : (
+                            <>
+                                <div className="line-numbers">
+                                    {renderLineNumbers()}
+                                </div>
 
-function App() {
-    const [count, setCount] = useState(0);
-
-    return (
-        <main>
-            <h1>Welcome to ForgeAI</h1>
-
-            <p>
-                Build applications with
-                your autonomous AI engineer.
-            </p>
-
-            <button
-                onClick={() => setCount(count + 1)}
-            >
-                Count: {count}
-            </button>
-        </main>
-    );
-}
-
-export default App;`}
-                            </code>
-
-                        </pre>
+                                <textarea
+                                    className="code-textarea"
+                                    value={fileContent}
+                                    onChange={(event) =>
+                                        setFileContent(
+                                            event.target
+                                                .value
+                                        )
+                                    }
+                                    onKeyDown={
+                                        handleEditorKeyDown
+                                    }
+                                    spellCheck={false}
+                                    aria-label={`Editing ${activeFile.path}`}
+                                />
+                            </>
+                        )}
 
                     </div>
 
                     <div className="editor-statusbar">
 
                         <span>
-                            JavaScript React
+                            {activeFile
+                                ? activeFile.path.endsWith(
+                                      ".json"
+                                  )
+                                    ? "JSON"
+                                    : activeFile.path.endsWith(
+                                            ".css"
+                                        )
+                                      ? "CSS"
+                                      : activeFile.path.endsWith(
+                                              ".jsx"
+                                          )
+                                        ? "JavaScript React"
+                                        : "JavaScript"
+                                : "No file"}
                         </span>
 
                         <span>
