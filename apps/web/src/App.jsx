@@ -720,6 +720,8 @@ function Workspace({
     const [fileContent, setFileContent] = useState("");
     const [originalContent, setOriginalContent] = useState("");
 
+    const hasUnsavedChanges = fileContent !== originalContent;
+
     const [loadingFiles, setLoadingFiles] = useState(true);
     const [loadingFile, setLoadingFile] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -1104,9 +1106,23 @@ function Workspace({
                                     ? "active"
                                     : ""
                             }`}
-                            onClick={() =>
-                                setActiveFileId(file.id)
-                            }
+                            onClick={() => {
+                              if (file.id === activeFileId) {
+                                  return;
+                              }
+
+                              if (hasUnsavedChanges) {
+                                  const confirmed = window.confirm(
+                                      "You have unsaved changes. Discard them and open another file?"
+                                  );
+
+                                  if (!confirmed) {
+                                      return;
+                                  }
+                              }
+
+                              setActiveFileId(file.id);
+                          }}
                             title={file.path}
                         >
                             <span className="tree-icon">
@@ -1326,6 +1342,15 @@ function Workspace({
                                 ? activeFile.path
                                 : "No file selected"}
 
+                            {hasUnsavedChanges && (
+                                <span
+                                    className="unsaved-indicator"
+                                    title="Unsaved changes"
+                                >
+                                    ●
+                                </span>
+                            )}
+
                             <span className="tab-close">
                                 ×
                             </span>
@@ -1381,13 +1406,14 @@ function Workspace({
                                 disabled={
                                     !activeFile ||
                                     saving ||
-                                    fileContent ===
-                                        originalContent
+                                    !hasUnsavedChanges
                                 }
                             >
                                 {saving
                                     ? "Saving..."
-                                    : "Save"}
+                                    : hasUnsavedChanges
+                                    ? "Save"
+                                    : "Saved"}
                             </button>
 
                         </div>
