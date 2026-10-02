@@ -1562,3 +1562,18 @@ button {
     opacity: 0.45;
     cursor: default;
 }
+
+/*FILE TREE UNSAVED STATE*/
+.tree-file-name {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.tree-unsaved-indicator {
+    flex-shrink: 0;
+    margin-left: 7px;
+    color: #d8a85c;
+    font-size: 8px;
+    line-height: 1;
+}
