@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Editor from "@monaco-editor/react";
 import "./App.css";
 
 import {
@@ -960,6 +961,75 @@ function Workspace({
         return parts.slice(0, -1).join("/");
     }
 
+    function getEditorLanguage(path) {
+      const lowerPath = path.toLowerCase();
+
+      if (
+          lowerPath.endsWith(".jsx") ||
+          lowerPath.endsWith(".tsx")
+      ) {
+          return "javascript";
+      }
+
+      if (
+          lowerPath.endsWith(".js") ||
+          lowerPath.endsWith(".mjs") ||
+          lowerPath.endsWith(".cjs")
+      ) {
+          return "javascript";
+      }
+
+      if (lowerPath.endsWith(".json")) {
+          return "json";
+      }
+
+      if (
+          lowerPath.endsWith(".css") ||
+          lowerPath.endsWith(".scss") ||
+          lowerPath.endsWith(".less")
+      ) {
+          return "css";
+      }
+
+      if (
+          lowerPath.endsWith(".html") ||
+          lowerPath.endsWith(".htm")
+      ) {
+          return "html";
+      }
+
+      if (lowerPath.endsWith(".md")) {
+          return "markdown";
+      }
+
+      if (lowerPath.endsWith(".py")) {
+          return "python";
+      }
+
+      if (lowerPath.endsWith(".java")) {
+          return "java";
+      }
+
+      if (lowerPath.endsWith(".sql")) {
+          return "sql";
+      }
+
+      if (lowerPath.endsWith(".xml")) {
+          return "xml";
+      }
+
+      if (lowerPath.endsWith(".sh")) {
+          return "shell";
+      }
+
+      if (lowerPath.endsWith(".yml") ||
+          lowerPath.endsWith(".yaml")) {
+          return "yaml";
+      }
+
+      return "plaintext";
+  }
+
     function getFileIcon(path) {
         if (path.endsWith(".jsx")) {
             return "◇";
@@ -1355,21 +1425,53 @@ function Workspace({
                                     {renderLineNumbers()}
                                 </div>
 
-                                <textarea
-                                    className="code-textarea"
-                                    value={fileContent}
-                                    onChange={(event) =>
-                                        setFileContent(
-                                            event.target
-                                                .value
-                                        )
-                                    }
-                                    onKeyDown={
-                                        handleEditorKeyDown
-                                    }
-                                    spellCheck={false}
-                                    aria-label={`Editing ${activeFile.path}`}
-                                />
+                                <Editor
+                                  height="100%"
+                                  width="100%"
+                                  theme="vs-dark"
+                                  language={getEditorLanguage(
+                                      activeFile.path
+                                  )}
+                                  path={activeFile.path}
+                                  value={fileContent}
+                                  onChange={(value) =>
+                                      setFileContent(value ?? "")
+                                  }
+                                  onMount={(editor) => {
+                                      editor.addCommand(
+                                          2048 | 49,
+                                          () => {
+                                              handleSaveFile();
+                                          }
+                                      );
+                                  }}
+                                  options={{
+                                      automaticLayout: true,
+                                      fontSize: 13,
+                                      fontFamily:
+                                          "'SFMono-Regular', Consolas, 'Liberation Mono', monospace",
+                                      lineHeight: 21,
+                                      minimap: {
+                                          enabled: false,
+                                      },
+                                      padding: {
+                                          top: 14,
+                                          bottom: 14,
+                                      },
+                                      scrollBeyondLastLine: false,
+                                      smoothScrolling: true,
+                                      cursorBlinking: "smooth",
+                                      renderWhitespace: "selection",
+                                      wordWrap: "off",
+                                      tabSize: 4,
+                                      insertSpaces: true,
+                                      folding: true,
+                                      lineNumbers: "on",
+                                      roundedSelection: false,
+                                      automaticLayout: true,
+                                      suggestOnTriggerCharacters: true,
+                                  }}
+                              />
                             </>
                         )}
 
