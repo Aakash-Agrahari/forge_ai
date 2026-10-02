@@ -87,9 +87,7 @@ export async function logoutUser() {
     });
 }
 
-/* =========================
-   PROJECTS
-========================= */
+/*PROJECTS*/
 
 export async function getProjects() {
     return apiRequest("/projects");
@@ -128,4 +126,31 @@ export async function deleteProject(projectId) {
     return apiRequest(`/projects/${projectId}`, {
         method: "DELETE",
     });
+}
+
+export async function getProjectFiles(projectId) {
+    return apiRequest(`/projects/${projectId}/files`);
+}
+
+export async function getProjectFile(projectId, fileId) {
+    return apiRequest(
+        `/projects/${projectId}/files/${fileId}`
+    );
+}
+
+export async function updateProjectFile(
+    projectId,
+    fileId,
+    content
+) {
+    return apiRequest(
+        `/projects/${projectId}/files/${fileId}`,
+        {
+            method: "PATCH",
+
+            body: JSON.stringify({
+                content,
+            }),
+        }
+    );
 }
