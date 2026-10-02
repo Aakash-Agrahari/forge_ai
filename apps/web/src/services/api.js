@@ -43,10 +43,7 @@ async function apiRequest(endpoint, options = {}) {
     return data;
 }
 
-/* =========================
-   AUTH
-========================= */
-
+/*AUTH*/
 export async function getCurrentUser() {
     return apiRequest("/auth/me");
 }
@@ -88,7 +85,6 @@ export async function logoutUser() {
 }
 
 /*PROJECTS*/
-
 export async function getProjects() {
     return apiRequest("/projects");
 }
@@ -152,5 +148,71 @@ export async function updateProjectFile(
                 content,
             }),
         }
+    );
+}
+
+/*CONVERSATIONS*/
+export async function createConversation(
+    projectId,
+    title
+) {
+    return apiRequest(
+        `/projects/${projectId}/conversations`,
+        {
+            method: "POST",
+
+            body: JSON.stringify({
+                title,
+            }),
+        }
+    );
+}
+
+export async function getConversationMessages(
+    projectId,
+    conversationId
+) {
+    return apiRequest(
+        `/projects/${projectId}/conversations/${conversationId}/messages`
+    );
+}
+
+export async function createConversationMessage(
+    projectId,
+    conversationId,
+    { role, content }
+) {
+    return apiRequest(
+        `/projects/${projectId}/conversations/${conversationId}/messages`,
+        {
+            method: "POST",
+
+            body: JSON.stringify({
+                role,
+                content,
+            }),
+        }
+    );
+}
+
+/*AGENT RUNS*/
+export async function startAgentRun(
+    projectId,
+    conversationId
+) {
+    return apiRequest(
+        `/projects/${projectId}/conversations/${conversationId}/runs`,
+        {
+            method: "POST",
+        }
+    );
+}
+
+export async function getAgentRuns(
+    projectId,
+    conversationId
+) {
+    return apiRequest(
+        `/projects/${projectId}/conversations/${conversationId}/runs`
     );
 }
