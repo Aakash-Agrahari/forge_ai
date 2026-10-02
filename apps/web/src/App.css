@@ -1357,3 +1357,166 @@ button {
     align-items: center;
     gap: 8px;
 }
+
+/*CODE EDITOR - REAL EDITION*/
+.code-editor {
+    position: relative;
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    background: #0b0e12;
+}
+
+.line-numbers {
+    flex: 0 0 52px;
+    width: 52px;
+    min-height: 100%;
+    padding: 14px 10px 14px 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    background: #0b0e12;
+    border-right: 1px solid #171b21;
+    color: #4f5865;
+    font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        monospace;
+    font-size: 13px;
+    line-height: 1.65;
+    text-align: right;
+    user-select: none;
+}
+
+.line-numbers span {
+    display: block;
+    height: 21.45px;
+}
+
+.code-textarea {
+    display: block;
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    box-sizing: border-box;
+
+    margin: 0;
+    padding: 14px 20px;
+
+    border: none;
+    outline: none;
+    border-radius: 0;
+
+    background: #0b0e12;
+    color: #d7dce3;
+
+    font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        monospace;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.65;
+
+    resize: none;
+    overflow: auto;
+
+    white-space: pre;
+    word-wrap: normal;
+    overflow-wrap: normal;
+
+    tab-size: 4;
+
+    caret-color: #ffffff;
+}
+
+.code-textarea:focus {
+    outline: none;
+}
+
+.code-textarea::selection {
+    background: #293241;
+    color: #ffffff;
+}
+
+/* Keep the editor dark even when the browser
+   applies default textarea styling. */
+
+.code-textarea,
+.code-textarea:hover,
+.code-textarea:focus {
+    background: #0b0e12;
+}
+
+/* Scrollbar */
+
+.code-textarea::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.code-textarea::-webkit-scrollbar-track {
+    background: #0b0e12;
+}
+
+.code-textarea::-webkit-scrollbar-thumb {
+    background: #252b34;
+    border-radius: 5px;
+}
+
+.code-textarea::-webkit-scrollbar-thumb:hover {
+    background: #343c48;
+}
+
+/* Editor empty/loading states */
+
+.editor-loading,
+.editor-empty {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+
+    background: #0b0e12;
+    color: #68717e;
+    padding: 30px;
+    text-align: center;
+}
+
+.editor-empty-icon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 14px;
+
+    border: 1px solid #292e36;
+    border-radius: 10px;
+
+    background: #15191f;
+    color: #8c96a3;
+
+    font-size: 18px;
+}
+
+.editor-empty h3 {
+    margin: 0 0 6px;
+    color: #cdd2d9;
+    font-size: 14px;
+}
+
+.editor-empty p {
+    margin: 0;
+    font-size: 12px;
+    color: #68717e;
+}
