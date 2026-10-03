@@ -216,3 +216,13 @@ export async function getAgentRuns(
         `/projects/${projectId}/conversations/${conversationId}/runs`
     );
 }
+
+export async function getAgentRun(
+    projectId,
+    conversationId,
+    runId
+) {
+    return apiRequest(
+        `/projects/${projectId}/conversations/${conversationId}/runs/${runId}`
+    );
+}
