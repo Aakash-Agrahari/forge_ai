@@ -717,7 +717,8 @@ function Workspace({
     onBackToDashboard,
 }) {
     const [files, setFiles] = useState([]);
-    const [filesRefreshKey, setFilesRefreshKey] = useState(0);
+    const [agentChangedFileIds, setAgentChangedFileIds] =
+        useState(new Set());
     const [activeFileId, setActiveFileId] = useState(null);
     const [activeFile, setActiveFile] = useState(null);
 
@@ -744,38 +745,246 @@ function Workspace({
     const projectName =
         project?.name || "ForgeAI Project";
 
-    async function handleSendMessage(){
-      const trimmedMessage = message.trim();
-
-      if(!trimmedMessage || !project?.id || sendingMessage){
-        return;
-      }
-
-      setSendingMessage(true);
-      setAgentError("");
-
-      try{
-        let currentConversationId = conversationId;
-
-        if(!currentConversationId){
-          const conversationResponse = await createConversation(project.id, trimmedMessage.slice(0, 80));
-          currentConversationId = conversationResponse?.conversation?.id;
-          if(!currentConversationId){
-            throw new Error("Unable to create an agent conversation");
-          }
-          setConversationId(currentConversationId);
+    async function refreshProjectFiles({ markAgentChanges = false } = {}) {
+        if (!project?.id) {
+            return null;
         }
-        await createConversationMessage(
-          project.id, currentConversationId, {role:"user", content:trimmedMessage}
+
+        try {
+            const response = await getProjectFiles(project.id);
+            const refreshedFiles = response?.files || [];
+
+            if (markAgentChanges) {
+                setFiles((currentFiles) => {
+                    const currentFileMap = new Map(
+                        currentFiles.map((file) => [file.id, file])
+                    );
+
+                    const changedIds = refreshedFiles
+                        .filter((file) => {
+                            const previousFile = currentFileMap.get(file.id);
+
+                            if (!previousFile) {
+                                return true;
+                            }
+
+                            return previousFile.content !== file.content;
+                        })
+                        .map((file) => file.id);
+
+                    if (changedIds.length > 0) {
+                        setAgentChangedFileIds((currentIds) => {
+                            const nextIds = new Set(currentIds);
+
+                            changedIds.forEach((id) => {
+                                nextIds.add(id);
+                            });
+
+                            return nextIds;
+                        });
+                    }
+
+                    return refreshedFiles;
+                });
+            } else {
+                setFiles(refreshedFiles);
+            }
+
+            setActiveFileId((currentActiveFileId) => {
+                const currentFile = refreshedFiles.find(
+                    (file) => file.id === currentActiveFileId
+                );
+
+                if (currentFile) {
+                    setActiveFile(currentFile);
+                    setFileContent(currentFile.content || "");
+                    setOriginalContent(currentFile.content || "");
+                    return currentActiveFileId;
+                }
+
+                const firstFile = refreshedFiles[0] || null;
+
+                if (firstFile) {
+                    setActiveFile(firstFile);
+                    setFileContent(firstFile.content || "");
+                    setOriginalContent(firstFile.content || "");
+                    return firstFile.id;
+                }
+
+                setActiveFile(null);
+                setFileContent("");
+                setOriginalContent("");
+
+                return null;
+            });
+
+            return refreshedFiles;
+        } catch (requestError) {
+            setError(
+                requestError.message ||
+                    "Unable to refresh project files."
+            );
+
+            return null;
+        }
+    }
+
+    async function waitForAgentFileChanges(previousFiles) {
+        const previousSignature = JSON.stringify(
+            (previousFiles || [])
+                .map((file) => ({
+                    id: file.id,
+                    path: file.path,
+                    content: file.content,
+                    updatedAt: file.updatedAt,
+                }))
+                .sort((a, b) => a.path.localeCompare(b.path))
         );
-        await startAgentRun(project.id, currentConversationId);
-        setFilesRefreshKey((currentKey) => currentKey + 1);
-        setMessage("");
-      } catch(requestError){
-          setAgentError(requestError.message || "Unable to start the ForgeAI agent.");
-      } finally {
-        setSendingMessage(false);
-      }
+
+        const maxAttempts = 30;
+        const delayMs = 500;
+
+        for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+            const response = await getProjectFiles(project.id);
+            const currentFiles = response?.files || [];
+
+            const currentSignature = JSON.stringify(
+                currentFiles
+                    .map((file) => ({
+                        id: file.id,
+                        path: file.path,
+                        content: file.content,
+                        updatedAt: file.updatedAt,
+                    }))
+                    .sort((a, b) => a.path.localeCompare(b.path))
+            );
+
+            if (currentSignature !== previousSignature) {
+                return currentFiles;
+            }
+
+            if (attempt < maxAttempts - 1) {
+                await new Promise((resolve) =>
+                    window.setTimeout(resolve, delayMs)
+                );
+            }
+        }
+
+        const finalResponse = await getProjectFiles(project.id);
+        return finalResponse?.files || [];
+    }
+
+    async function handleSendMessage() {
+        const trimmedMessage = message.trim();
+
+        if (
+            !trimmedMessage ||
+            !project?.id ||
+            sendingMessage
+        ) {
+            return;
+        }
+
+        setSendingMessage(true);
+        setAgentError("");
+
+        try {
+            let currentConversationId = conversationId;
+
+            if (!currentConversationId) {
+                const conversationResponse =
+                    await createConversation(
+                        project.id,
+                        trimmedMessage.slice(0, 80)
+                    );
+
+                currentConversationId =
+                    conversationResponse?.conversation?.id;
+
+                if (!currentConversationId) {
+                    throw new Error(
+                        "Unable to create an agent conversation"
+                    );
+                }
+
+                setConversationId(currentConversationId);
+            }
+
+            await createConversationMessage(
+                project.id,
+                currentConversationId,
+                {
+                    role: "user",
+                    content: trimmedMessage,
+                }
+            );
+
+            const filesBeforeAgent = [...files];
+
+            await startAgentRun(
+                project.id,
+                currentConversationId
+            );
+
+            const agentFiles =
+                await waitForAgentFileChanges(filesBeforeAgent);
+
+            // Use the files returned after the agent has actually
+            // changed the project, rather than refreshing only once.
+            if (agentFiles) {
+                const previousFiles = filesBeforeAgent;
+                const previousFileMap = new Map(
+                    previousFiles.map((file) => [file.id, file])
+                );
+
+                const changedIds = agentFiles
+                    .filter((file) => {
+                        const previousFile = previousFileMap.get(file.id);
+                        return (
+                            !previousFile ||
+                            previousFile.content !== file.content ||
+                            previousFile.path !== file.path
+                        );
+                    })
+                    .map((file) => file.id);
+
+                if (changedIds.length > 0) {
+                    setAgentChangedFileIds((currentIds) => {
+                        const nextIds = new Set(currentIds);
+                        changedIds.forEach((id) => nextIds.add(id));
+                        return nextIds;
+                    });
+                }
+
+                setFiles(agentFiles);
+
+                setActiveFileId((currentActiveFileId) => {
+                    if (
+                        currentActiveFileId &&
+                        agentFiles.some(
+                            (file) => file.id === currentActiveFileId
+                        )
+                    ) {
+                        return currentActiveFileId;
+                    }
+
+                    return agentFiles[0]?.id ?? null;
+                });
+            } else {
+                await refreshProjectFiles({
+                    markAgentChanges: true,
+                });
+            }
+
+            setMessage("");
+        } catch (requestError) {
+            setAgentError(
+                requestError.message ||
+                    "Unable to start the ForgeAI agent."
+            );
+        } finally {
+            setSendingMessage(false);
+        }
     }
 
     /*
@@ -809,18 +1018,25 @@ function Workspace({
 
                 setFiles(projectFiles);
 
-                setActiveFileId((currentActiveFileId) => {
-                    if (
-                        currentActiveFileId &&
-                        projectFiles.some(
-                            (file) => file.id === currentActiveFileId
-                        )
-                    ) {
-                        return currentActiveFileId;
-                    }
+                setActiveFileId(
+                    (currentActiveFileId) => {
+                        if (
+                            currentActiveFileId &&
+                            projectFiles.some(
+                                (file) =>
+                                    file.id ===
+                                    currentActiveFileId
+                            )
+                        ) {
+                            return currentActiveFileId;
+                        }
 
-                    return projectFiles[0]?.id ?? null;
-                });
+                        return (
+                            projectFiles[0]?.id ??
+                            null
+                        );
+                    }
+                );
 
                 if (projectFiles.length === 0) {
                     setActiveFile(null);
@@ -831,7 +1047,7 @@ function Workspace({
                 if (!cancelled) {
                     setError(
                         requestError.message ||
-                        "Unable to load project files."
+                            "Unable to load project files."
                     );
                 }
             } finally {
@@ -846,7 +1062,7 @@ function Workspace({
         return () => {
             cancelled = true;
         };
-    }, [project?.id, filesRefreshKey]);
+    }, [project?.id]);
 
     /*
      * =========================
@@ -958,6 +1174,12 @@ function Workspace({
                             : file
                     )
                 );
+
+                setAgentChangedFileIds((currentIds) => {
+                    const nextIds = new Set(currentIds);
+                    nextIds.delete(updatedFile.id);
+                    return nextIds;
+                });
             } else {
                 setOriginalContent(
                     fileContent
@@ -1143,7 +1365,15 @@ function Workspace({
         );
 
         return (
-            <div className="file-tree">
+            <div
+                className="file-tree"
+                style={{
+                    maxHeight: "calc(100vh - 245px)",
+                    overflowY: "auto",
+                    overflowX: "hidden",
+                    minHeight: 0,
+                }}
+            >
                 {sortedFiles.map((file) => {
                     const isActive =
                         file.id === activeFileId;
@@ -1187,8 +1417,18 @@ function Workspace({
                                       file.path
                                   )}
 
+                                  {agentChangedFileIds.has(file.id) && (
+                                      <span
+                                          className="tree-unsaved-indicator"
+                                          title="Changed by ForgeAI"
+                                      >
+                                          ●
+                                      </span>
+                                  )}
+
                                   {file.id === activeFileId &&
-                                      hasUnsavedChanges && (
+                                      hasUnsavedChanges &&
+                                      !agentChangedFileIds.has(file.id) && (
                                           <span
                                               className="tree-unsaved-indicator"
                                               title="Unsaved changes"
@@ -1786,6 +2026,40 @@ function App() {
                     response;
 
                 setUser(authenticatedUser);
+
+                const savedProjectId =
+                    window.sessionStorage.getItem(
+                        "forgeai_active_project_id"
+                    );
+
+                if (savedProjectId) {
+                    try {
+                        const projectsResponse =
+                            await getProjects();
+
+                        const savedProject =
+                            (
+                                projectsResponse?.projects ||
+                                []
+                            ).find(
+                                (item) =>
+                                    item.id ===
+                                    savedProjectId
+                            );
+
+                        if (savedProject) {
+                            setProject(savedProject);
+                        } else {
+                            window.sessionStorage.removeItem(
+                                "forgeai_active_project_id"
+                            );
+                        }
+                    } catch {
+                        window.sessionStorage.removeItem(
+                            "forgeai_active_project_id"
+                        );
+                    }
+                }
             } catch {
                 setUser(null);
             } finally {
@@ -1800,6 +2074,9 @@ function App() {
         try {
             await logoutUser();
         } finally {
+            window.sessionStorage.removeItem(
+                "forgeai_active_project_id"
+            );
             setUser(null);
             setProject(null);
         }
@@ -1817,9 +2094,18 @@ function App() {
 
     function handleOpenProject(selectedProject) {
         setProject(selectedProject);
+
+        window.sessionStorage.setItem(
+            "forgeai_active_project_id",
+            selectedProject.id
+        );
     }
 
     function handleBackToDashboard() {
+        window.sessionStorage.removeItem(
+            "forgeai_active_project_id"
+        );
+
         setProject(null);
     }
 
