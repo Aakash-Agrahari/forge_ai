@@ -13,6 +13,7 @@ import {moveFileTool} from "./moveFile.js";
 import {copyFileTool} from "./copyFile.js";
 import { verifyJavaScriptTool } from "./verifyJavaScript.js";
 import {executeJavaScriptTool} from "./executeJavaScript.js";
+import { runJavaScriptTestTool } from "./runJavaScriptTest.js";
 
 export function registerAgentTools(){
     registerTool(listFilesTool);
@@ -29,4 +30,5 @@ export function registerAgentTools(){
     registerTool(copyFileTool);
     registerTool(verifyJavaScriptTool);
     registerTool(executeJavaScriptTool);
+    registerTool(runJavaScriptTestTool);
 }
