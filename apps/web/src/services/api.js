@@ -43,7 +43,10 @@ async function apiRequest(endpoint, options = {}) {
     return data;
 }
 
-/*AUTH*/
+/* =========================
+   AUTH
+========================= */
+
 export async function getCurrentUser() {
     return apiRequest("/auth/me");
 }
@@ -84,7 +87,10 @@ export async function logoutUser() {
     });
 }
 
-/*PROJECTS*/
+/* =========================
+   PROJECTS
+========================= */
+
 export async function getProjects() {
     return apiRequest("/projects");
 }
@@ -124,11 +130,18 @@ export async function deleteProject(projectId) {
     });
 }
 
+/* =========================
+   PROJECT FILES
+========================= */
+
 export async function getProjectFiles(projectId) {
     return apiRequest(`/projects/${projectId}/files`);
 }
 
-export async function getProjectFile(projectId, fileId) {
+export async function getProjectFile(
+    projectId,
+    fileId
+) {
     return apiRequest(
         `/projects/${projectId}/files/${fileId}`
     );
@@ -151,7 +164,10 @@ export async function updateProjectFile(
     );
 }
 
-/*CONVERSATIONS*/
+/* =========================
+   CONVERSATIONS
+========================= */
+
 export async function createConversation(
     projectId,
     title
@@ -165,6 +181,14 @@ export async function createConversation(
                 title,
             }),
         }
+    );
+}
+
+export async function getProjectConversations(
+    projectId
+) {
+    return apiRequest(
+        `/projects/${projectId}/conversations`
     );
 }
 
@@ -195,7 +219,10 @@ export async function createConversationMessage(
     );
 }
 
-/*AGENT RUNS*/
+/* =========================
+   AGENT RUNS
+========================= */
+
 export async function startAgentRun(
     projectId,
     conversationId
@@ -225,14 +252,4 @@ export async function getAgentRun(
     return apiRequest(
         `/projects/${projectId}/conversations/${conversationId}/runs/${runId}`
     );
-}
-
-export async function getProjectConversations(projectId){
-    return apiRequest(
-        `/projects/${projectId}/conversations`
-    );
-}
-
-export async function getConversationMessages(projectId, conversationId){
-    return apiRequest(`/projects/${projectId}/conversations/${conversationId}/messages`);
 }
