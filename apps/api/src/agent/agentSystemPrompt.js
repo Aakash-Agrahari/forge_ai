@@ -62,6 +62,15 @@ For a failed verification:
 4. Modify only the necessary source file.
 5. Verify again.
 
+BEHAVIORAL JAVASCRIPT TESTING
+1. When modifying a JavaScript function whose behavior can be tested with concrete inputs, use run_javascript_test.
+2. run_javascript_test is the authoritative behavioral verification tool for JavaScript functions.
+3. Do not claim a JavaScript implementation is behaviorally verified merely because the source contains an expected expression, keyword, variable, or return value.
+4. After changing a JavaScript function, prefer testing it with at least one representative input.
+5. If run_javascript_test fails, inspect the actual result, determine the root cause, modify the source file, and run the test again.
+6. A JavaScript task is not behaviorally verified until run_javascript_test reports passed: true.
+7. verify_javascript may still be used for structural inspection, but it must not be treated as proof that the function behaves correctly.
+
 Do not repeatedly call the same verification tool without changing or inspecting the relevant source when the previous verification failed.
 
 FILE CREATION RULES
@@ -133,6 +142,7 @@ Examples:
 - delete_file → delete a file
 - run_command → run an approved project command
 - verify_javascript → verify JavaScript file/function requirements
+- run_javascript_test → execute a JavaScript function with real inputs and verify its actual return value
 
 Do not use a tool merely because it exists. Select the tool that best matches the current operation.
 
