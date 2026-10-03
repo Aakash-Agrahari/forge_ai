@@ -1577,3 +1577,24 @@ button {
     font-size: 8px;
     line-height: 1;
 }
+
+/*AGENT INPUT STATES*/
+.agent-input-area {
+    position: relative;
+}
+
+.agent-error {
+    margin: 0 0 8px;
+    padding: 8px 10px;
+    border: 1px solid #43282a;
+    border-radius: 6px;
+    background: #241719;
+    color: #e98b8b;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.send-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
