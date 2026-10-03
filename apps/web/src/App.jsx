@@ -16,6 +16,7 @@ import {
     createConversation,
     createConversationMessage,
     startAgentRun,
+    getAgentRun,
 } from "./services/api";
 
 /* =========================
@@ -829,38 +830,47 @@ function Workspace({
         }
     }
 
-    async function waitForAgentFileChanges(previousFiles) {
-        const previousSignature = JSON.stringify(
-            (previousFiles || [])
-                .map((file) => ({
-                    id: file.id,
-                    path: file.path,
-                    content: file.content,
-                    updatedAt: file.updatedAt,
-                }))
-                .sort((a, b) => a.path.localeCompare(b.path))
-        );
-
-        const maxAttempts = 30;
-        const delayMs = 500;
+    async function waitForAgentRun(
+        projectId,
+        currentConversationId,
+        runId
+    ) {
+        const maxAttempts = 180;
+        const delayMs = 1000;
 
         for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-            const response = await getProjectFiles(project.id);
-            const currentFiles = response?.files || [];
-
-            const currentSignature = JSON.stringify(
-                currentFiles
-                    .map((file) => ({
-                        id: file.id,
-                        path: file.path,
-                        content: file.content,
-                        updatedAt: file.updatedAt,
-                    }))
-                    .sort((a, b) => a.path.localeCompare(b.path))
+            const response = await getAgentRun(
+                projectId,
+                currentConversationId,
+                runId
             );
 
-            if (currentSignature !== previousSignature) {
-                return currentFiles;
+            const run = response?.run;
+
+            if (!run) {
+                throw new Error(
+                    "Unable to find the ForgeAI agent run."
+                );
+            }
+
+            if (run.status === "completed") {
+                return run;
+            }
+
+            if (run.status === "failed") {
+                throw new Error(
+                    run.error ||
+                        "ForgeAI could not complete the requested task."
+                );
+            }
+
+            if (
+                run.status !== "queued" &&
+                run.status !== "running"
+            ) {
+                throw new Error(
+                    `ForgeAI run ended with unexpected status: ${run.status}`
+                );
             }
 
             if (attempt < maxAttempts - 1) {
@@ -870,8 +880,9 @@ function Workspace({
             }
         }
 
-        const finalResponse = await getProjectFiles(project.id);
-        return finalResponse?.files || [];
+        throw new Error(
+            "ForgeAI is taking longer than expected. The agent may still be running."
+        );
     }
 
     async function handleSendMessage() {
@@ -921,60 +932,75 @@ function Workspace({
 
             const filesBeforeAgent = [...files];
 
-            await startAgentRun(
+            const runResponse = await startAgentRun(
                 project.id,
                 currentConversationId
             );
 
-            const agentFiles =
-                await waitForAgentFileChanges(filesBeforeAgent);
+            const runId = runResponse?.run?.id;
 
-            // Use the files returned after the agent has actually
-            // changed the project, rather than refreshing only once.
-            if (agentFiles) {
-                const previousFiles = filesBeforeAgent;
-                const previousFileMap = new Map(
-                    previousFiles.map((file) => [file.id, file])
+            if (!runId) {
+                throw new Error(
+                    "ForgeAI started without returning an agent run ID."
                 );
+            }
 
-                const changedIds = agentFiles
-                    .filter((file) => {
-                        const previousFile = previousFileMap.get(file.id);
-                        return (
-                            !previousFile ||
-                            previousFile.content !== file.content ||
-                            previousFile.path !== file.path
-                        );
-                    })
-                    .map((file) => file.id);
+            // Wait for this exact run to finish. Do not guess
+            // completion from whether project files have changed.
+            await waitForAgentRun(
+                project.id,
+                currentConversationId,
+                runId
+            );
 
-                if (changedIds.length > 0) {
-                    setAgentChangedFileIds((currentIds) => {
-                        const nextIds = new Set(currentIds);
-                        changedIds.forEach((id) => nextIds.add(id));
-                        return nextIds;
-                    });
-                }
+            // The agent has completed all iterations and tool calls.
+            // Refresh the project only after that completion.
+            const response = await getProjectFiles(project.id);
+            const agentFiles = response?.files || [];
 
-                setFiles(agentFiles);
+            const previousFileMap = new Map(
+                filesBeforeAgent.map((file) => [file.id, file])
+            );
 
-                setActiveFileId((currentActiveFileId) => {
-                    if (
-                        currentActiveFileId &&
-                        agentFiles.some(
-                            (file) => file.id === currentActiveFileId
-                        )
-                    ) {
-                        return currentActiveFileId;
-                    }
+            const changedIds = agentFiles
+                .filter((file) => {
+                    const previousFile = previousFileMap.get(file.id);
 
-                    return agentFiles[0]?.id ?? null;
-                });
-            } else {
-                await refreshProjectFiles({
-                    markAgentChanges: true,
+                    return (
+                        !previousFile ||
+                        previousFile.content !== file.content ||
+                        previousFile.path !== file.path
+                    );
+                })
+                .map((file) => file.id);
+
+            if (changedIds.length > 0) {
+                setAgentChangedFileIds((currentIds) => {
+                    const nextIds = new Set(currentIds);
+
+                    changedIds.forEach((id) =>
+                        nextIds.add(id)
+                    );
+
+                    return nextIds;
                 });
             }
+
+            setFiles(agentFiles);
+
+            setActiveFileId((currentActiveFileId) => {
+                if (
+                    currentActiveFileId &&
+                    agentFiles.some(
+                        (file) =>
+                            file.id === currentActiveFileId
+                    )
+                ) {
+                    return currentActiveFileId;
+                }
+
+                return agentFiles[0]?.id ?? null;
+            });
 
             setMessage("");
         } catch (requestError) {
