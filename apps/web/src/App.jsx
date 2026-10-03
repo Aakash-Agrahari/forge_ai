@@ -757,7 +757,7 @@ function Workspace({
         let currentConversationId = conversationId;
 
         if(!currentConversationId){
-          const conversationResponse = await createConversation(project.id, trimmedMessage.slice(0, 00));
+          const conversationResponse = await createConversation(project.id, trimmedMessage.slice(0, 80));
           currentConversationId = conversationResponse?.conversation?.id;
           if(!currentConversationId){
             throw new Error("Unable to create an agent conversation");
@@ -1691,7 +1691,7 @@ function Workspace({
                                 {agentError}
                             </div>
                         )}   
-                             
+
                         <div className="agent-input-wrapper">
 
                             <textarea
@@ -1722,7 +1722,7 @@ function Workspace({
                                     test your code
                                 </span>
 
-                                <button className="send-button">
+                                <button
                                     className="send-button"
                                       onClick={handleSendMessage}
                                       disabled={
