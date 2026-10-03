@@ -717,6 +717,7 @@ function Workspace({
     onBackToDashboard,
 }) {
     const [files, setFiles] = useState([]);
+    const [filesRefreshKey, setFilesRefreshKey] = useState(0);
     const [activeFileId, setActiveFileId] = useState(null);
     const [activeFile, setActiveFile] = useState(null);
 
@@ -768,6 +769,7 @@ function Workspace({
           project.id, currentConversationId, {role:"user", content:trimmedMessage}
         );
         await startAgentRun(project.id, currentConversationId);
+        setFilesRefreshKey((currentKey) => currentKey + 1);
         setMessage("");
       } catch(requestError){
           setAgentError(requestError.message || "Unable to start the ForgeAI agent.");
@@ -807,12 +809,20 @@ function Workspace({
 
                 setFiles(projectFiles);
 
-                if (projectFiles.length > 0) {
-                    setActiveFileId(
-                        projectFiles[0].id
-                    );
-                } else {
-                    setActiveFileId(null);
+                setActiveFileId((currentActiveFileId) => {
+                    if (
+                        currentActiveFileId &&
+                        projectFiles.some(
+                            (file) => file.id === currentActiveFileId
+                        )
+                    ) {
+                        return currentActiveFileId;
+                    }
+
+                    return projectFiles[0]?.id ?? null;
+                });
+
+                if (projectFiles.length === 0) {
                     setActiveFile(null);
                     setFileContent("");
                     setOriginalContent("");
@@ -836,7 +846,7 @@ function Workspace({
         return () => {
             cancelled = true;
         };
-    }, [project?.id]);
+    }, [project?.id, filesRefreshKey]);
 
     /*
      * =========================
