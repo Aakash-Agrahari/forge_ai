@@ -14,6 +14,8 @@ import {
     getProjectFile,
     updateProjectFile,
     createConversation,
+    getProjectConversations,
+    getConversationMessages,
     createConversationMessage,
     startAgentRun,
     getAgentRun,
@@ -739,12 +741,103 @@ function Workspace({
 
     const saveFileRef = useRef(null);
 
+    const [conversations, setConversations] = useState([]);
     const [conversationId, setConversationId] = useState(null);
+    const [conversationMessages, setConversationMessages] = useState([]);
+    const [loadingConversation, setLoadingConversation] = useState(true);
     const [sendingMessage, setSendingMessage] = useState(false);
-    const[agentError,setAgentError]= useState("");
+    const [agentError, setAgentError] = useState("");
+    const conversationEndRef = useRef(null);
 
     const projectName =
         project?.name || "ForgeAI Project";
+
+    async function loadConversationHistory(projectId) {
+        if (!projectId) {
+            return;
+        }
+
+        setLoadingConversation(true);
+        setAgentError("");
+
+        try {
+            const response = await getProjectConversations(projectId);
+            const projectConversations = response?.conversations || [];
+
+            setConversations(projectConversations);
+
+            const latestConversation = projectConversations[0] || null;
+
+            if (!latestConversation) {
+                setConversationId(null);
+                setConversationMessages([]);
+                return;
+            }
+
+            setConversationId(latestConversation.id);
+
+            const messagesResponse = await getConversationMessages(
+                projectId,
+                latestConversation.id
+            );
+
+            setConversationMessages(messagesResponse?.messages || []);
+        } catch (requestError) {
+            setAgentError(
+                requestError.message ||
+                    "Unable to load the conversation history."
+            );
+        } finally {
+            setLoadingConversation(false);
+        }
+    }
+
+    async function loadConversation(projectId, selectedConversationId) {
+        if (!projectId || !selectedConversationId) {
+            return;
+        }
+
+        setLoadingConversation(true);
+        setAgentError("");
+
+        try {
+            const messagesResponse = await getConversationMessages(
+                projectId,
+                selectedConversationId
+            );
+
+            setConversationId(selectedConversationId);
+            setConversationMessages(messagesResponse?.messages || []);
+        } catch (requestError) {
+            setAgentError(
+                requestError.message ||
+                    "Unable to load this conversation."
+            );
+        } finally {
+            setLoadingConversation(false);
+        }
+    }
+
+    function handleNewConversation() {
+        if (sendingMessage) {
+            return;
+        }
+
+        setConversationId(null);
+        setConversationMessages([]);
+        setMessage("");
+        setAgentError("");
+    }
+
+    useEffect(() => {
+        loadConversationHistory(project?.id);
+    }, [project?.id]);
+
+    useEffect(() => {
+        conversationEndRef.current?.scrollIntoView({
+            behavior: "smooth",
+        });
+    }, [conversationMessages, sendingMessage]);
 
     async function refreshProjectFiles({ markAgentChanges = false } = {}) {
         if (!project?.id) {
@@ -921,7 +1014,7 @@ function Workspace({
                 setConversationId(currentConversationId);
             }
 
-            await createConversationMessage(
+            const userMessageResponse = await createConversationMessage(
                 project.id,
                 currentConversationId,
                 {
@@ -929,6 +1022,18 @@ function Workspace({
                     content: trimmedMessage,
                 }
             );
+
+            const persistedUserMessage = userMessageResponse?.message;
+
+            setConversationMessages((currentMessages) => [
+                ...currentMessages,
+                persistedUserMessage || {
+                    id: `local-${Date.now()}`,
+                    role: "user",
+                    content: trimmedMessage,
+                    createdAt: new Date().toISOString(),
+                },
+            ]);
 
             const filesBeforeAgent = [...files];
 
@@ -952,6 +1057,19 @@ function Workspace({
                 currentConversationId,
                 runId
             );
+
+            const messagesResponse = await getConversationMessages(
+                project.id,
+                currentConversationId
+            );
+
+            setConversationMessages(messagesResponse?.messages || []);
+
+            const conversationsResponse = await getProjectConversations(
+                project.id
+            );
+
+            setConversations(conversationsResponse?.conversations || []);
 
             // The agent has completed all iterations and tool calls.
             // Refresh the project only after that completion.
@@ -1886,77 +2004,159 @@ function Workspace({
 
                         </div>
 
-                        <div className="agent-indicator">
-                            <span></span>
+                        <div className="agent-header-actions">
+                            <button
+                                className="new-conversation-button"
+                                onClick={handleNewConversation}
+                                disabled={sendingMessage}
+                                title="Start a new conversation"
+                            >
+                                + New chat
+                            </button>
+
+                            <div className="agent-indicator">
+                                <span></span>
+                            </div>
                         </div>
 
                     </div>
 
+                    {conversations.length > 1 && (
+                        <div className="conversation-history">
+                            <label htmlFor="conversation-select">Conversation</label>
+                            <select
+                                id="conversation-select"
+                                value={conversationId || ""}
+                                onChange={(event) =>
+                                    loadConversation(
+                                        project.id,
+                                        event.target.value
+                                    )
+                                }
+                                disabled={sendingMessage}
+                            >
+                                {conversations.map((conversation) => (
+                                    <option
+                                        key={conversation.id}
+                                        value={conversation.id}
+                                    >
+                                        {conversation.title || "Untitled conversation"}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
                     <div className="conversation">
 
-                        <div className="welcome-message">
-
-                            <div className="forgeai-avatar">
-                                F
+                        {loadingConversation ? (
+                            <div className="conversation-loading">
+                                Loading conversation...
                             </div>
+                        ) : conversationMessages.length === 0 ? (
+                            <>
+                                <div className="welcome-message">
 
-                            <div className="message-content">
+                                    <div className="forgeai-avatar">
+                                        F
+                                    </div>
 
-                                <div className="message-author">
-                                    ForgeAI
+                                    <div className="message-content">
+
+                                        <div className="message-author">
+                                            ForgeAI
+                                        </div>
+
+                                        <p>
+                                            I'm ready to build, modify, test, and debug your project.
+                                        </p>
+
+                                        <p>
+                                            Tell me what you want to create.
+                                        </p>
+
+                                    </div>
+
                                 </div>
 
-                                <p>
-                                    I'm ready to build,
-                                    modify, test, and
-                                    debug your project.
-                                </p>
+                                <div className="suggestions">
 
-                                <p>
-                                    Tell me what you want
-                                    to create.
-                                </p>
+                                    <button
+                                        onClick={() =>
+                                            setMessage(
+                                                "Build a modern landing page"
+                                            )
+                                        }
+                                    >
+                                        <span>✦</span>
+                                        Build a modern landing page
+                                    </button>
 
+                                    <button
+                                        onClick={() =>
+                                            setMessage(
+                                                "Find and fix bugs in my project"
+                                            )
+                                        }
+                                    >
+                                        <span>⌁</span>
+                                        Find and fix bugs
+                                    </button>
+
+                                    <button
+                                        onClick={() =>
+                                            setMessage(
+                                                "Add authentication to my app"
+                                            )
+                                        }
+                                    >
+                                        <span>+</span>
+                                        Add authentication
+                                    </button>
+
+                                </div>
+                            </>
+                        ) : (
+                            <div className="conversation-messages">
+                                {conversationMessages.map((chatMessage) => (
+                                    <div
+                                        className={`chat-message ${
+                                            chatMessage.role === "user"
+                                                ? "chat-message-user"
+                                                : "chat-message-assistant"
+                                        }`}
+                                        key={chatMessage.id}
+                                    >
+                                        <div className="chat-message-avatar">
+                                            {chatMessage.role === "user" ? "You" : "F"}
+                                        </div>
+
+                                        <div className="chat-message-body">
+                                            <div className="chat-message-author">
+                                                {chatMessage.role === "user" ? "You" : "ForgeAI"}
+                                            </div>
+                                            <div className="chat-message-content">
+                                                {chatMessage.content || ""}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {sendingMessage && (
+                                    <div className="chat-message chat-message-assistant">
+                                        <div className="chat-message-avatar">F</div>
+                                        <div className="chat-message-body">
+                                            <div className="chat-message-author">ForgeAI</div>
+                                            <div className="chat-message-content agent-working-message">
+                                                ForgeAI is working on your project…
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div ref={conversationEndRef} />
                             </div>
-
-                        </div>
-
-                        <div className="suggestions">
-
-                            <button
-                                onClick={() =>
-                                    setMessage(
-                                        "Build a modern landing page"
-                                    )
-                                }
-                            >
-                                <span>✦</span>
-                                Build a modern landing page
-                            </button>
-
-                            <button
-                                onClick={() =>
-                                    setMessage(
-                                        "Find and fix bugs in my project"
-                                    )
-                                }
-                            >
-                                <span>⌁</span>
-                                Find and fix bugs
-                            </button>
-
-                            <button
-                                onClick={() =>
-                                    setMessage(
-                                        "Add authentication to my app"
-                                    )
-                                }
-                            >
-                                <span>+</span>
-                                Add authentication
-                            </button>
-
-                        </div>
+                        )}
 
                     </div>
 
