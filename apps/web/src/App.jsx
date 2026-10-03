@@ -13,6 +13,9 @@ import {
     getProjectFiles,
     getProjectFile,
     updateProjectFile,
+    createConversation,
+    createConversationMessage,
+    startAgentRun,
 } from "./services/api";
 
 /* =========================
@@ -733,8 +736,45 @@ function Workspace({
 
     const saveFileRef = useRef(null);
 
+    const [conversationId, setConversationId] = useState(null);
+    const [sendingMessage, setSendingMessage] = useState(false);
+    const[agentError,setAgentError]= useState("");
+
     const projectName =
         project?.name || "ForgeAI Project";
+
+    async function handleSendMessage(){
+      const trimmedMessage = message.trim();
+
+      if(!trimmedMessage || !project?.id || sendingMessage){
+        return;
+      }
+
+      setSendingMessage(true);
+      setAgentError("");
+
+      try{
+        let currentConversationId = conversationId;
+
+        if(!currentConversationId){
+          const conversationResponse = await createConversation(project.id, trimmedMessage.slice(0, 00));
+          currentConversationId = conversationResponse?.conversation?.id;
+          if(!currentConversationId){
+            throw new Error("Unable to create an agent conversation");
+          }
+          setConversationId(currentConversationId);
+        }
+        await createConversationMessage(
+          project.id, currentConversationId, {role:"user", content:trimmedMessage}
+        );
+        await startAgentRun(project.id, currentConversationId);
+        setMessage("");
+      } catch(requestError){
+          setAgentError(requestError.message || "Unable to start the ForgeAI agent.");
+      } finally {
+        setSendingMessage(false);
+      }
+    }
 
     /*
      * =========================
@@ -1646,6 +1686,12 @@ function Workspace({
 
                     <div className="agent-input-area">
 
+                        {agentError && (
+                            <div className="agent-error">
+                                {agentError}
+                            </div>
+                        )}   
+                             
                         <div className="agent-input-wrapper">
 
                             <textarea
@@ -1655,8 +1701,18 @@ function Workspace({
                                         event.target.value
                                     )
                                 }
+                                onKeyDown={(event) => {
+                                    if (
+                                        event.key === "Enter" &&
+                                        !event.shiftKey
+                                    ) {
+                                        event.preventDefault();
+                                        handleSendMessage();
+                                    }
+                                }}
                                 placeholder="Ask ForgeAI to build something..."
                                 rows="3"
+                                disabled={sendingMessage}
                             />
 
                             <div className="input-footer">
@@ -1667,7 +1723,19 @@ function Workspace({
                                 </span>
 
                                 <button className="send-button">
-                                    ↑
+                                    className="send-button"
+                                      onClick={handleSendMessage}
+                                      disabled={
+                                          !message.trim() ||
+                                          sendingMessage
+                                      }
+                                      title={
+                                          sendingMessage
+                                              ? "ForgeAI is working..."
+                                              : "Send message"
+                                      }
+                                  >
+                                      {sendingMessage ? "…" : "↑"}
                                 </button>
 
                             </div>
