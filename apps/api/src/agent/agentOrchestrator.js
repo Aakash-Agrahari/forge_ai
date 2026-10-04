@@ -131,7 +131,7 @@ export async function runAgent({
                 model: result.model
             });
 
-            //If the model has finished without requesting a tool, the agent run is complete.
+            // If the model has finished without requesting a tool, the agent run is complete.
             if (!result.toolCalls || result.toolCalls.length === 0) {
                 await createMessage({
                     conversationId,
@@ -158,7 +158,7 @@ export async function runAgent({
                 };
             }
 
-            //Persist the assistant's tool calls.
+            // Persist the assistant's tool calls.
             for (const toolCall of result.toolCalls) {
                 await createMessage({
                     conversationId,
@@ -170,9 +170,9 @@ export async function runAgent({
                 });
             }
 
-            //Execute each requested tool exactly once.
+            // Execute each requested tool exactly once.
             for (const toolCall of result.toolCalls) {
-                //Validate the model-generated tool call before executing anything.
+                // Validate the model-generated tool call before executing anything.
                 const validatedToolCall =
                     validateToolCall(toolCall);
 
@@ -192,7 +192,7 @@ export async function runAgent({
                     currentCount
                 );
 
-                //Prevent the model from endlessly repeating exactly the same operation
+                // Prevent the model from endlessly repeating exactly the same operation.
                 if (currentCount > MAX_IDENTICAL_TOOL_CALLS) {
                     const error = new Error(
                         `Agent repeated the same tool call too many times: ${validatedToolCall.name}`
@@ -239,10 +239,31 @@ export async function runAgent({
                     recordError(state, toolError);
                 }
 
-                if (validatedToolCall.name === "verify_javascript") {
-                    const verificationStatus = toolResult?.verified
-                        ? "JavaScript verification passed."
-                        : "JavaScript verification failed. Inspect the verification result and repair the file if necessary.";
+                /*
+                 * ==========================================
+                 * VERIFICATION / EXECUTION FEEDBACK
+                 * ==========================================
+                 */
+
+                if (
+                    validatedToolCall.name === "verify_javascript" ||
+                    validatedToolCall.name === "run_javascript_test"
+                ) {
+                    const verificationPassed =
+                        validatedToolCall.name === "run_javascript_test"
+                            ? toolResult?.passed === true
+                            : toolResult?.verified === true;
+
+                    const verificationStatus =
+                        verificationPassed
+                            ? validatedToolCall.name ===
+                              "run_javascript_test"
+                                ? "JavaScript behavioral test passed. The function produced the expected result."
+                                : "JavaScript structural verification passed."
+                            : validatedToolCall.name ===
+                              "run_javascript_test"
+                                ? "JavaScript behavioral test failed. Inspect the actual result, determine the root cause, repair the relevant file, and run the behavioral test again."
+                                : "JavaScript structural verification failed. Inspect the verification result and repair the file if necessary.";
 
                     addMessage(state, {
                         role: "system",
@@ -260,9 +281,12 @@ export async function runAgent({
                     JSON.stringify(toolResult, null, 2)
                 );
 
-                
-                //Track files modified by write_file.
-                 
+                /*
+                 * ==========================================
+                 * TRACK FILE CHANGES
+                 * ==========================================
+                 */
+
                 if (
                     validatedToolCall.name === "write_file" &&
                     toolResult?.success &&
@@ -274,21 +298,42 @@ export async function runAgent({
                     );
                 }
 
-                if (validatedToolCall.name === "verify_javascript") {
+                /*
+                 * ==========================================
+                 * TRACK VERIFICATION RESULTS
+                 * ==========================================
+                 */
+
+                if (
+                    validatedToolCall.name === "verify_javascript" ||
+                    validatedToolCall.name === "run_javascript_test"
+                ) {
                     recordVerificationResult(
                         state,
                         toolResult
                     );
                 }
 
-                if (validatedToolCall.name === "execute_javascript") {
+                /*
+                 * ==========================================
+                 * TRACK JAVASCRIPT EXECUTION
+                 * ==========================================
+                 */
+
+                if (
+                    validatedToolCall.name ===
+                    "execute_javascript"
+                ) {
                     recordExecutionResult(
                         state,
                         toolResult
                     );
                 }
 
-                if (validatedToolCall.name === "execute_javascript") {
+                if (
+                    validatedToolCall.name ===
+                    "execute_javascript"
+                ) {
                     const executionStatus =
                         toolResult?.success &&
                         toolResult?.exitCode === 0 &&
@@ -306,9 +351,13 @@ export async function runAgent({
                         executionStatus
                     );
                 }
-              
-                //Persist the tool result.
-                
+
+                /*
+                 * ==========================================
+                 * PERSIST TOOL RESULT
+                 * ==========================================
+                 */
+
                 const serializedToolResult =
                     JSON.stringify(toolResult);
 
@@ -321,8 +370,11 @@ export async function runAgent({
                     toolResult
                 });
 
-                
-                //Add the tool result back into the agent's in-memory conversation so the next model iteration can reason over it.
+                /*
+                 * Add the tool result back into the agent's
+                 * in-memory conversation so the next model
+                 * iteration can reason over it.
+                 */
                 addMessage(state, {
                     role: "tool",
                     toolCallId: validatedToolCall.id,
@@ -330,16 +382,37 @@ export async function runAgent({
                     content: serializedToolResult
                 });
 
-                
-                //Give the model explicit feedback about the result of the tool it just used.
-                const toolStatus =
-                    validatedToolCall.name === "verify_javascript"
-                        ? toolResult?.verified
-                            ? "JavaScript verification passed. The requested implementation has been verified."
-                            : "JavaScript verification failed. Inspect the verification result, repair the relevant file, and run verification again."
-                        : toolResult?.success
-                            ? `Tool "${validatedToolCall.name}" completed successfully. Use this result as evidence. Do not repeat the same tool call unless the project state has changed or additional information is required.`
-                            : `Tool "${validatedToolCall.name}" failed. Inspect the returned error, determine the cause, and take a different corrective action if possible.`;
+                /*
+                 * ==========================================
+                 * EXPLICIT TOOL STATUS FOR THE MODEL
+                 * ==========================================
+                 */
+
+                let toolStatus;
+
+                if (
+                    validatedToolCall.name ===
+                    "run_javascript_test"
+                ) {
+                    if (toolResult?.passed === true) {
+                        toolStatus =
+                            "JavaScript behavioral test passed. The actual function output matches the expected result. This is valid behavioral verification.";
+                    } else {
+                        toolStatus =
+                            "JavaScript behavioral test failed. The function did not produce the expected result or the test could not complete. Inspect the test result, determine the root cause, repair the relevant file, and run run_javascript_test again. Do not claim the JavaScript implementation is verified until passed is true.";
+                    }
+                } else if (
+                    validatedToolCall.name ===
+                    "verify_javascript"
+                ) {
+                    toolStatus = toolResult?.verified
+                        ? "JavaScript structural verification passed. This confirms the expected structure was found, but it does not prove runtime behavior."
+                        : "JavaScript structural verification failed. Inspect the verification result, repair the relevant file, and run verification again.";
+                } else {
+                    toolStatus = toolResult?.success
+                        ? `Tool "${validatedToolCall.name}" completed successfully. Use this result as evidence. Do not repeat the same tool call unless the project state has changed or additional information is required.`
+                        : `Tool "${validatedToolCall.name}" failed. Inspect the returned error, determine the cause, and take a different corrective action if possible.`;
+                }
 
                 addMessage(state, {
                     role: "system",
@@ -348,9 +421,7 @@ export async function runAgent({
             }
         }
 
-        
-        //The agent reached the safety iteration limit.
-        
+        // The agent reached the safety iteration limit.
         const error = new Error(
             `Agent exceeded maximum iterations (${MAX_ITERATIONS})`
         );
