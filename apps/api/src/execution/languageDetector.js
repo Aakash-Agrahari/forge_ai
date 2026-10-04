@@ -2,10 +2,12 @@ const EXTENSION_LANGUAGE_MAP = {
     ".js": "javascript",
     ".mjs": "javascript",
     ".cjs": "javascript",
+    ".jsx": "javascript",
 
     ".ts": "typescript",
     ".mts": "typescript",
     ".cts": "typescript",
+    ".tsx": "typescript",
 
     ".py": "python",
 
