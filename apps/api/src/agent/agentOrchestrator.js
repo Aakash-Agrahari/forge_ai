@@ -24,6 +24,47 @@ import { validateToolCall } from "./toolCallValidator.js";
 const MAX_ITERATIONS = 10;
 const MAX_IDENTICAL_TOOL_CALLS = 3;
 
+/*
+ * Detect whether the user's request explicitly requires
+ * behavioral JavaScript verification.
+ *
+ * We intentionally do not require verification for every
+ * JavaScript task. The requirement is activated only when
+ * the user explicitly asks for behavioral/runtime testing.
+ */
+function requiresBehavioralVerification(messages) {
+    const userMessages = messages
+        .filter((message) => message?.role === "user")
+        .map((message) => message?.content ?? "")
+        .join("\n")
+        .toLowerCase();
+
+    if (!userMessages) {
+        return false;
+    }
+
+    const verificationSignals = [
+        "run_javascript_test",
+        "behavioral verification",
+        "behaviorally verify",
+        "behavioral test",
+        "behaviorally test",
+        "runtime verification",
+        "runtime test",
+        "verify the function",
+        "verify the implementation",
+        "verify the code",
+        "test the function",
+        "test the implementation",
+        "do not claim",
+        "until passed is true"
+    ];
+
+    return verificationSignals.some((signal) =>
+        userMessages.includes(signal)
+    );
+}
+
 export async function runAgent({
     runId,
     projectId,
@@ -38,10 +79,32 @@ export async function runAgent({
 
     const toolCallHistory = new Map();
 
+    /*
+     * Determine this once from the user's request.
+     *
+     * If the user explicitly requested behavioral verification,
+     * the agent cannot finish until run_javascript_test succeeds.
+     */
+    const behavioralVerificationRequired =
+        requiresBehavioralVerification(messages);
+
+    let behavioralVerificationPassed = false;
+
     addMessage(state, {
         role: "system",
         content: AGENT_SYSTEM_PROMPT
     });
+
+    if (behavioralVerificationRequired) {
+        addMessage(state, {
+            role: "system",
+            content:
+                "This task explicitly requires behavioral JavaScript verification. " +
+                "You must use run_javascript_test before claiming the task is complete. " +
+                "A file being created successfully is not sufficient. " +
+                "The task cannot be considered verified until run_javascript_test returns passed: true."
+        });
+    }
 
     try {
         /*
@@ -131,8 +194,48 @@ export async function runAgent({
                 model: result.model
             });
 
-            // If the model has finished without requesting a tool, the agent run is complete.
+            /*
+             * =====================================================
+             * COMPLETION GATE
+             * =====================================================
+             *
+             * Normally, a model response without tool calls means
+             * the agent has finished.
+             *
+             * However, if the user explicitly required behavioral
+             * verification, we must prevent premature completion.
+             */
             if (!result.toolCalls || result.toolCalls.length === 0) {
+                if (
+                    behavioralVerificationRequired &&
+                    !behavioralVerificationPassed
+                ) {
+                    const verificationRequiredMessage =
+                        "The task explicitly requires behavioral JavaScript verification, " +
+                        "but run_javascript_test has not successfully passed yet. " +
+                        "Do not finish the task. " +
+                        "Use run_javascript_test on the relevant JavaScript function " +
+                        "with representative inputs. " +
+                        "If the test fails, inspect the actual result, repair the implementation, " +
+                        "and run run_javascript_test again. " +
+                        "You may only claim completion after passed: true.";
+
+                    addMessage(state, {
+                        role: "system",
+                        content: verificationRequiredMessage
+                    });
+
+                    console.log(
+                        "[ForgeAI Agent] Completion blocked:",
+                        verificationRequiredMessage
+                    );
+
+                    /*
+                     * Continue the agent loop instead of completing.
+                     */
+                    continue;
+                }
+
                 await createMessage({
                     conversationId,
                     role: "assistant",
@@ -158,7 +261,9 @@ export async function runAgent({
                 };
             }
 
-            // Persist the assistant's tool calls.
+            /*
+             * Persist the assistant's tool calls.
+             */
             for (const toolCall of result.toolCalls) {
                 await createMessage({
                     conversationId,
@@ -170,9 +275,14 @@ export async function runAgent({
                 });
             }
 
-            // Execute each requested tool exactly once.
+            /*
+             * Execute each requested tool exactly once.
+             */
             for (const toolCall of result.toolCalls) {
-                // Validate the model-generated tool call before executing anything.
+                /*
+                 * Validate the model-generated tool call before
+                 * executing anything.
+                 */
                 const validatedToolCall =
                     validateToolCall(toolCall);
 
@@ -192,7 +302,10 @@ export async function runAgent({
                     currentCount
                 );
 
-                // Prevent the model from endlessly repeating exactly the same operation.
+                /*
+                 * Prevent the model from endlessly repeating
+                 * exactly the same operation.
+                 */
                 if (currentCount > MAX_IDENTICAL_TOOL_CALLS) {
                     const error = new Error(
                         `Agent repeated the same tool call too many times: ${validatedToolCall.name}`
@@ -240,9 +353,9 @@ export async function runAgent({
                 }
 
                 /*
-                 * ==========================================
+                 * =====================================================
                  * VERIFICATION / EXECUTION FEEDBACK
-                 * ==========================================
+                 * =====================================================
                  */
 
                 if (
@@ -250,9 +363,19 @@ export async function runAgent({
                     validatedToolCall.name === "run_javascript_test"
                 ) {
                     const verificationPassed =
-                        validatedToolCall.name === "run_javascript_test"
+                        validatedToolCall.name ===
+                        "run_javascript_test"
                             ? toolResult?.passed === true
                             : toolResult?.verified === true;
+
+                    if (
+                        validatedToolCall.name ===
+                        "run_javascript_test"
+                    ) {
+                        if (verificationPassed) {
+                            behavioralVerificationPassed = true;
+                        }
+                    }
 
                     const verificationStatus =
                         verificationPassed
@@ -278,13 +401,17 @@ export async function runAgent({
 
                 console.log(
                     `[ForgeAI Agent] Tool result: ${validatedToolCall.name}`,
-                    JSON.stringify(toolResult, null, 2)
+                    JSON.stringify(
+                        toolResult,
+                        null,
+                        2
+                    )
                 );
 
                 /*
-                 * ==========================================
+                 * =====================================================
                  * TRACK FILE CHANGES
-                 * ==========================================
+                 * =====================================================
                  */
 
                 if (
@@ -299,14 +426,16 @@ export async function runAgent({
                 }
 
                 /*
-                 * ==========================================
+                 * =====================================================
                  * TRACK VERIFICATION RESULTS
-                 * ==========================================
+                 * =====================================================
                  */
 
                 if (
-                    validatedToolCall.name === "verify_javascript" ||
-                    validatedToolCall.name === "run_javascript_test"
+                    validatedToolCall.name ===
+                        "verify_javascript" ||
+                    validatedToolCall.name ===
+                        "run_javascript_test"
                 ) {
                     recordVerificationResult(
                         state,
@@ -315,9 +444,9 @@ export async function runAgent({
                 }
 
                 /*
-                 * ==========================================
+                 * =====================================================
                  * TRACK JAVASCRIPT EXECUTION
-                 * ==========================================
+                 * =====================================================
                  */
 
                 if (
@@ -353,9 +482,9 @@ export async function runAgent({
                 }
 
                 /*
-                 * ==========================================
+                 * =====================================================
                  * PERSIST TOOL RESULT
-                 * ==========================================
+                 * =====================================================
                  */
 
                 const serializedToolResult =
@@ -383,9 +512,9 @@ export async function runAgent({
                 });
 
                 /*
-                 * ==========================================
+                 * =====================================================
                  * EXPLICIT TOOL STATUS FOR THE MODEL
-                 * ==========================================
+                 * =====================================================
                  */
 
                 let toolStatus;
@@ -421,7 +550,9 @@ export async function runAgent({
             }
         }
 
-        // The agent reached the safety iteration limit.
+        /*
+         * The agent reached the safety iteration limit.
+         */
         const error = new Error(
             `Agent exceeded maximum iterations (${MAX_ITERATIONS})`
         );
