@@ -14,6 +14,11 @@ const ALLOWED_RUNTIME_COMMANDS = [
     /^java\s+[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*$/
 ];
 
+const SANDBOX_LIMITS = {
+    maxTimeoutMs: 30_000,
+    maxOutputBytes: 1_000_000
+};
+
 function normalizeCommand(command) {
     return command.trim().replace(/\s+/g, " ");
 }
@@ -27,15 +32,20 @@ function parseJavaSourceArguments(command) {
         return [];
     }
 
-    return sourcePart
-        .match(/"[^"]+"|\S+/g)
-        ?.map((file) => {
-            if (file.startsWith('"') && file.endsWith('"')) {
-                return file.slice(1, -1);
-            }
+    return (
+        sourcePart
+            .match(/"[^"]+"|\S+/g)
+            ?.map((file) => {
+                if (
+                    file.startsWith('"') &&
+                    file.endsWith('"')
+                ) {
+                    return file.slice(1, -1);
+                }
 
-            return file;
-        }) ?? [];
+                return file;
+            }) ?? []
+    );
 }
 
 function isSafeRelativeJavaPath(filePath) {
@@ -107,7 +117,10 @@ function validateRuntimeCommand(command) {
 }
 
 export function validateSandboxCommand(command) {
-    if (typeof command !== "string" || !command.trim()) {
+    if (
+        typeof command !== "string" ||
+        !command.trim()
+    ) {
         const error = new Error(
             "Sandbox command must be a non-empty string"
         );
@@ -138,4 +151,10 @@ export function validateSandboxCommand(command) {
     error.code = "SANDBOX_COMMAND_NOT_ALLOWED";
 
     throw error;
+}
+
+export function getSandboxLimits() {
+    return {
+        ...SANDBOX_LIMITS
+    };
 }
