@@ -7,57 +7,97 @@ const ALLOWED_SIMPLE_COMMANDS = new Set([
 ]);
 
 const ALLOWED_RUNTIME_COMMANDS = [
-    /^node\s+([A-Za-z0-9._/-]+\.m?js)$/,
-    /^python\s+([A-Za-z0-9._/-]+\.py)$/,
-    /^php\s+([A-Za-z0-9._/-]+\.php)$/,
-    /^ruby\s+([A-Za-z0-9._/-]+\.rb)$/,
-    /^java\s+([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*)$/
+    /^node\s+[A-Za-z0-9._/-]+\.m?js$/,
+    /^python\s+[A-Za-z0-9._/-]+\.py$/,
+    /^php\s+[A-Za-z0-9._/-]+\.php$/,
+    /^ruby\s+[A-Za-z0-9._/-]+\.rb$/,
+    /^java\s+[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*$/
 ];
 
 function normalizeCommand(command) {
     return command.trim().replace(/\s+/g, " ");
 }
 
-function validateJavaCompileCommand(command) {
-    const normalized = normalizeCommand(command);
-
-    if (!normalized.startsWith("javac ")) {
-        return false;
-    }
-
-    const sourcePart = normalized.slice("javac ".length).trim();
+function parseJavaSourceArguments(command) {
+    const sourcePart = command
+        .slice("javac".length)
+        .trim();
 
     if (!sourcePart) {
+        return [];
+    }
+
+    return sourcePart
+        .match(/"[^"]+"|\S+/g)
+        ?.map((file) => {
+            if (file.startsWith('"') && file.endsWith('"')) {
+                return file.slice(1, -1);
+            }
+
+            return file;
+        }) ?? [];
+}
+
+function isSafeRelativeJavaPath(filePath) {
+    if (!filePath) {
         return false;
     }
 
-    const sourceFiles = sourcePart
-        .split(/\s+/)
-        .map((file) => file.replace(/^"|"$/g, ""));
+    if (filePath.startsWith("/")) {
+        return false;
+    }
+
+    if (filePath.includes("\\")) {
+        return false;
+    }
+
+    if (filePath.includes("..")) {
+        return false;
+    }
+
+    if (filePath.includes(";")) {
+        return false;
+    }
+
+    if (filePath.includes("|")) {
+        return false;
+    }
+
+    if (filePath.includes("&")) {
+        return false;
+    }
+
+    if (filePath.includes(">")) {
+        return false;
+    }
+
+    if (filePath.includes("<")) {
+        return false;
+    }
+
+    if (filePath.includes("$")) {
+        return false;
+    }
+
+    if (!filePath.endsWith(".java")) {
+        return false;
+    }
+
+    return /^[A-Za-z0-9._/-]+\.java$/.test(filePath);
+}
+
+function validateJavaCompileCommand(command) {
+    if (!command.startsWith("javac ")) {
+        return false;
+    }
+
+    const sourceFiles = parseJavaSourceArguments(command);
 
     if (sourceFiles.length === 0) {
         return false;
     }
 
-    return sourceFiles.every((file) => {
-        if (!file.endsWith(".java")) {
-            return false;
-        }
-
-        if (file.startsWith("/")) {
-            return false;
-        }
-
-        if (file.includes("..")) {
-            return false;
-        }
-
-        if (file.includes("\\") || file.includes(";")) {
-            return false;
-        }
-
-        return /^[A-Za-z0-9._/-]+\.java$/.test(file);
-    });
+    return sourceFiles.every(isSafeRelativeJavaPath);
 }
 
 function validateRuntimeCommand(command) {
