@@ -7,8 +7,13 @@ const result = await executeInSandboxSession({
 
     steps: [
         {
-            name: "javascript",
-            command: "node hello.js"
+            name: "compile-java",
+            command:
+                'javac "addjava.java" "src/Calculator.java" "src/CalculatorRepair.java"'
+        },
+        {
+            name: "run-java",
+            command: "java addjava"
         }
     ]
 });
