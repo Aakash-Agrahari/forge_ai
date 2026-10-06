@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { getProjectFiles } from "../services/fileService.js";
 import { validateProjectPath } from "../agent/projectPath.js";
-import { executeProjectCommand } from "../sandbox/sandboxService.js";
+import { executeInSandboxSession } from "../sandbox/sandboxSessionService.js";
 
 import {
     detectPrimaryProjectLanguage,
@@ -86,7 +86,9 @@ function getJavaSourceFiles(files) {
         .filter(
             (file) =>
                 typeof file.path === "string" &&
-                file.path.toLowerCase().endsWith(".java")
+                file.path
+                    .toLowerCase()
+                    .endsWith(".java")
         )
         .map((file) =>
             validateProjectPath(file.path)
@@ -182,6 +184,7 @@ function createExecutionCommand({
                         filePath,
                         content: fileContent
                     }),
+
                 buildCommand:
                     getJavaCompileCommand(
                         javaFiles
@@ -272,7 +275,7 @@ export async function executeCode({
      * Other strategies exist, but their
      * compiler/runtime integration will be
      * added one language at a time after the
-     * generic contract is proven.
+     * generic execution contract is proven.
      */
     const supportedLanguages = new Set([
         "javascript",
@@ -298,44 +301,93 @@ export async function executeCode({
             projectFile.content
     });
 
-    let buildResult = null;
+    /*
+     * Every execution now happens inside one
+     * persistent sandbox session.
+     *
+     * This is important for compiled languages:
+     *
+     *     build -> run
+     *
+     * must happen inside the same workspace.
+     *
+     * Otherwise generated artifacts such as
+     * .class files disappear between executions.
+     */
+    const steps = [];
 
     if (buildCommand) {
-        buildResult =
-            await executeProjectCommand({
-                projectId,
-                command:
-                    buildCommand
-            });
+        steps.push({
+            name: "build",
+            command: buildCommand,
+            stopOnFailure: true
+        });
+    }
 
-        if (
+    steps.push({
+        name: "execution",
+        command,
+        stopOnFailure: true
+    });
+
+    const sessionResult =
+        await executeInSandboxSession({
+            projectId,
+            steps
+        });
+
+    const buildResult =
+        buildCommand
+            ? (
+                sessionResult.results
+                    .find(
+                        (result) =>
+                            result.name === "build"
+                    ) ?? null
+            )
+            : null;
+
+    const executionResult =
+        sessionResult.results
+            .find(
+                (result) =>
+                    result.name === "execution"
+            ) ?? null;
+
+    if (
+        buildCommand &&
+        buildResult &&
+        (
             !buildResult.success ||
             buildResult.exitCode !== 0 ||
             buildResult.timeOut
-        ) {
-            return {
-                success: false,
-                language,
-                filePath:
-                    projectFile.path,
-                stage: "build",
-                build: buildResult,
-                execution: null
-            };
-        }
-    }
+        )
+    ) {
+        return {
+            success: false,
 
-    const executionResult =
-        await executeProjectCommand({
-            projectId,
-            command
-        });
+            language,
+
+            runtime:
+                strategy.runtime,
+
+            filePath:
+                projectFile.path,
+
+            stage: "build",
+
+            build: buildResult,
+
+            execution: null
+        };
+    }
 
     return {
         success:
-            executionResult.success &&
-            executionResult.exitCode === 0 &&
-            !executionResult.timeOut,
+            sessionResult.success &&
+            executionResult?.success === true &&
+            executionResult?.exitCode === 0 &&
+            executionResult?.timeOut !== true,
 
         language,
 
