@@ -330,6 +330,26 @@ Do not use a tool merely because it exists.
 
 Select the tool that best matches the CURRENT operation.
 
+IMPORTANT TOOL ARGUMENT RULES
+
+Use tool arguments exactly according to the tool schema.
+
+For list_files:
+- Call list_files with NO arguments.
+- Correct: list_files {}
+- Incorrect: list_files { "path": "." }
+- Incorrect: list_files { "directory": "." }
+- The list_files tool already operates on the current project and returns the project file list.
+
+For read_file:
+- Provide the project-relative file path using the "path" argument.
+
+For write_file:
+- Provide "path" and "content".
+
+For run_command:
+- Provide "command".
+
 ==================================================
 AUTONOMOUS DEBUGGING
 ==================================================
