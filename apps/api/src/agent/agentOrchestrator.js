@@ -21,19 +21,85 @@ import { updateAgentRun } from "../services/agentRunService.js";
 import { AGENT_SYSTEM_PROMPT } from "./agentSystemPrompt.js";
 import { validateToolCall } from "./toolCallValidator.js";
 
+
 const MAX_ITERATIONS = 10;
 const MAX_IDENTICAL_TOOL_CALLS = 3;
+const MAX_COMPLETION_RETRIES = 3;
 
-const MAX_EARLY_COMPLETION_RETRIES = 2;
 
-function taskRequiresVerification(messages) {
-    const userText = messages
+/*
+ * ============================================================
+ * TASK CONTEXT
+ * ============================================================
+ *
+ * The agent may receive short follow-up messages such as:
+ *
+ * "continue"
+ * "re-read the conversation"
+ *
+ * Those messages should NOT replace the original coding task.
+ *
+ * We therefore identify the latest substantive user request
+ * and keep it available throughout the agent run.
+ */
+function getTaskContext(messages) {
+    const userMessages = messages
         .filter((message) => message.role === "user")
-        .map((message) => message.content ?? "")
-        .join("\n")
-        .toLowerCase();
+        .map((message) => (message.content ?? "").trim())
+        .filter(Boolean);
 
-    const verificationKeywords = [
+    if (userMessages.length === 0) {
+        return "";
+    }
+
+    const metaOnlyPatterns = [
+        /^so have re read the conversation[.!]?$/i,
+        /^re[- ]?read the conversation[.!]?$/i,
+        /^read the conversation again[.!]?$/i,
+        /^continue[.!]?$/i
+    ];
+
+    const candidates = userMessages.filter(
+        (message) =>
+            message.length >= 40 &&
+            !metaOnlyPatterns.some((pattern) =>
+                pattern.test(message)
+            )
+    );
+
+    if (candidates.length === 0) {
+        return userMessages[userMessages.length - 1];
+    }
+
+    return candidates[candidates.length - 1];
+}
+
+
+/*
+ * ============================================================
+ * TASK REQUIREMENTS
+ * ============================================================
+ *
+ * Detect whether the user explicitly requires:
+ *
+ * 1. Runtime/test verification
+ * 2. An intentional failure followed by repair
+ *
+ * Example:
+ *
+ * "Intentionally introduce a bug.
+ * Run the test.
+ * Observe failure.
+ * Diagnose.
+ * Fix.
+ * Run again."
+ *
+ * For this type of task, a single successful test is NOT enough.
+ */
+function getTaskRequirements(taskText) {
+    const text = taskText.toLowerCase();
+
+    const requiresVerification = [
         "run test",
         "run tests",
         "run the test",
@@ -49,13 +115,39 @@ function taskRequiresVerification(messages) {
         "diagnose",
         "fix the bug",
         "fix incorrect"
-    ];
-
-    return verificationKeywords.some((keyword) =>
-        userText.includes(keyword)
+    ].some((keyword) =>
+        text.includes(keyword)
     );
+
+    const requiresObservedFailure = [
+        "intentionally introduce",
+        "intentionally make",
+        "introduce a bug",
+        "make it buggy",
+        "make the implementation incorrect",
+        "observe failure",
+        "observe the failure",
+        "observe actual failure",
+        "diagnose root cause",
+        "diagnose the root cause",
+        "fix the bug",
+        "fix incorrect implementation"
+    ].some((keyword) =>
+        text.includes(keyword)
+    );
+
+    return {
+        requiresVerification,
+        requiresObservedFailure
+    };
 }
 
+
+/*
+ * ============================================================
+ * SUCCESSFUL VERIFICATION
+ * ============================================================
+ */
 function hasSuccessfulVerification(toolResults) {
     return toolResults.some((result) => {
         if (!result?.success) {
@@ -78,13 +170,155 @@ function hasSuccessfulVerification(toolResults) {
                 return result.verified === true;
             }
 
-            return result.exitCode === 0 || result.success === true;
+            return (
+                result.exitCode === 0 ||
+                result.success === true
+            );
         }
 
         return false;
     });
 }
 
+
+/*
+ * ============================================================
+ * OBSERVED EXECUTION FAILURE
+ * ============================================================
+ *
+ * This is intentionally different from a successful verification.
+ *
+ * For an intentional-bug workflow we need actual evidence that
+ * the buggy implementation failed at runtime/test time.
+ */
+function hasObservedExecutionFailure(toolResults) {
+    return toolResults.some((result) => {
+        const toolName = result?.toolName;
+
+        if (toolName === "run_javascript_test") {
+            return result.passed === false;
+        }
+
+        if (
+            toolName === "run_command" ||
+            toolName === "execute_javascript"
+        ) {
+            return (
+                result.success === false ||
+                (
+                    result.exitCode !== undefined &&
+                    result.exitCode !== 0
+                ) ||
+                result.timeOut === true
+            );
+        }
+
+        return false;
+    });
+}
+
+
+/*
+ * ============================================================
+ * SUCCESS AFTER FAILURE
+ * ============================================================
+ *
+ * For intentional repair tasks we require:
+ *
+ * failure
+ *   ↓
+ * repair
+ *   ↓
+ * success
+ *
+ * A success that happened BEFORE the failure does not count.
+ */
+function hasSuccessfulVerificationAfterFailure(toolResults) {
+    let failureSeen = false;
+
+    for (const result of toolResults) {
+        if (hasObservedExecutionFailure([result])) {
+            failureSeen = true;
+            continue;
+        }
+
+        if (
+            failureSeen &&
+            hasSuccessfulVerification([result])
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+/*
+ * ============================================================
+ * COMPLETION AUDIT
+ * ============================================================
+ *
+ * Determines exactly what evidence is still missing.
+ */
+function getMissingCompletionRequirements(
+    taskRequirements,
+    toolResults
+) {
+    const missing = [];
+
+    if (!taskRequirements.requiresVerification) {
+        return missing;
+    }
+
+    /*
+     * Tasks such as:
+     *
+     * "Introduce a bug, run it, observe failure,
+     * fix it, and run it again."
+     *
+     * require BOTH failure and later success.
+     */
+    if (taskRequirements.requiresObservedFailure) {
+        if (!hasObservedExecutionFailure(toolResults)) {
+            missing.push(
+                "an actual failing execution/test that demonstrates the bug or failure"
+            );
+        }
+
+        if (
+            !hasSuccessfulVerificationAfterFailure(
+                toolResults
+            )
+        ) {
+            missing.push(
+                "a successful execution/test after the failure has been diagnosed and repaired"
+            );
+        }
+
+        return missing;
+    }
+
+    /*
+     * Normal verification task:
+     *
+     * successful runtime/test evidence is enough.
+     */
+    if (!hasSuccessfulVerification(toolResults)) {
+        missing.push(
+            "successful runtime/test verification of the requested final behavior"
+        );
+    }
+
+    return missing;
+}
+
+
+/*
+ * ============================================================
+ * JAVASCRIPT TEST FEEDBACK
+ * ============================================================
+ */
 function getJavaScriptVerificationStatus(toolResult) {
     if (toolResult?.passed === true) {
         return {
@@ -145,6 +379,12 @@ function getJavaScriptVerificationStatus(toolResult) {
     }
 }
 
+
+/*
+ * ============================================================
+ * MAIN AGENT
+ * ============================================================
+ */
 export async function runAgent({
     runId,
     projectId,
@@ -159,18 +399,38 @@ export async function runAgent({
 
     const toolCallHistory = new Map();
 
+    /*
+     * Every tool result is stored here so that completion
+     * decisions are based on actual runtime evidence.
+     */
     const toolResults = [];
-    let earlyCompletionRetries = 0;
-    let hasPerformedWork = false;
-    const requiresVerification = taskRequiresVerification(messages);
 
+    let completionRetries = 0;
+
+    /*
+     * Identify the actual substantive task.
+     */
+    const taskContext = getTaskContext(messages);
+
+    const taskRequirements =
+        getTaskRequirements(taskContext);
+
+
+    /*
+     * System instructions.
+     */
     addMessage(state, {
         role: "system",
         content: AGENT_SYSTEM_PROMPT
     });
 
+
     try {
         /*
+         * ========================================================
+         * LOAD EXISTING CONVERSATION
+         * ========================================================
+         *
          * Messages already exist in the database.
          * Load them into the in-memory agent state,
          * but do not persist them again.
@@ -181,11 +441,48 @@ export async function runAgent({
                 content: message.content ?? "",
                 toolCallId: message.toolCallId ?? null,
                 toolName: message.toolName ?? null,
-                toolArguments: message.toolArguments ?? null,
-                toolResult: message.toolResult ?? null
+                toolArguments:
+                    message.toolArguments ?? null,
+                toolResult:
+                    message.toolResult ?? null
             });
         }
 
+
+        /*
+         * ========================================================
+         * ACTIVE TASK CONTEXT
+         * ========================================================
+         *
+         * This prevents short follow-up messages such as:
+         *
+         * "re-read the conversation"
+         *
+         * from replacing the actual coding task.
+         */
+        if (taskContext) {
+            addMessage(state, {
+                role: "system",
+                content: [
+                    "CURRENT TASK CONTEXT",
+                    "",
+                    "The following is the substantive user task for this agent run.",
+                    "Treat it as the active task even if later user messages are only follow-up/meta instructions.",
+                    "",
+                    taskContext,
+                    "",
+                    "Do not confuse historical project state with completion of this task.",
+                    "If the requested workflow includes intentional failure, diagnosis, repair, and final verification, complete that workflow in order."
+                ].join("\n")
+            });
+        }
+
+
+        /*
+         * ========================================================
+         * MARK RUNNING
+         * ========================================================
+         */
         await updateAgentRun({
             runId,
             conversationId,
@@ -194,8 +491,20 @@ export async function runAgent({
             }
         });
 
+
+        /*
+         * ========================================================
+         * LOAD TOOLS
+         * ========================================================
+         */
         const tools = getAgentTools();
 
+
+        /*
+         * ========================================================
+         * SELECT FREE TOOL-CALLING MODELS
+         * ========================================================
+         */
         const models = selectModelsForRequest({
             task: "code",
             freeOnly: true,
@@ -207,125 +516,252 @@ export async function runAgent({
                 "No eligible tool-calling models available"
             );
 
-            error.code = "NO_TOOL_CALLING_MODELS";
+            error.code =
+                "NO_TOOL_CALLING_MODELS";
+
             error.statusCode = 503;
 
             throw error;
         }
 
-        while (state.iteration < MAX_ITERATIONS) {
+
+        /*
+         * ========================================================
+         * AGENT LOOP
+         * ========================================================
+         */
+        while (
+            state.iteration < MAX_ITERATIONS
+        ) {
             incrementIteration(state);
 
-            const request = createAgentModelRequest({
-                messages: state.messages,
-                tools,
-                toolChoice: "auto",
-                temperature: 0.2,
-                maxTokens: 8192
-            });
 
-            const rawResult = await executeWithFallback({
-                models,
-                messages: request.messages,
-                tools: request.tools,
-                toolChoice: request.toolChoice,
-                temperature: request.temperature,
-                maxTokens: request.maxTokens
-            });
+            /*
+             * ----------------------------------------------------
+             * CREATE MODEL REQUEST
+             * ----------------------------------------------------
+             */
+            const request =
+                createAgentModelRequest({
+                    messages: state.messages,
+                    tools,
+                    toolChoice: "auto",
+                    temperature: 0.2,
+                    maxTokens: 8192
+                });
 
-            const result = normalizeAgentModelResult(rawResult);
+
+            /*
+             * ----------------------------------------------------
+             * EXECUTE MODEL WITH FALLBACK
+             * ----------------------------------------------------
+             */
+            const rawResult =
+                await executeWithFallback({
+                    models,
+                    messages: request.messages,
+                    tools: request.tools,
+                    toolChoice:
+                        request.toolChoice,
+                    temperature:
+                        request.temperature,
+                    maxTokens:
+                        request.maxTokens
+                });
+
+
+            /*
+             * ----------------------------------------------------
+             * NORMALIZE RESULT
+             * ----------------------------------------------------
+             */
+            const result =
+                normalizeAgentModelResult(
+                    rawResult
+                );
+
 
             console.log(
                 `[ForgeAI Agent] Iteration ${state.iteration}`,
                 JSON.stringify(
                     {
-                        provider: result.provider,
-                        model: result.model,
-                        content: result.content,
-                        toolCalls: result.toolCalls
+                        provider:
+                            result.provider,
+                        model:
+                            result.model,
+                        content:
+                            result.content,
+                        toolCalls:
+                            result.toolCalls
                     },
                     null,
                     2
                 )
             );
 
+
+            /*
+             * ----------------------------------------------------
+             * STORE ASSISTANT RESPONSE IN MEMORY
+             * ----------------------------------------------------
+             */
             addMessage(state, {
                 role: "assistant",
                 content: result.content,
                 toolCalls: result.toolCalls,
-                provider: result.provider,
-                model: result.model
+                provider:
+                    result.provider,
+                model:
+                    result.model
             });
 
 
-            if (!result.toolCalls || result.toolCalls.length === 0) {
-                const verificationPassed =
-                    !requiresVerification ||
-                    hasSuccessfulVerification(toolResults);
+            /*
+             * ====================================================
+             * NO TOOL CALLS
+             * ====================================================
+             *
+             * This is where we decide whether the agent is
+             * genuinely finished.
+             */
+            if (
+                !result.toolCalls ||
+                result.toolCalls.length === 0
+            ) {
+                const missingRequirements =
+                    getMissingCompletionRequirements(
+                        taskRequirements,
+                        toolResults
+                    );
+
 
                 /*
-                * If the agent has already performed work but has not
-                * completed the requested workflow, do not allow it to
-                * terminate prematurely.
-                */
+                 * ------------------------------------------------
+                 * TASK IS NOT PROVEN COMPLETE
+                 * ------------------------------------------------
+                 */
                 if (
-                    hasPerformedWork &&
-                    !verificationPassed &&
-                    earlyCompletionRetries < MAX_EARLY_COMPLETION_RETRIES
+                    missingRequirements.length > 0
                 ) {
-                    earlyCompletionRetries += 1;
+                    /*
+                     * Prevent infinite continuation loops.
+                     */
+                    if (
+                        completionRetries >=
+                        MAX_COMPLETION_RETRIES
+                    ) {
+                        const error =
+                            new Error(
+                                [
+                                    "Agent could not complete the requested task within the available iterations.",
+                                    "Missing completion evidence:",
+                                    ...missingRequirements.map(
+                                        (item) =>
+                                            `- ${item}`
+                                    )
+                                ].join("\n")
+                            );
 
-                    const continuationMessage = requiresVerification
-                        ? [
-                            "You attempted to finish the task before completing it.",
-                            "Do not claim success yet.",
-                            "",
-                            "The user explicitly requires actual execution/testing/verification.",
-                            "Continue working with tools.",
-                            "Inspect the current project state, complete every requested deliverable,",
-                            "run the required verification, and only finish after successful execution.",
-                            "",
-                            `Early completion attempt ${earlyCompletionRetries}/${MAX_EARLY_COMPLETION_RETRIES}.`
-                        ].join("\n")
-                        : [
-                            "You attempted to finish the task immediately after performing work.",
-                            "Before finishing, verify that every part of the user's latest request is complete.",
-                            "If anything remains, continue using the appropriate tools.",
-                            "Do not claim completion based only on source inspection.",
-                            "",
-                            `Early completion attempt ${earlyCompletionRetries}/${MAX_EARLY_COMPLETION_RETRIES}.`
-                        ].join("\n");
+                        error.code =
+                            "INCOMPLETE_AGENT_TASK";
+
+                        error.statusCode = 503;
+
+                        throw error;
+                    }
+
+
+                    completionRetries += 1;
+
+
+                    /*
+                     * ------------------------------------------------
+                     * FORCE THE MODEL BACK INTO THE TASK
+                     * ------------------------------------------------
+                     */
+                    const continuationMessage = [
+                        "TASK COMPLETION AUDIT",
+                        "",
+                        "Do not finish the task yet.",
+                        "Your last response contained no tool calls, but the user's requested workflow is not fully proven.",
+                        "",
+                        "ACTIVE USER TASK:",
+                        taskContext ||
+                            "Use the user's current request as the active task.",
+                        "",
+                        "MISSING COMPLETION EVIDENCE:",
+                        ...missingRequirements.map(
+                            (item) =>
+                                `- ${item}`
+                        ),
+                        "",
+                        "Continue using the appropriate tools.",
+                        "Inspect the current project state if necessary.",
+                        "Do not claim success from source inspection alone.",
+                        "If the task requires a failure/repair workflow, you must first produce an actual failing execution, diagnose it, repair the relevant code, and then produce a successful execution/test.",
+                        "",
+                        `Completion audit attempt ${completionRetries}/${MAX_COMPLETION_RETRIES}.`
+                    ].join("\n");
+
 
                     addMessage(state, {
                         role: "system",
-                        content: continuationMessage
+                        content:
+                            continuationMessage
                     });
 
+
                     console.log(
-                        `[ForgeAI Agent] Prevented premature completion (${earlyCompletionRetries}/${MAX_EARLY_COMPLETION_RETRIES})`
+                        `[ForgeAI Agent] Completion audit required (${completionRetries}/${MAX_COMPLETION_RETRIES})`,
+                        JSON.stringify(
+                            {
+                                missingRequirements,
+                                taskRequirements
+                            },
+                            null,
+                            2
+                        )
                     );
+
 
                     continue;
                 }
 
+
+                /*
+                 * ------------------------------------------------
+                 * TASK IS PROVEN COMPLETE
+                 * ------------------------------------------------
+                 */
                 await createMessage({
                     conversationId,
                     role: "assistant",
-                    content: result.content ?? ""
+                    content:
+                        result.content ?? ""
                 });
 
-                completeAgentState(state, "completed");
+
+                completeAgentState(
+                    state,
+                    "completed"
+                );
+
 
                 await updateAgentRun({
                     runId,
                     conversationId,
                     data: {
-                        status: "completed",
-                        provider: result.provider,
-                        model: result.model,
-                        completedAt: new Date()
+                        status:
+                            "completed",
+                        provider:
+                            result.provider,
+                        model:
+                            result.model,
+                        completedAt:
+                            new Date()
                     }
                 });
+
 
                 return {
                     state,
@@ -333,72 +769,136 @@ export async function runAgent({
                 };
             }
 
-            // Persist the assistant's tool calls.
-            for (const toolCall of result.toolCalls) {
+
+            /*
+             * ====================================================
+             * PERSIST ASSISTANT TOOL CALLS
+             * ====================================================
+             */
+            for (
+                const toolCall
+                of result.toolCalls
+            ) {
                 await createMessage({
                     conversationId,
                     role: "assistant",
-                    content: result.content ?? "",
-                    toolCallId: toolCall.id,
-                    toolName: toolCall.name,
-                    toolArguments: toolCall.arguments
+                    content:
+                        result.content ?? "",
+                    toolCallId:
+                        toolCall.id,
+                    toolName:
+                        toolCall.name,
+                    toolArguments:
+                        toolCall.arguments
                 });
             }
 
-            // Execute each requested tool exactly once.
-            for (const toolCall of result.toolCalls) {
-                // Validate the model-generated tool call before executing anything.
-                const validatedToolCall =
-                    validateToolCall(toolCall);
 
-                const toolCallKey = JSON.stringify({
-                    name: validatedToolCall.name,
-                    arguments: validatedToolCall.arguments
-                });
+            /*
+             * ====================================================
+             * EXECUTE TOOL CALLS
+             * ====================================================
+             */
+            for (
+                const toolCall
+                of result.toolCalls
+            ) {
+                /*
+                 * Validate model-generated tool call.
+                 */
+                const validatedToolCall =
+                    validateToolCall(
+                        toolCall
+                    );
+
+
+                /*
+                 * Create a deterministic key so we can
+                 * detect endless identical operations.
+                 */
+                const toolCallKey =
+                    JSON.stringify({
+                        name:
+                            validatedToolCall.name,
+                        arguments:
+                            validatedToolCall.arguments
+                    });
+
 
                 const previousCount =
-                    toolCallHistory.get(toolCallKey) ?? 0;
+                    toolCallHistory.get(
+                        toolCallKey
+                    ) ?? 0;
+
 
                 const currentCount =
                     previousCount + 1;
+
 
                 toolCallHistory.set(
                     toolCallKey,
                     currentCount
                 );
 
-                // Prevent the model from endlessly repeating exactly the same operation.
-                if (currentCount > MAX_IDENTICAL_TOOL_CALLS) {
-                    const error = new Error(
-                        `Agent repeated the same tool call too many times: ${validatedToolCall.name}`
-                    );
 
-                    error.code = "REPEATED_TOOL_CALL";
+                /*
+                 * Prevent endless repetition.
+                 */
+                if (
+                    currentCount >
+                    MAX_IDENTICAL_TOOL_CALLS
+                ) {
+                    const error =
+                        new Error(
+                            `Agent repeated the same tool call too many times: ${validatedToolCall.name}`
+                        );
+
+                    error.code =
+                        "REPEATED_TOOL_CALL";
+
                     error.statusCode = 503;
 
                     throw error;
                 }
 
+
+                /*
+                 * Record tool call in agent state.
+                 */
                 recordToolCall(state, {
-                    id: validatedToolCall.id,
-                    name: validatedToolCall.name,
-                    input: validatedToolCall.arguments,
-                    iteration: state.iteration
+                    id:
+                        validatedToolCall.id,
+                    name:
+                        validatedToolCall.name,
+                    input:
+                        validatedToolCall.arguments,
+                    iteration:
+                        state.iteration
                 });
+
 
                 let toolResult;
 
+
+                /*
+                 * ------------------------------------------------
+                 * EXECUTE TOOL
+                 * ------------------------------------------------
+                 */
                 try {
-                    toolResult = await executeTool(
-                        validatedToolCall.name,
-                        validatedToolCall.arguments,
-                        {
-                            projectId,
-                            conversationId,
-                            runId
-                        }
-                    );
-                } catch (toolError) {
+                    toolResult =
+                        await executeTool(
+                            validatedToolCall.name,
+                            validatedToolCall.arguments,
+                            {
+                                projectId,
+                                conversationId,
+                                runId
+                            }
+                        );
+                } catch (
+                    toolError
+                ) {
                     toolResult = {
                         success: false,
                         error: {
@@ -411,15 +911,19 @@ export async function runAgent({
                         }
                     };
 
-                    recordError(state, toolError);
+
+                    recordError(
+                        state,
+                        toolError
+                    );
                 }
 
-                /*
-                 * ==========================================
-                 * VERIFICATION / EXECUTION FEEDBACK
-                 * ==========================================
-                 */
 
+                /*
+                 * =================================================
+                 * VERIFICATION / EXECUTION FEEDBACK
+                 * =================================================
+                 */
                 if (
                     validatedToolCall.name ===
                     "run_javascript_test"
@@ -429,11 +933,13 @@ export async function runAgent({
                             toolResult
                         );
 
+
                     addMessage(state, {
                         role: "system",
                         content:
                             verification.message
                     });
+
 
                     console.log(
                         "[ForgeAI Agent] JavaScript verification:",
@@ -447,7 +953,8 @@ export async function runAgent({
                                     toolResult?.error?.code ??
                                     null,
                                 passed:
-                                    toolResult?.passed === true
+                                    toolResult?.passed ===
+                                    true
                             },
                             null,
                             2
@@ -458,17 +965,22 @@ export async function runAgent({
                     "verify_javascript"
                 ) {
                     const verificationPassed =
-                        toolResult?.verified === true;
+                        toolResult?.verified ===
+                        true;
+
 
                     const verificationStatus =
                         verificationPassed
                             ? "JavaScript structural verification passed."
                             : "JavaScript structural verification failed. Inspect the verification result and repair the file if necessary.";
 
+
                     addMessage(state, {
                         role: "system",
-                        content: verificationStatus
+                        content:
+                            verificationStatus
                     });
+
 
                     console.log(
                         "[ForgeAI Agent] Verification status:",
@@ -476,6 +988,10 @@ export async function runAgent({
                     );
                 }
 
+
+                /*
+                 * Log complete tool result.
+                 */
                 console.log(
                     `[ForgeAI Agent] Tool result: ${validatedToolCall.name}`,
                     JSON.stringify(
@@ -485,12 +1001,12 @@ export async function runAgent({
                     )
                 );
 
-                /*
-                 * ==========================================
-                 * TRACK FILE CHANGES
-                 * ==========================================
-                 */
 
+                /*
+                 * =================================================
+                 * TRACK FILE CHANGES
+                 * =================================================
+                 */
                 if (
                     validatedToolCall.name ===
                         "write_file" &&
@@ -503,12 +1019,12 @@ export async function runAgent({
                     );
                 }
 
-                /*
-                 * ==========================================
-                 * TRACK VERIFICATION RESULTS
-                 * ==========================================
-                 */
 
+                /*
+                 * =================================================
+                 * TRACK VERIFICATION
+                 * =================================================
+                 */
                 if (
                     validatedToolCall.name ===
                         "verify_javascript" ||
@@ -521,12 +1037,12 @@ export async function runAgent({
                     );
                 }
 
-                /*
-                 * ==========================================
-                 * TRACK JAVASCRIPT EXECUTION
-                 * ==========================================
-                 */
 
+                /*
+                 * =================================================
+                 * TRACK JAVASCRIPT EXECUTION
+                 * =================================================
+                 */
                 if (
                     validatedToolCall.name ===
                     "execute_javascript"
@@ -536,6 +1052,7 @@ export async function runAgent({
                         toolResult
                     );
 
+
                     const executionStatus =
                         toolResult?.success &&
                         toolResult?.exitCode === 0 &&
@@ -543,10 +1060,13 @@ export async function runAgent({
                             ? "JavaScript execution succeeded. The program ran successfully."
                             : "JavaScript execution failed. Inspect stdout and stderr, determine the cause, repair the relevant file, and execute it again.";
 
+
                     addMessage(state, {
                         role: "system",
-                        content: executionStatus
+                        content:
+                            executionStatus
                     });
+
 
                     console.log(
                         "[ForgeAI Agent] Execution status:",
@@ -554,24 +1074,35 @@ export async function runAgent({
                     );
                 }
 
+
+                /*
+                 * =================================================
+                 * STORE RESULT FOR COMPLETION AUDIT
+                 * =================================================
+                 */
                 toolResults.push({
-                    toolName: validatedToolCall.name,
+                    toolName:
+                        validatedToolCall.name,
                     ...toolResult
                 });
 
-                if (toolResult?.success) {
-                    hasPerformedWork = true;
-                }
 
                 const serializedToolResult =
-                    JSON.stringify(toolResult);
+                    JSON.stringify(
+                        toolResult
+                    );
 
 
-
+                /*
+                 * =================================================
+                 * PERSIST TOOL RESULT
+                 * =================================================
+                 */
                 await createMessage({
                     conversationId,
                     role: "tool",
-                    content: serializedToolResult,
+                    content:
+                        serializedToolResult,
                     toolCallId:
                         validatedToolCall.id,
                     toolName:
@@ -579,10 +1110,11 @@ export async function runAgent({
                     toolResult
                 });
 
+
                 /*
-                 * Add the tool result back into the agent's
-                 * in-memory conversation so the next model
-                 * iteration can reason over it.
+                 * =================================================
+                 * ADD TOOL RESULT TO MODEL CONTEXT
+                 * =================================================
                  */
                 addMessage(state, {
                     role: "tool",
@@ -594,13 +1126,17 @@ export async function runAgent({
                         serializedToolResult
                 });
 
-                /*
-                 * ==========================================
-                 * EXPLICIT TOOL STATUS FOR THE MODEL
-                 * ==========================================
-                 */
 
+                /*
+                 * =================================================
+                 * EXPLICIT TOOL STATUS
+                 * =================================================
+                 *
+                 * This gives the model a concise interpretation
+                 * of what just happened.
+                 */
                 let toolStatus;
+
 
                 if (
                     validatedToolCall.name ===
@@ -610,6 +1146,7 @@ export async function runAgent({
                         getJavaScriptVerificationStatus(
                             toolResult
                         );
+
 
                     toolStatus =
                         verification.message;
@@ -628,36 +1165,65 @@ export async function runAgent({
                             : `Tool "${validatedToolCall.name}" failed. Inspect the returned error, determine the cause, and take a different corrective action if possible.`;
                 }
 
+
                 addMessage(state, {
                     role: "system",
-                    content: toolStatus
+                    content:
+                        toolStatus
                 });
             }
         }
 
-        // The agent reached the safety iteration limit.
-        const error = new Error(
-            `Agent exceeded maximum iterations (${MAX_ITERATIONS})`
-        );
 
-        error.code = "MAX_AGENT_ITERATIONS";
+        /*
+         * ========================================================
+         * MAX ITERATIONS
+         * ========================================================
+         */
+        const error =
+            new Error(
+                `Agent exceeded maximum iterations (${MAX_ITERATIONS})`
+            );
+
+
+        error.code =
+            "MAX_AGENT_ITERATIONS";
+
         error.statusCode = 503;
 
         throw error;
-    } catch (error) {
-        recordError(state, error);
 
-        completeAgentState(state, "failed");
+
+    } catch (error) {
+        /*
+         * ========================================================
+         * FAILED RUN
+         * ========================================================
+         */
+        recordError(
+            state,
+            error
+        );
+
+
+        completeAgentState(
+            state,
+            "failed"
+        );
+
 
         await updateAgentRun({
             runId,
             conversationId,
             data: {
                 status: "failed",
-                error: error.message,
-                completedAt: new Date()
+                error:
+                    error.message,
+                completedAt:
+                    new Date()
             }
         });
+
 
         throw error;
     }
