@@ -24,6 +24,67 @@ import { validateToolCall } from "./toolCallValidator.js";
 const MAX_ITERATIONS = 10;
 const MAX_IDENTICAL_TOOL_CALLS = 3;
 
+const MAX_EARLY_COMPLETION_RETRIES = 2;
+
+function taskRequiresVerification(messages) {
+    const userText = messages
+        .filter((message) => message.role === "user")
+        .map((message) => message.content ?? "")
+        .join("\n")
+        .toLowerCase();
+
+    const verificationKeywords = [
+        "run test",
+        "run tests",
+        "run the test",
+        "run the tests",
+        "execute",
+        "execution",
+        "verify",
+        "verification",
+        "test again",
+        "successful execution",
+        "prove",
+        "observe actual",
+        "diagnose",
+        "fix the bug",
+        "fix incorrect"
+    ];
+
+    return verificationKeywords.some((keyword) =>
+        userText.includes(keyword)
+    );
+}
+
+function hasSuccessfulVerification(toolResults) {
+    return toolResults.some((result) => {
+        if (!result?.success) {
+            return false;
+        }
+
+        const toolName = result.toolName;
+
+        if (
+            toolName === "run_command" ||
+            toolName === "execute_javascript" ||
+            toolName === "run_javascript_test" ||
+            toolName === "verify_javascript"
+        ) {
+            if (toolName === "run_javascript_test") {
+                return result.passed === true;
+            }
+
+            if (toolName === "verify_javascript") {
+                return result.verified === true;
+            }
+
+            return result.exitCode === 0 || result.success === true;
+        }
+
+        return false;
+    });
+}
+
 function getJavaScriptVerificationStatus(toolResult) {
     if (toolResult?.passed === true) {
         return {
