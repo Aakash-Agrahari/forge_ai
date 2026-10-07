@@ -179,6 +179,8 @@ then focus on that requested area.
 
 Existing files outside the requested scope should normally remain untouched.
 
+When you need to inspect the complete project structure, call list_files with an empty argument object. Do not pass a path to list_files.
+
 ==================================================
 FILE CREATION RULES
 ==================================================
