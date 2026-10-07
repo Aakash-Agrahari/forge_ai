@@ -257,8 +257,57 @@ export async function runAgent({
                 model: result.model
             });
 
-            // If the model has finished without requesting a tool, the agent run is complete.
+            
             if (!result.toolCalls || result.toolCalls.length === 0) {
+                const verificationPassed =
+                    !requiresVerification ||
+                    hasSuccessfulVerification(toolResults);
+
+                /*
+                * If the agent has already performed work but has not
+                * completed the requested workflow, do not allow it to
+                * terminate prematurely.
+                */
+                if (
+                    hasPerformedWork &&
+                    !verificationPassed &&
+                    earlyCompletionRetries < MAX_EARLY_COMPLETION_RETRIES
+                ) {
+                    earlyCompletionRetries += 1;
+
+                    const continuationMessage = requiresVerification
+                        ? [
+                            "You attempted to finish the task before completing it.",
+                            "Do not claim success yet.",
+                            "",
+                            "The user explicitly requires actual execution/testing/verification.",
+                            "Continue working with tools.",
+                            "Inspect the current project state, complete every requested deliverable,",
+                            "run the required verification, and only finish after successful execution.",
+                            "",
+                            `Early completion attempt ${earlyCompletionRetries}/${MAX_EARLY_COMPLETION_RETRIES}.`
+                        ].join("\n")
+                        : [
+                            "You attempted to finish the task immediately after performing work.",
+                            "Before finishing, verify that every part of the user's latest request is complete.",
+                            "If anything remains, continue using the appropriate tools.",
+                            "Do not claim completion based only on source inspection.",
+                            "",
+                            `Early completion attempt ${earlyCompletionRetries}/${MAX_EARLY_COMPLETION_RETRIES}.`
+                        ].join("\n");
+
+                    addMessage(state, {
+                        role: "system",
+                        content: continuationMessage
+                    });
+
+                    console.log(
+                        `[ForgeAI Agent] Prevented premature completion (${earlyCompletionRetries}/${MAX_EARLY_COMPLETION_RETRIES})`
+                    );
+
+                    continue;
+                }
+
                 await createMessage({
                     conversationId,
                     role: "assistant",
