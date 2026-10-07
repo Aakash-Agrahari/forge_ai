@@ -257,7 +257,7 @@ export async function runAgent({
                 model: result.model
             });
 
-            
+
             if (!result.toolCalls || result.toolCalls.length === 0) {
                 const verificationPassed =
                     !requiresVerification ||
@@ -554,14 +554,19 @@ export async function runAgent({
                     );
                 }
 
-                /*
-                 * ==========================================
-                 * PERSIST TOOL RESULT
-                 * ==========================================
-                 */
+                toolResults.push({
+                    toolName: validatedToolCall.name,
+                    ...toolResult
+                });
+
+                if (toolResult?.success) {
+                    hasPerformedWork = true;
+                }
 
                 const serializedToolResult =
                     JSON.stringify(toolResult);
+
+
 
                 await createMessage({
                     conversationId,
