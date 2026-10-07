@@ -159,6 +159,11 @@ export async function runAgent({
 
     const toolCallHistory = new Map();
 
+    const toolResults = [];
+    let earlyCompletionRetries = 0;
+    let hasPerformedWork = false;
+    const requiresVerification = taskRequiresVerification(messages);
+
     addMessage(state, {
         role: "system",
         content: AGENT_SYSTEM_PROMPT
