@@ -16,6 +16,18 @@ function createTestFilePath(filePath) {
     return `.forgeai-test-${safeName}-${Date.now()}.js`;
 }
 
+function normalizeExpectedResult(value) {
+    if (typeof value !== "string") {
+        return value;
+    }
+
+    try {
+        return JSON.parse(value);
+    } catch {
+        return value;
+    }
+}
+
 function createTestFileContent({
     filePath,
     functionName,
@@ -23,29 +35,78 @@ function createTestFileContent({
     expectedResult
 }) {
     const serializedArgs = JSON.stringify(args);
+
+    const normalizedExpectedResult =
+        normalizeExpectedResult(expectedResult);
+
     const serializedExpectedResult =
-        JSON.stringify(expectedResult);
+        JSON.stringify(normalizedExpectedResult);
 
     return `import { pathToFileURL } from "node:url";
 import path from "node:path";
 
 const targetPath = path.resolve(${JSON.stringify(filePath)});
 
-const moduleNamespace = await import(
-    pathToFileURL(targetPath).href
-);
+let moduleNamespace;
 
-const targetFunction =
-    moduleNamespace[${JSON.stringify(functionName)}] ??
-    moduleNamespace.default;
+try {
+    moduleNamespace = await import(
+        pathToFileURL(targetPath).href
+    );
+} catch (error) {
+    console.error(
+        JSON.stringify({
+            type: "TEST_ERROR",
+            code: "MODULE_IMPORT_FAILED",
+            message:
+                error?.message ||
+                "Failed to import target JavaScript file",
+            name: error?.name || "Error"
+        })
+    );
+
+    process.exit(1);
+}
+
+const functionName =
+    ${JSON.stringify(functionName)};
+
+let targetFunction =
+    moduleNamespace[functionName];
+
+if (
+    typeof targetFunction !== "function" &&
+    typeof moduleNamespace.default === "function" &&
+    functionName === "default"
+) {
+    targetFunction = moduleNamespace.default;
+}
+
+if (
+    typeof targetFunction !== "function" &&
+    moduleNamespace.default &&
+    typeof moduleNamespace.default === "object"
+) {
+    const defaultObjectFunction =
+        moduleNamespace.default[functionName];
+
+    if (typeof defaultObjectFunction === "function") {
+        targetFunction = defaultObjectFunction;
+    }
+}
 
 if (typeof targetFunction !== "function") {
     console.error(
         JSON.stringify({
             type: "TEST_ERROR",
-            message: "Target function was not found",
-            functionName: ${JSON.stringify(functionName)},
-            availableExports: Object.keys(moduleNamespace)
+            code: "FUNCTION_NOT_FOUND",
+            message:
+                "Target function was not found as an exported function.",
+            functionName,
+            availableExports:
+                Object.keys(moduleNamespace),
+            hint:
+                "The target function must be exported before it can be behaviorally tested."
         })
     );
 
@@ -54,31 +115,42 @@ if (typeof targetFunction !== "function") {
 
 const args = ${serializedArgs};
 
-const expectedResult = ${serializedExpectedResult};
+const expectedResult =
+    ${serializedExpectedResult};
 
 let actualResult;
 
 try {
-    actualResult = await targetFunction(...args);
+    actualResult =
+        await targetFunction(...args);
 } catch (error) {
     console.error(
         JSON.stringify({
             type: "TEST_ERROR",
-            message: error?.message || "Function execution failed",
-            name: error?.name || "Error"
+            code: "FUNCTION_EXECUTION_FAILED",
+            message:
+                error?.message ||
+                "Function execution failed",
+            name:
+                error?.name ||
+                "Error"
         })
     );
 
     process.exit(1);
 }
 
-const actualSerialized = JSON.stringify(actualResult);
-const expectedSerialized = JSON.stringify(expectedResult);
+const actualSerialized =
+    JSON.stringify(actualResult);
+
+const expectedSerialized =
+    JSON.stringify(expectedResult);
 
 if (actualSerialized !== expectedSerialized) {
     console.error(
         JSON.stringify({
             type: "TEST_FAILED",
+            code: "BEHAVIOR_MISMATCH",
             expected: expectedResult,
             actual: actualResult
         })
@@ -101,7 +173,7 @@ export const runJavaScriptTestTool = createTool({
     name: "run_javascript_test",
 
     description:
-        "Execute a JavaScript function with real input arguments in the ForgeAI sandbox and compare its actual return value with the expected result. Use this for behavioral verification after modifying JavaScript code.",
+        "Execute an exported JavaScript function with real input arguments in the ForgeAI sandbox and compare its actual return value with the expected result. Use this for behavioral verification after modifying JavaScript code.",
 
     inputSchema: {
         type: "object",
@@ -116,7 +188,7 @@ export const runJavaScriptTestTool = createTool({
             functionName: {
                 type: "string",
                 description:
-                    "Name of the JavaScript function to execute."
+                    "Name of the exported JavaScript function to execute."
             },
 
             args: {
@@ -127,7 +199,7 @@ export const runJavaScriptTestTool = createTool({
 
             expectedResult: {
                 description:
-                    "Expected return value from the function."
+                    "Expected return value. JSON strings such as '5', 'true', or '[1,2]' are normalized to their corresponding JSON values."
             }
         },
 
@@ -209,16 +281,18 @@ export const runJavaScriptTestTool = createTool({
         let testFile = null;
 
         try {
-            testFile = await upsertProjectFile({
-                projectId: context.projectId,
-                path: testFilePath,
-                content: testContent
-            });
+            testFile =
+                await upsertProjectFile({
+                    projectId: context.projectId,
+                    path: testFilePath,
+                    content: testContent
+                });
 
             const result =
                 await executeProjectCommand({
                     projectId: context.projectId,
-                    command: `node ${testFilePath}`
+                    command:
+                        `node ${testFilePath}`
                 });
 
             let parsedOutput = null;
@@ -239,29 +313,60 @@ export const runJavaScriptTestTool = createTool({
                 result.success &&
                 result.exitCode === 0 &&
                 !result.timeOut &&
-                parsedOutput?.type === "TEST_PASSED";
+                parsedOutput?.type ===
+                    "TEST_PASSED";
 
             return {
                 success: true,
                 passed,
+
                 filePath: relativePath,
-                functionName: input.functionName,
+
+                functionName:
+                    input.functionName,
+
                 args: input.args,
-                expectedResult: input.expectedResult,
+
+                expectedResult:
+                    normalizeExpectedResult(
+                        input.expectedResult
+                    ),
+
                 actualResult:
                     parsedOutput?.actual ?? null,
-                exitCode: result.exitCode,
-                stdout: result.stdout,
-                stderr: result.stderr,
-                durationMs: result.durationMs,
-                timeOut: result.timeOut
+
+                failureCode:
+                    passed
+                        ? null
+                        : parsedOutput?.code ??
+                          (result.timeOut
+                              ? "TEST_TIMEOUT"
+                              : "TEST_EXECUTION_FAILED"),
+
+                exitCode:
+                    result.exitCode,
+
+                stdout:
+                    result.stdout,
+
+                stderr:
+                    result.stderr,
+
+                durationMs:
+                    result.durationMs,
+
+                timeOut:
+                    result.timeOut
             };
         } finally {
             if (testFile?.id) {
                 try {
                     await deleteProjectFile({
-                        projectId: context.projectId,
-                        fileId: testFile.id
+                        projectId:
+                            context.projectId,
+
+                        fileId:
+                            testFile.id
                     });
                 } catch (cleanupError) {
                     console.error(
