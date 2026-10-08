@@ -1,139 +1,207 @@
 import { createTool } from "./toolContract.js";
-
-import {
-    upsertProjectFile,
-    deleteProjectFile
-} from "../../services/fileService.js";
-
 import { executeProjectCommand } from "../../sandbox/sandboxService.js";
 import { validateProjectPath } from "../projectPath.js";
+import { prisma } from "../../db/prisma.js";
 
-function createTestFilePath(filePath) {
-    const safeName = filePath
-        .replace(/[^a-zA-Z0-9]/g, "_")
-        .slice(0, 80);
-
-    return `.forgeai-test-${safeName}-${Date.now()}.js`;
+function createTemporaryTestFileName() {
+    return `.forgeai-test-${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2)}.mjs`;
 }
 
-function normalizeExpectedResult(value) {
-    if (typeof value !== "string") {
-        return value;
-    }
-
-    try {
-        return JSON.parse(value);
-    } catch {
-        return value;
-    }
+function normalizeValue(value) {
+    return JSON.stringify(value);
 }
 
-function createTestFileContent({
-    filePath,
-    functionName,
-    args,
-    expectedResult
-}) {
-    const serializedArgs = JSON.stringify(args);
+export const runJavaScriptTestTool =
+    createTool({
+        name: "run_javascript_test",
 
-    const normalizedExpectedResult =
-        normalizeExpectedResult(expectedResult);
+        description:
+            "Run a behavioral JavaScript test against a project function and return structured test execution results.",
 
-    const serializedExpectedResult =
-        JSON.stringify(normalizedExpectedResult);
+        inputSchema: {
+            type: "object",
 
-    return `import { pathToFileURL } from "node:url";
-import path from "node:path";
+            properties: {
+                filePath: {
+                    type: "string",
+                    description:
+                        "Project-relative path of the JavaScript file containing the function."
+                },
 
-const targetPath = path.resolve(${JSON.stringify(filePath)});
+                functionName: {
+                    type: "string",
+                    description:
+                        "Name of the exported function to test."
+                },
 
-let moduleNamespace;
+                arguments: {
+                    type: "array",
+                    description:
+                        "Arguments passed to the function."
+                },
 
-try {
-    moduleNamespace = await import(
-        pathToFileURL(targetPath).href
-    );
-} catch (error) {
-    console.error(
-        JSON.stringify({
-            type: "TEST_ERROR",
-            code: "MODULE_IMPORT_FAILED",
-            message:
-                error?.message ||
-                "Failed to import target JavaScript file",
-            name: error?.name || "Error"
-        })
-    );
+                expectedResult: {
+                    description:
+                        "Expected return value."
+                }
+            },
 
-    process.exit(1);
-}
+            required: [
+                "filePath",
+                "functionName",
+                "arguments",
+                "expectedResult"
+            ],
+
+            additionalProperties: false
+        },
+
+        async execute(input, context) {
+            if (!context?.projectId) {
+                const error = new Error(
+                    "Project ID is required to run JavaScript tests"
+                );
+
+                error.code =
+                    "PROJECT_ID_REQUIRED";
+
+                throw error;
+            }
+
+            if (
+                typeof input?.filePath !== "string" ||
+                !input.filePath.trim()
+            ) {
+                const error = new Error(
+                    "File path is required"
+                );
+
+                error.code =
+                    "FILE_PATH_REQUIRED";
+
+                throw error;
+            }
+
+            if (
+                typeof input?.functionName !== "string" ||
+                !input.functionName.trim()
+            ) {
+                const error = new Error(
+                    "Function name is required"
+                );
+
+                error.code =
+                    "FUNCTION_NAME_REQUIRED";
+
+                throw error;
+            }
+
+            if (!Array.isArray(input.arguments)) {
+                const error = new Error(
+                    "arguments must be an array"
+                );
+
+                error.code =
+                    "INVALID_TEST_ARGUMENTS";
+
+                throw error;
+            }
+
+            const relativePath =
+                validateProjectPath(
+                    input.filePath
+                );
+
+            if (
+                !relativePath.endsWith(".js") &&
+                !relativePath.endsWith(".mjs") &&
+                !relativePath.endsWith(".cjs")
+            ) {
+                const error = new Error(
+                    "run_javascript_test only supports JavaScript files"
+                );
+
+                error.code =
+                    "UNSUPPORTED_FILE_TYPE";
+
+                throw error;
+            }
+
+            const projectFile =
+                await prisma.projectFile.findFirst({
+                    where: {
+                        projectId:
+                            context.projectId,
+
+                        path:
+                            relativePath
+                    }
+                });
+
+            if (!projectFile) {
+                const error = new Error(
+                    `Project file not found: ${relativePath}`
+                );
+
+                error.code =
+                    "PROJECT_FILE_NOT_FOUND";
+
+                throw error;
+            }
+
+            const testFilePath =
+                createTemporaryTestFileName();
+
+            const testFileContent = `
+import * as moduleNamespace from ${JSON.stringify(
+                `./${relativePath}`
+            )};
 
 const functionName =
-    ${JSON.stringify(functionName)};
+    ${JSON.stringify(input.functionName)};
 
-let targetFunction =
-    moduleNamespace[functionName];
+const args =
+    ${JSON.stringify(input.arguments)};
 
-if (
-    typeof targetFunction !== "function" &&
-    typeof moduleNamespace.default === "function" &&
-    functionName === "default"
-) {
-    targetFunction = moduleNamespace.default;
-}
+const expected =
+    ${JSON.stringify(input.expectedResult)};
 
-if (
-    typeof targetFunction !== "function" &&
-    moduleNamespace.default &&
-    typeof moduleNamespace.default === "object"
-) {
-    const defaultObjectFunction =
-        moduleNamespace.default[functionName];
+const availableExports =
+    Object.keys(moduleNamespace);
 
-    if (typeof defaultObjectFunction === "function") {
-        targetFunction = defaultObjectFunction;
-    }
-}
+const targetFunction =
+    moduleNamespace[functionName] ??
+    moduleNamespace.default;
 
 if (typeof targetFunction !== "function") {
-    console.error(
+    console.log(
         JSON.stringify({
-            type: "TEST_ERROR",
-            code: "FUNCTION_NOT_FOUND",
-            message:
-                "Target function was not found as an exported function.",
+            type: "TEST_SETUP_ERROR",
+            success: false,
+            reason: "Target function was not found",
             functionName,
-            availableExports:
-                Object.keys(moduleNamespace),
-            hint:
-                "The target function must be exported before it can be behaviorally tested."
+            availableExports
         })
     );
 
-    process.exit(1);
+    process.exit(2);
 }
 
-const args = ${serializedArgs};
-
-const expectedResult =
-    ${serializedExpectedResult};
-
-let actualResult;
+let actual;
 
 try {
-    actualResult =
+    actual =
         await targetFunction(...args);
 } catch (error) {
-    console.error(
+    console.log(
         JSON.stringify({
-            type: "TEST_ERROR",
-            code: "FUNCTION_EXECUTION_FAILED",
-            message:
-                error?.message ||
-                "Function execution failed",
-            name:
-                error?.name ||
-                "Error"
+            type: "TEST_FAILURE",
+            success: false,
+            reason: "Function threw an error",
+            functionName,
+            error: error?.message ?? String(error)
         })
     );
 
@@ -141,18 +209,20 @@ try {
 }
 
 const actualSerialized =
-    JSON.stringify(actualResult);
+    JSON.stringify(actual);
 
 const expectedSerialized =
-    JSON.stringify(expectedResult);
+    JSON.stringify(expected);
 
 if (actualSerialized !== expectedSerialized) {
-    console.error(
+    console.log(
         JSON.stringify({
-            type: "TEST_FAILED",
-            code: "BEHAVIOR_MISMATCH",
-            expected: expectedResult,
-            actual: actualResult
+            type: "TEST_FAILURE",
+            success: false,
+            reason: "Returned value did not match expected value",
+            functionName,
+            actual,
+            expected
         })
     );
 
@@ -161,220 +231,235 @@ if (actualSerialized !== expectedSerialized) {
 
 console.log(
     JSON.stringify({
-        type: "TEST_PASSED",
-        expected: expectedResult,
-        actual: actualResult
+        type: "TEST_PASS",
+        success: true,
+        functionName,
+        actual,
+        expected
     })
 );
 `;
-}
 
-export const runJavaScriptTestTool = createTool({
-    name: "run_javascript_test",
+            await prisma.projectFile.create({
+                data: {
+                    projectId:
+                        context.projectId,
 
-    description:
-        "Execute an exported JavaScript function with real input arguments in the ForgeAI sandbox and compare its actual return value with the expected result. Use this for behavioral verification after modifying JavaScript code.",
+                    path:
+                        testFilePath,
 
-    inputSchema: {
-        type: "object",
-
-        properties: {
-            filePath: {
-                type: "string",
-                description:
-                    "Project-relative path to the JavaScript file containing the function."
-            },
-
-            functionName: {
-                type: "string",
-                description:
-                    "Name of the exported JavaScript function to execute."
-            },
-
-            args: {
-                type: "array",
-                description:
-                    "Arguments to pass to the function."
-            },
-
-            expectedResult: {
-                description:
-                    "Expected return value. JSON strings such as '5', 'true', or '[1,2]' are normalized to their corresponding JSON values."
-            }
-        },
-
-        required: [
-            "filePath",
-            "functionName",
-            "args",
-            "expectedResult"
-        ],
-
-        additionalProperties: false
-    },
-
-    async execute(input, context) {
-        if (!context?.projectId) {
-            const error = new Error(
-                "Project ID is required to run a JavaScript test"
-            );
-
-            error.code = "PROJECT_ID_REQUIRED";
-
-            throw error;
-        }
-
-        if (!input?.filePath) {
-            const error = new Error(
-                "File path is required"
-            );
-
-            error.code = "FILE_PATH_REQUIRED";
-
-            throw error;
-        }
-
-        if (!input?.functionName) {
-            const error = new Error(
-                "Function name is required"
-            );
-
-            error.code = "FUNCTION_NAME_REQUIRED";
-
-            throw error;
-        }
-
-        if (!Array.isArray(input.args)) {
-            const error = new Error(
-                "Test arguments must be an array"
-            );
-
-            error.code = "INVALID_TEST_ARGUMENTS";
-
-            throw error;
-        }
-
-        const relativePath =
-            validateProjectPath(input.filePath);
-
-        if (!relativePath.endsWith(".js")) {
-            const error = new Error(
-                "run_javascript_test only supports .js files"
-            );
-
-            error.code = "UNSUPPORTED_FILE_TYPE";
-
-            throw error;
-        }
-
-        const testFilePath =
-            createTestFilePath(relativePath);
-
-        const testContent =
-            createTestFileContent({
-                filePath: relativePath,
-                functionName: input.functionName,
-                args: input.args,
-                expectedResult: input.expectedResult
+                    content:
+                        testFileContent
+                }
             });
 
-        let testFile = null;
-
-        try {
-            testFile =
-                await upsertProjectFile({
-                    projectId: context.projectId,
-                    path: testFilePath,
-                    content: testContent
-                });
-
-            const result =
-                await executeProjectCommand({
-                    projectId: context.projectId,
-                    command:
-                        `node ${testFilePath}`
-                });
-
-            let parsedOutput = null;
-
-            const output =
-                result.stdout?.trim() || "";
-
-            if (output) {
-                try {
-                    parsedOutput =
-                        JSON.parse(output);
-                } catch {
-                    parsedOutput = null;
-                }
-            }
-
-            const passed =
-                result.success &&
-                result.exitCode === 0 &&
-                !result.timeOut &&
-                parsedOutput?.type ===
-                    "TEST_PASSED";
-
-            return {
-                success: true,
-                passed,
-
-                filePath: relativePath,
-
-                functionName:
-                    input.functionName,
-
-                args: input.args,
-
-                expectedResult:
-                    normalizeExpectedResult(
-                        input.expectedResult
-                    ),
-
-                actualResult:
-                    parsedOutput?.actual ?? null,
-
-                failureCode:
-                    passed
-                        ? null
-                        : parsedOutput?.code ??
-                          (result.timeOut
-                              ? "TEST_TIMEOUT"
-                              : "TEST_EXECUTION_FAILED"),
-
-                exitCode:
-                    result.exitCode,
-
-                stdout:
-                    result.stdout,
-
-                stderr:
-                    result.stderr,
-
-                durationMs:
-                    result.durationMs,
-
-                timeOut:
-                    result.timeOut
-            };
-        } finally {
-            if (testFile?.id) {
-                try {
-                    await deleteProjectFile({
+            try {
+                const result =
+                    await executeProjectCommand({
                         projectId:
                             context.projectId,
 
-                        fileId:
-                            testFile.id
+                        command:
+                            `node "${testFilePath}"`
                     });
-                } catch (cleanupError) {
-                    console.error(
-                        "[ForgeAI] Test file cleanup failed:",
-                        cleanupError.message
-                    );
+
+                const output =
+                    `${result.stdout ?? ""}\n${
+                        result.stderr ?? ""
+                    }`;
+
+                let testEvidence = null;
+
+                try {
+                    const lines =
+                        output
+                            .split(/\r?\n/)
+                            .map(
+                                (line) =>
+                                    line.trim()
+                            )
+                            .filter(Boolean);
+
+                    for (
+                        let i = lines.length - 1;
+                        i >= 0;
+                        i--
+                    ) {
+                        try {
+                            const parsed =
+                                JSON.parse(
+                                    lines[i]
+                                );
+
+                            if (
+                                parsed?.type ===
+                                    "TEST_PASS" ||
+                                parsed?.type ===
+                                    "TEST_FAILURE" ||
+                                parsed?.type ===
+                                    "TEST_SETUP_ERROR"
+                            ) {
+                                testEvidence =
+                                    parsed;
+
+                                break;
+                            }
+                        } catch {
+                            // Ignore non-JSON output.
+                        }
+                    }
+                } catch {
+                    testEvidence = null;
                 }
+
+                if (
+                    testEvidence?.type ===
+                    "TEST_SETUP_ERROR"
+                ) {
+                    return {
+                        success: false,
+                        status: "failed",
+                        failureType:
+                            "TEST_SETUP_FAILURE",
+                        passed: false,
+                        filePath:
+                            relativePath,
+                        functionName:
+                            input.functionName,
+                        actual: undefined,
+                        expected:
+                            input.expectedResult,
+                        exitCode:
+                            result.exitCode,
+                        stdout:
+                            result.stdout,
+                        stderr:
+                            result.stderr,
+                        durationMs:
+                            result.durationMs,
+                        timeOut:
+                            result.timeOut,
+                        evidence:
+                            testEvidence
+                    };
+                }
+
+                if (
+                    testEvidence?.type ===
+                    "TEST_FAILURE"
+                ) {
+                    return {
+                        success: false,
+                        status: "failed",
+                        failureType:
+                            "TEST_FAILURE",
+                        passed: false,
+                        filePath:
+                            relativePath,
+                        functionName:
+                            input.functionName,
+                        actual:
+                            testEvidence.actual,
+                        expected:
+                            testEvidence.expected ??
+                            input.expectedResult,
+                        exitCode:
+                            result.exitCode,
+                        stdout:
+                            result.stdout,
+                        stderr:
+                            result.stderr,
+                        durationMs:
+                            result.durationMs,
+                        timeOut:
+                            result.timeOut,
+                        evidence:
+                            testEvidence
+                    };
+                }
+
+                if (
+                    testEvidence?.type ===
+                    "TEST_PASS"
+                ) {
+                    return {
+                        success: true,
+                        status: "passed",
+                        failureType: null,
+                        passed: true,
+                        filePath:
+                            relativePath,
+                        functionName:
+                            input.functionName,
+                        actual:
+                            testEvidence.actual,
+                        expected:
+                            testEvidence.expected,
+                        exitCode:
+                            result.exitCode,
+                        stdout:
+                            result.stdout,
+                        stderr:
+                            result.stderr,
+                        durationMs:
+                            result.durationMs,
+                        timeOut:
+                            result.timeOut,
+                        evidence:
+                            testEvidence
+                    };
+                }
+
+                return {
+                    success:
+                        result.success,
+
+                    status:
+                        result.status,
+
+                    failureType:
+                        result.failureType ??
+                        "UNKNOWN_TEST_RESULT",
+
+                    passed: false,
+
+                    filePath:
+                        relativePath,
+
+                    functionName:
+                        input.functionName,
+
+                    expected:
+                        input.expectedResult,
+
+                    exitCode:
+                        result.exitCode,
+
+                    stdout:
+                        result.stdout,
+
+                    stderr:
+                        result.stderr,
+
+                    durationMs:
+                        result.durationMs,
+
+                    timeOut:
+                        result.timeOut,
+
+                    evidence:
+                        result.evidence ?? null
+                };
+            } finally {
+                await prisma.projectFile.deleteMany({
+                    where: {
+                        projectId:
+                            context.projectId,
+
+                        path:
+                            testFilePath
+                    }
+                });
             }
         }
-    }
-});
+    });
