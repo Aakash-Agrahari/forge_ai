@@ -5,7 +5,6 @@ import {
 
 import { createSandboxResult } from "./sandboxResult.js";
 import { getExecutionBackend } from "./executionBackendFactory.js";
-
 import {
     classifyExecutionResult
 } from "../execution/executionResultClassifier.js";
@@ -45,38 +44,44 @@ export async function runSandboxCommand({
     const executionBackend =
         getExecutionBackend(backend);
 
-    const rawResult =
-        await executionBackend.execute({
-            command: validatedCommand,
-            cwd,
-            timeoutMs: limits.timeoutMs,
-            maxOutputBytes: limits.maxOutputBytes
-        });
+    let result;
+
+    try {
+        result =
+            await executionBackend.execute({
+                command: validatedCommand,
+                cwd,
+                timeoutMs: limits.timeoutMs,
+                maxOutputBytes:
+                    limits.maxOutputBytes
+            });
+    } catch (error) {
+        return {
+            success: false,
+            status: "failed",
+            failureType: "SANDBOX_FAILURE",
+            exitCode: null,
+            stdout: "",
+            stderr:
+                error?.message ??
+                "Sandbox execution failed",
+            durationMs: 0,
+            timeOut: false,
+            error: {
+                code:
+                    error?.code ??
+                    "SANDBOX_EXECUTION_ERROR",
+                message:
+                    error?.message ??
+                    "Sandbox execution failed"
+            }
+        };
+    }
 
     const sandboxResult =
-        createSandboxResult(rawResult);
+        createSandboxResult(result);
 
-    const classifiedResult =
-        classifyExecutionResult(
-            sandboxResult
-        );
-
-    return {
-        ...classifiedResult,
-
-        command: validatedCommand,
-
-        backend,
-
-        classification: {
-            status:
-                classifiedResult.status,
-
-            failureType:
-                classifiedResult.failureType,
-
-            evidence:
-                classifiedResult.evidence
-        }
-    };
+    return classifyExecutionResult(
+        sandboxResult
+    );
 }
