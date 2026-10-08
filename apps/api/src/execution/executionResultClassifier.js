@@ -1,330 +1,347 @@
-function normalizeText(value) {
-    return typeof value === "string"
-        ? value
-        : "";
+function normalizeOutput(value) {
+    if (value === undefined || value === null) {
+        return "";
+    }
+
+    return String(value).replace(/\r\n/g, "\n");
 }
 
-function countMatches(text, pattern) {
-    const matches = text.match(pattern);
-    return matches ? matches.length : 0;
-}
+function detectTestEvidence(output) {
+    const text = normalizeOutput(output);
 
-function detectTestEvidence(stdout, stderr) {
-    const combined = `${stdout}\n${stderr}`;
+    const passMatches =
+        text.match(/\bPASS(?:ED)?\b/gi) ?? [];
 
-    const testsPassed =
-        countMatches(
-            combined,
-            /\bPASS(?:ED)?\b/gi
-        );
+    const failMatches =
+        text.match(/\bFAIL(?:ED|URE)?\b/gi) ?? [];
 
-    const testsFailed =
-        countMatches(
-            combined,
-            /\bFAIL(?:ED|URE)?\b/gi
-        );
-
-    const assertionsFailed =
-        countMatches(
-            combined,
-            /AssertionError/gi
-        );
+    const assertionMatches =
+        text.match(
+            /\bAssertionError\b|\bexpected\b.*\bactual\b|\bactual\b.*\bexpected\b/gi
+        ) ?? [];
 
     const testFailurePatterns = [
-        /expected.*(?:to be|to equal|to strictly equal)/i,
-        /actual.*expected/i,
-        /expected values to be strictly equal/i,
         /tests?\s+failed/i,
         /failed\s+tests?/i,
         /assertionerror/i,
-        /\bFAIL:/i
+        /expected[\s\S]{0,100}(?:to be|to equal|to strictly equal|but)/i,
+        /actual[\s\S]{0,100}expected/i,
+        /\bFAIL\s*:/i,
+        /\bFAILED\s*:/i
     ];
 
-    const hasTestFailureMessage =
+    const explicitFailure =
         testFailurePatterns.some(
-            (pattern) =>
-                pattern.test(stdout) ||
-                pattern.test(stderr)
+            (pattern) => pattern.test(text)
         );
 
-    const hasTestSuccessMessage =
-        /\bPASS:/i.test(stdout) ||
-        /\bPASS(?:ED)?\b/i.test(stdout) ||
-        /\btests?\s+passed\b/i.test(stdout) ||
-        /\ball\s+tests?\s+pass(?:ed)?\b/i.test(stdout);
-
     return {
-        testsPassed,
-        testsFailed,
-        assertionsFailed,
-        hasTestFailureMessage,
-        hasTestSuccessMessage
+        passCount: passMatches.length,
+        failCount: failMatches.length,
+        assertionCount: assertionMatches.length,
+        hasFailure:
+            failMatches.length > 0 ||
+            assertionMatches.length > 0 ||
+            explicitFailure,
+        hasPass:
+            passMatches.length > 0,
+        output: text
     };
 }
 
-function detectCompilationFailure(stdout, stderr) {
-    const combined = `${stdout}\n${stderr}`;
+function detectCompilationFailure(output) {
+    const text = normalizeOutput(output);
 
     const patterns = [
-        /SyntaxError/i,
-        /Compilation failed/i,
-        /compile(?:r|ation)? error/i,
-        /error:\s+/i,
-        /cannot find symbol/i,
-        /cannot find module/i,
-        /module not found/i,
-        /parse error/i
+        /\bSyntaxError\b/i,
+        /\bCompilation failed\b/i,
+        /\bCompilation error\b/i,
+        /\bcompile error\b/i,
+        /\bcompile failed\b/i,
+        /\bcannot find symbol\b/i,
+        /\bmodule not found\b/i,
+        /\bcannot find module\b/i,
+        /\bparse error\b/i,
+        /\berror:\s+cannot find\b/i,
+        /\berror:\s+expected\b/i
     ];
 
-    return patterns.some((pattern) =>
-        pattern.test(combined)
+    return patterns.some(
+        (pattern) => pattern.test(text)
     );
 }
 
-function detectRuntimeFailure(stdout, stderr) {
-    const combined = `${stdout}\n${stderr}`;
+function detectRuntimeFailure(output) {
+    const text = normalizeOutput(output);
 
     const patterns = [
-        /ReferenceError/i,
-        /TypeError/i,
-        /RangeError/i,
-        /Error:/i,
-        /Exception in thread/i,
-        /Traceback \(most recent call last\)/i,
-        /panic:/i,
-        /segmentation fault/i,
-        /uncaught exception/i
+        /\bReferenceError\b/i,
+        /\bTypeError\b/i,
+        /\bRangeError\b/i,
+        /\bException in thread\b/i,
+        /\bTraceback\b/i,
+        /\bpanic:/i,
+        /\bsegmentation fault\b/i,
+        /\buncaught exception\b/i
     ];
 
-    return patterns.some((pattern) =>
-        pattern.test(combined)
+    return patterns.some(
+        (pattern) => pattern.test(text)
     );
 }
 
-function detectSandboxFailure(stdout, stderr) {
-    const combined = `${stdout}\n${stderr}`;
+function detectSandboxFailure(output) {
+    const text = normalizeOutput(output);
 
     const patterns = [
         /SANDBOX_COMMAND_NOT_ALLOWED/i,
-        /sandbox command.*not allowed/i,
+        /sandbox command not allowed/i,
         /invalid sandbox/i,
-        /sandbox.*timeout/i,
+        /sandbox timeout/i,
         /permission denied/i,
         /operation not permitted/i
     ];
 
-    return patterns.some((pattern) =>
-        pattern.test(combined)
+    return patterns.some(
+        (pattern) => pattern.test(text)
     );
 }
 
 export function classifyExecutionResult(result = {}) {
-    const stdout = normalizeText(result.stdout);
-    const stderr = normalizeText(result.stderr);
+    const stdout =
+        normalizeOutput(result.stdout);
 
-    const exitCode =
-        typeof result.exitCode === "number"
-            ? result.exitCode
-            : null;
+    const stderr =
+        normalizeOutput(result.stderr);
+
+    const combinedOutput =
+        `${stdout}\n${stderr}`.trim();
+
+    const testEvidence =
+        detectTestEvidence(combinedOutput);
+
+    const compilationFailure =
+        detectCompilationFailure(
+            combinedOutput
+        );
+
+    const runtimeFailure =
+        detectRuntimeFailure(
+            combinedOutput
+        );
+
+    const sandboxFailure =
+        detectSandboxFailure(
+            combinedOutput
+        );
 
     const timedOut =
         result.timedOut === true ||
         result.timeOut === true;
 
-    const testEvidence =
-        detectTestEvidence(
-            stdout,
-            stderr
-        );
-
-    const sandboxFailure =
-        detectSandboxFailure(
-            stdout,
-            stderr
-        );
-
-    const compilationFailure =
-        detectCompilationFailure(
-            stdout,
-            stderr
-        );
-
-    const runtimeFailure =
-        detectRuntimeFailure(
-            stdout,
-            stderr
-        );
-
     /*
-     * Timeout always takes priority.
+     * ------------------------------------------
+     * TIMEOUT
+     * ------------------------------------------
      */
+
     if (timedOut) {
         return {
             ...result,
             success: false,
             status: "failed",
             failureType: "TIMEOUT",
-            timedOut: true,
-            evidence: testEvidence
+            evidence: {
+                stdout,
+                stderr,
+                reason: "Execution timed out"
+            }
         };
     }
 
     /*
-     * Sandbox/policy failures must never be
-     * treated as application bugs.
+     * ------------------------------------------
+     * SANDBOX FAILURE
+     * ------------------------------------------
      */
+
     if (sandboxFailure) {
         return {
             ...result,
             success: false,
             status: "failed",
             failureType: "SANDBOX_FAILURE",
-            timedOut: false,
-            evidence: testEvidence
+            evidence: {
+                stdout,
+                stderr,
+                reason:
+                    "Sandbox policy or sandbox execution failure"
+            }
         };
     }
 
     /*
-     * A test command can exit with code 0 while
-     * printing FAIL messages. Detect that explicitly.
+     * ------------------------------------------
+     * TEST FAILURE
+     *
+     * Important:
+     * A test script may catch assertion errors
+     * and still exit with code 0.
+     *
+     * Therefore exitCode === 0 does NOT
+     * automatically mean the test passed.
+     * ------------------------------------------
      */
-    if (
-        testEvidence.hasTestFailureMessage ||
-        testEvidence.testsFailed > 0 ||
-        testEvidence.assertionsFailed > 0
-    ) {
+
+    if (testEvidence.hasFailure) {
         return {
             ...result,
             success: false,
             status: "failed",
             failureType: "TEST_FAILURE",
-            timedOut: false,
-            evidence: testEvidence
+            evidence: {
+                stdout,
+                stderr,
+                passCount:
+                    testEvidence.passCount,
+                failCount:
+                    testEvidence.failCount,
+                assertionCount:
+                    testEvidence.assertionCount,
+                reason:
+                    "Test failure evidence detected in execution output"
+            }
         };
     }
 
     /*
-     * Non-zero process exit normally means the
-     * executed program itself failed.
+     * ------------------------------------------
+     * NON-ZERO EXIT CODE
+     * ------------------------------------------
      */
+
     if (
-        exitCode !== null &&
-        exitCode !== 0
+        result.exitCode !== undefined &&
+        result.exitCode !== null &&
+        result.exitCode !== 0
     ) {
+        let failureType =
+            "EXECUTION_FAILURE";
+
         if (compilationFailure) {
-            return {
-                ...result,
-                success: false,
-                status: "failed",
-                failureType: "COMPILATION_FAILURE",
-                timedOut: false,
-                evidence: testEvidence
-            };
-        }
-
-        if (runtimeFailure) {
-            return {
-                ...result,
-                success: false,
-                status: "failed",
-                failureType: "RUNTIME_FAILURE",
-                timedOut: false,
-                evidence: testEvidence
-            };
+            failureType =
+                "COMPILATION_FAILURE";
+        } else if (runtimeFailure) {
+            failureType =
+                "RUNTIME_FAILURE";
         }
 
         return {
             ...result,
             success: false,
             status: "failed",
-            failureType: "EXECUTION_FAILURE",
-            timedOut: false,
-            evidence: testEvidence
+            failureType,
+            evidence: {
+                stdout,
+                stderr,
+                reason:
+                    "Process exited with a non-zero exit code"
+            }
         };
     }
 
     /*
-     * Explicit backend failure with no exit code.
+     * ------------------------------------------
+     * EXPLICIT SUCCESS
+     * ------------------------------------------
      */
-    if (result.success === false) {
-        return {
-            ...result,
-            success: false,
-            status: "failed",
-            failureType: "EXECUTION_FAILURE",
-            timedOut: false,
-            evidence: testEvidence
-        };
-    }
 
-    /*
-     * Successful test output.
-     */
     if (
-        testEvidence.hasTestSuccessMessage &&
-        testEvidence.testsFailed === 0
+        result.success === true &&
+        (
+            result.exitCode === undefined ||
+            result.exitCode === null ||
+            result.exitCode === 0
+        )
     ) {
         return {
             ...result,
             success: true,
             status: "passed",
             failureType: null,
-            timedOut: false,
-            evidence: testEvidence
+            evidence: {
+                stdout,
+                stderr,
+                passCount:
+                    testEvidence.passCount,
+                failCount:
+                    testEvidence.failCount,
+                assertionCount:
+                    testEvidence.assertionCount,
+                reason:
+                    "Execution completed successfully without failure evidence"
+            }
         };
     }
 
     /*
-     * Normal successful program execution.
+     * ------------------------------------------
+     * FALLBACK
+     * ------------------------------------------
      */
+
     return {
         ...result,
-        success: true,
-        status: "passed",
-        failureType: null,
-        timedOut: false,
-        evidence: testEvidence
+        success: false,
+        status: "failed",
+        failureType: "UNKNOWN_EXECUTION_RESULT",
+        evidence: {
+            stdout,
+            stderr,
+            reason:
+                "Execution result could not be proven successful"
+        }
     };
 }
 
 export function isExecutionFailure(result) {
     return (
-        classifyExecutionResult(result)
-            .status === "failed"
+        result?.status === "failed" ||
+        result?.success === false
     );
 }
 
 export function isTestFailure(result) {
     return (
-        classifyExecutionResult(result)
-            .failureType === "TEST_FAILURE"
+        result?.failureType ===
+        "TEST_FAILURE"
     );
 }
 
 export function isSandboxFailure(result) {
     return (
-        classifyExecutionResult(result)
-            .failureType === "SANDBOX_FAILURE"
+        result?.failureType ===
+        "SANDBOX_FAILURE"
     );
 }
 
 export function isRuntimeFailure(result) {
     return (
-        classifyExecutionResult(result)
-            .failureType === "RUNTIME_FAILURE"
+        result?.failureType ===
+        "RUNTIME_FAILURE"
     );
 }
 
 export function isCompilationFailure(result) {
     return (
-        classifyExecutionResult(result)
-            .failureType === "COMPILATION_FAILURE"
+        result?.failureType ===
+        "COMPILATION_FAILURE"
     );
 }
 
 export function isSuccessfulExecution(result) {
     return (
-        classifyExecutionResult(result)
-            .status === "passed"
+        result?.success === true &&
+        result?.status === "passed"
     );
 }
