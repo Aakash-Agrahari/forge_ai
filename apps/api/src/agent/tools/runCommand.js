@@ -5,10 +5,11 @@ export const runCommandTool = createTool({
     name: "run_command",
 
     description:
-        "Run an approved project command in the ForgeAI sandbox and return its output.",
+        "Run an approved project command in the ForgeAI sandbox and return normalized execution results.",
 
     inputSchema: {
         type: "object",
+
         properties: {
             command: {
                 type: "string",
@@ -16,7 +17,9 @@ export const runCommandTool = createTool({
                     "The project command to execute, such as npm test."
             }
         },
+
         required: ["command"],
+
         additionalProperties: false
     },
 
@@ -26,7 +29,8 @@ export const runCommandTool = createTool({
                 "Project ID is required to run a command"
             );
 
-            error.code = "PROJECT_ID_REQUIRED";
+            error.code =
+                "PROJECT_ID_REQUIRED";
 
             throw error;
         }
@@ -36,23 +40,53 @@ export const runCommandTool = createTool({
                 "Command is required"
             );
 
-            error.code = "COMMAND_REQUIRED";
+            error.code =
+                "COMMAND_REQUIRED";
 
             throw error;
         }
 
-        const result = await executeProjectCommand({
-            projectId: context.projectId,
-            command: input.command
-        });
+        const result =
+            await executeProjectCommand({
+                projectId:
+                    context.projectId,
+
+                command:
+                    input.command
+            });
 
         return {
-            success: result.success,
-            exitCode: result.exitCode,
-            stdout: result.stdout,
-            stderr: result.stderr,
-            durationMs: result.durationMs,
-            timeOut: result.timeOut
+            success:
+                result.success,
+
+            status:
+                result.status,
+
+            failureType:
+                result.failureType,
+
+            exitCode:
+                result.exitCode,
+
+            stdout:
+                result.stdout,
+
+            stderr:
+                result.stderr,
+
+            durationMs:
+                result.durationMs,
+
+            timedOut:
+                result.timedOut ??
+                result.timeOut ??
+                false,
+
+            evidence:
+                result.evidence ?? null,
+
+            classification:
+                result.classification ?? null
         };
     }
 });
