@@ -272,46 +272,52 @@ function getJavaScriptVerificationStatus(toolResult) {
         };
     }
 
-    const failureCode =
+    const failureType =
+        toolResult?.failureType ??
         toolResult?.failureCode ??
         toolResult?.code ??
         toolResult?.error?.code ??
         null;
 
-    switch (failureCode) {
+    switch (failureType) {
+        case "TEST_FAILURE":
         case "BEHAVIOR_MISMATCH":
             return {
                 category: "REPAIR_REQUIRED",
                 message:
-                    "JavaScript behavioral verification failed because the actual function output does not match the expected result. Inspect the implementation, repair the relevant code, and run run_javascript_test again."
+                    "JavaScript behavioral test failed. The actual function behavior did not match the expected result. Inspect the test output and relevant implementation, diagnose the root cause, repair the incorrect code, and run run_javascript_test again."
             };
 
-        case "FUNCTION_EXECUTION_FAILED":
-            return {
-                category: "REPAIR_REQUIRED",
-                message:
-                    "JavaScript behavioral verification could not execute the target function successfully. Inspect the reported runtime error, repair the relevant code if necessary, and run run_javascript_test again."
-            };
-
+        case "TEST_SETUP_FAILURE":
         case "FUNCTION_NOT_FOUND":
-            return {
-                category: "TEST_SETUP_ERROR",
-                message:
-                    "JavaScript behavioral verification could not find the requested function. This is a test setup or function-discovery problem, not evidence that the implementation is incorrect. Do not blindly modify the implementation to make the test pass. Inspect the function name, export/setup, and test configuration first."
-            };
-
         case "MODULE_IMPORT_FAILED":
             return {
                 category: "TEST_SETUP_ERROR",
                 message:
-                    "JavaScript behavioral verification could not import the target module. This is a module/import configuration problem, not evidence that the function's behavior is incorrect. Inspect the module format, imports, and project configuration before modifying the implementation."
+                    "JavaScript behavioral verification could not be completed because of a test setup or module/function discovery problem. This is not evidence that the implementation is incorrect. Do not blindly modify the application code. Inspect the function name, exports, module format, imports, and test configuration first."
+            };
+
+        case "FUNCTION_EXECUTION_FAILED":
+        case "RUNTIME_FAILURE":
+            return {
+                category: "REPAIR_REQUIRED",
+                message:
+                    "JavaScript behavioral verification failed because the target function threw a runtime error. Inspect the reported error, diagnose the root cause, repair the relevant code if necessary, and run run_javascript_test again."
             };
 
         case "TEST_TIMEOUT":
+        case "TIMEOUT":
             return {
                 category: "EXECUTION_PROBLEM",
                 message:
                     "JavaScript behavioral verification timed out. Inspect the function for an execution or infinite-loop problem and use the test result to determine whether code repair is required."
+            };
+
+        case "SANDBOX_FAILURE":
+            return {
+                category: "EXECUTION_PROBLEM",
+                message:
+                    "JavaScript behavioral verification could not complete because the sandbox failed. This does not by itself prove that the application code is incorrect. Inspect the sandbox error before modifying the implementation."
             };
 
         default:
