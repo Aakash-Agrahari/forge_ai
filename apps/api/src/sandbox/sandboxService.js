@@ -68,7 +68,22 @@ export async function executeProjectCommand({
             "Project ID is required"
         );
 
-        error.code = "PROJECT_ID_REQUIRED";
+        error.code =
+            "PROJECT_ID_REQUIRED";
+
+        throw error;
+    }
+
+    if (
+        typeof command !== "string" ||
+        !command.trim()
+    ) {
+        const error = new Error(
+            "Sandbox command is required"
+        );
+
+        error.code =
+            "COMMAND_REQUIRED";
 
         throw error;
     }
@@ -97,7 +112,8 @@ export async function executeProjectCommand({
             cwd: workspacePath,
             timeoutMs,
             maxOutputBytes,
-            backend: sandboxConfig.backend
+            backend:
+                sandboxConfig.backend
         });
     } finally {
         await removeWorkspace(
