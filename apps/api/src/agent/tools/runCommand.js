@@ -5,7 +5,7 @@ export const runCommandTool = createTool({
     name: "run_command",
 
     description:
-        "Run an approved project command in the ForgeAI sandbox and return normalized execution results.",
+        "Run an approved project command in the ForgeAI sandbox and return structured execution results.",
 
     inputSchema: {
         type: "object",
@@ -14,7 +14,7 @@ export const runCommandTool = createTool({
             command: {
                 type: "string",
                 description:
-                    "The project command to execute, such as npm test."
+                    "The project command to execute, such as npm test or node src/index.js."
             }
         },
 
@@ -35,7 +35,10 @@ export const runCommandTool = createTool({
             throw error;
         }
 
-        if (!input?.command) {
+        if (
+            typeof input?.command !== "string" ||
+            !input.command.trim()
+        ) {
             const error = new Error(
                 "Command is required"
             );
@@ -77,16 +80,14 @@ export const runCommandTool = createTool({
             durationMs:
                 result.durationMs,
 
+            timeOut:
+                result.timeOut,
+
             timedOut:
-                result.timedOut ??
-                result.timeOut ??
-                false,
+                result.timedOut,
 
             evidence:
-                result.evidence ?? null,
-
-            classification:
-                result.classification ?? null
+                result.evidence ?? null
         };
     }
 });
