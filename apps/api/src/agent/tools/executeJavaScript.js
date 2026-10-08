@@ -1,19 +1,13 @@
 import { createTool } from "./toolContract.js";
-
-import {
-    executeProjectCommand
-} from "../../sandbox/sandboxService.js";
-
-import {
-    validateProjectPath
-} from "../projectPath.js";
+import { executeProjectCommand } from "../../sandbox/sandboxService.js";
+import { validateProjectPath } from "../projectPath.js";
 
 export const executeJavaScriptTool =
     createTool({
         name: "execute_javascript",
 
         description:
-            "Execute a JavaScript file from the current project in the ForgeAI sandbox and return normalized execution results.",
+            "Execute a JavaScript file from the current project in the ForgeAI sandbox and return structured execution results.",
 
         inputSchema: {
             type: "object",
@@ -26,9 +20,7 @@ export const executeJavaScriptTool =
                 }
             },
 
-            required: [
-                "filePath"
-            ],
+            required: ["filePath"],
 
             additionalProperties: false
         },
@@ -45,7 +37,10 @@ export const executeJavaScriptTool =
                 throw error;
             }
 
-            if (!input?.filePath) {
+            if (
+                typeof input?.filePath !== "string" ||
+                !input.filePath.trim()
+            ) {
                 const error = new Error(
                     "File path is required"
                 );
@@ -62,10 +57,12 @@ export const executeJavaScriptTool =
                 );
 
             if (
-                !relativePath.endsWith(".js")
+                !relativePath.endsWith(".js") &&
+                !relativePath.endsWith(".mjs") &&
+                !relativePath.endsWith(".cjs")
             ) {
                 const error = new Error(
-                    "execute_javascript only supports .js files"
+                    "execute_javascript only supports .js, .mjs and .cjs files"
                 );
 
                 error.code =
@@ -80,7 +77,7 @@ export const executeJavaScriptTool =
                         context.projectId,
 
                     command:
-                        `node ${relativePath}`
+                        `node "${relativePath}"`
                 });
 
             return {
@@ -108,16 +105,14 @@ export const executeJavaScriptTool =
                 durationMs:
                     result.durationMs,
 
+                timeOut:
+                    result.timeOut,
+
                 timedOut:
-                    result.timedOut ??
-                    result.timeOut ??
-                    false,
+                    result.timedOut,
 
                 evidence:
-                    result.evidence ?? null,
-
-                classification:
-                    result.classification ?? null
+                    result.evidence ?? null
             };
         }
     });
