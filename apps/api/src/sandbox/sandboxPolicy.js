@@ -1,4 +1,4 @@
-const ALLOWED_SIMPLE_COMMANDS = new Set([
+const ALLOWED_COMMANDS = new Set([
     "npm test",
     "npm run build",
     "npm run lint",
@@ -6,155 +6,208 @@ const ALLOWED_SIMPLE_COMMANDS = new Set([
     "node --test"
 ]);
 
-const ALLOWED_RUNTIME_COMMANDS = [
-    /^node\s+[A-Za-z0-9._/-]+\.m?js$/,
-    /^python\s+[A-Za-z0-9._/-]+\.py$/,
-    /^php\s+[A-Za-z0-9._/-]+\.php$/,
-    /^ruby\s+[A-Za-z0-9._/-]+\.rb$/,
-    /^java\s+[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*$/
-];
+const DEFAULT_TIMEOUT_MS = 30_000;
+const MAX_TIMEOUT_MS = 60_000;
+const MAX_OUTPUT_BYTES = 1_000_000;
 
-const SANDBOX_LIMITS = {
-    maxTimeoutMs: 30_000,
-    maxOutputBytes: 1_000_000
-};
+function extractNodeFilePath(command) {
+    const match = command.match(
+        /^node\s+(?:"([^"]+)"|'([^']+)'|([^\s]+))$/
+    );
 
-function normalizeCommand(command) {
-    return command.trim().replace(/\s+/g, " ");
-}
-
-function parseJavaSourceArguments(command) {
-    const sourcePart = command
-        .slice("javac".length)
-        .trim();
-
-    if (!sourcePart) {
-        return [];
+    if (!match) {
+        return null;
     }
 
     return (
-        sourcePart
-            .match(/"[^"]+"|\S+/g)
-            ?.map((file) => {
-                if (
-                    file.startsWith('"') &&
-                    file.endsWith('"')
-                ) {
-                    return file.slice(1, -1);
-                }
-
-                return file;
-            }) ?? []
+        match[1] ??
+        match[2] ??
+        match[3] ??
+        null
     );
 }
 
-function isSafeRelativeJavaPath(filePath) {
+function isSafeNodeCommand(command) {
+    if (!command.startsWith("node ")) {
+        return false;
+    }
+
+    const filePath =
+        extractNodeFilePath(command);
+
     if (!filePath) {
         return false;
     }
 
-    if (filePath.startsWith("/")) {
+    /*
+     * Only allow JavaScript source files that
+     * are relative to the sandbox project workspace.
+     */
+    const supportedExtensions = [
+        ".js",
+        ".mjs",
+        ".cjs"
+    ];
+
+    if (
+        !supportedExtensions.some(
+            (extension) =>
+                filePath.endsWith(extension)
+        )
+    ) {
         return false;
     }
 
-    if (filePath.includes("\\")) {
+    /*
+     * Never allow shell operators or flags.
+     */
+    if (
+        filePath.startsWith("-") ||
+        filePath.includes("&&") ||
+        filePath.includes("||") ||
+        filePath.includes(";") ||
+        filePath.includes("|") ||
+        filePath.includes(">") ||
+        filePath.includes("<")
+    ) {
         return false;
     }
 
-    if (filePath.includes("..")) {
+    /*
+     * Never allow absolute paths.
+     */
+    if (pathIsAbsolute(filePath)) {
         return false;
     }
 
-    if (filePath.includes(";")) {
+    /*
+     * Never allow directory traversal.
+     */
+    const segments =
+        filePath.split(/[\\/]+/);
+
+    if (segments.includes("..")) {
         return false;
     }
 
-    if (filePath.includes("|")) {
-        return false;
-    }
-
-    if (filePath.includes("&")) {
-        return false;
-    }
-
-    if (filePath.includes(">")) {
-        return false;
-    }
-
-    if (filePath.includes("<")) {
-        return false;
-    }
-
-    if (filePath.includes("$")) {
-        return false;
-    }
-
-    if (!filePath.endsWith(".java")) {
-        return false;
-    }
-
-    return /^[A-Za-z0-9._/-]+\.java$/.test(filePath);
+    return true;
 }
 
-function validateJavaCompileCommand(command) {
-    if (!command.startsWith("javac ")) {
-        return false;
-    }
-
-    const sourceFiles = parseJavaSourceArguments(command);
-
-    if (sourceFiles.length === 0) {
-        return false;
-    }
-
-    return sourceFiles.every(isSafeRelativeJavaPath);
-}
-
-function validateRuntimeCommand(command) {
-    return ALLOWED_RUNTIME_COMMANDS.some((pattern) =>
-        pattern.test(command)
+function pathIsAbsolute(filePath) {
+    return (
+        filePath.startsWith("/") ||
+        filePath.startsWith("\\") ||
+        /^[A-Za-z]:[\\/]/.test(filePath)
     );
 }
 
 export function validateSandboxCommand(command) {
-    if (
-        typeof command !== "string" ||
-        !command.trim()
-    ) {
+    if (typeof command !== "string") {
         const error = new Error(
-            "Sandbox command must be a non-empty string"
+            "Sandbox command must be a string"
         );
 
-        error.code = "SANDBOX_COMMAND_REQUIRED";
+        error.code =
+            "INVALID_SANDBOX_COMMAND";
 
         throw error;
     }
 
-    const normalized = normalizeCommand(command);
+    const normalizedCommand =
+        command.trim();
 
-    if (ALLOWED_SIMPLE_COMMANDS.has(normalized)) {
-        return normalized;
+    if (!normalizedCommand) {
+        const error = new Error(
+            "Sandbox command cannot be empty"
+        );
+
+        error.code =
+            "EMPTY_SANDBOX_COMMAND";
+
+        throw error;
     }
 
-    if (validateJavaCompileCommand(normalized)) {
-        return normalized;
+    const isExplicitlyAllowed =
+        ALLOWED_COMMANDS.has(
+            normalizedCommand
+        );
+
+    const isAllowedNodeCommand =
+        isSafeNodeCommand(
+            normalizedCommand
+        );
+
+    if (
+        !isExplicitlyAllowed &&
+        !isAllowedNodeCommand
+    ) {
+        const error = new Error(
+            `Command is not allowed in the sandbox: ${normalizedCommand}`
+        );
+
+        error.code =
+            "SANDBOX_COMMAND_NOT_ALLOWED";
+
+        throw error;
     }
 
-    if (validateRuntimeCommand(normalized)) {
-        return normalized;
-    }
-
-    const error = new Error(
-        `Command is not allowed in the sandbox: ${command}`
-    );
-
-    error.code = "SANDBOX_COMMAND_NOT_ALLOWED";
-
-    throw error;
+    return normalizedCommand;
 }
 
-export function getSandboxLimits() {
+export function getSandboxLimits({
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+    maxOutputBytes = MAX_OUTPUT_BYTES
+} = {}) {
+    if (
+        !Number.isInteger(timeoutMs) ||
+        timeoutMs <= 0
+    ) {
+        const error = new Error(
+            "Sandbox timeout must be a positive integer"
+        );
+
+        error.code =
+            "INVALID_SANDBOX_TIMEOUT";
+
+        throw error;
+    }
+
+    if (timeoutMs > MAX_TIMEOUT_MS) {
+        const error = new Error(
+            `Sandbox timeout cannot exceed ${MAX_TIMEOUT_MS}ms`
+        );
+
+        error.code =
+            "SANDBOX_TIMEOUT_TOO_LARGE";
+
+        throw error;
+    }
+
+    if (
+        !Number.isInteger(maxOutputBytes) ||
+        maxOutputBytes <= 0
+    ) {
+        const error = new Error(
+            "Sandbox max output must be a positive integer"
+        );
+
+        error.code =
+            "INVALID_SANDBOX_OUTPUT_LIMIT";
+
+        throw error;
+    }
+
     return {
-        ...SANDBOX_LIMITS
+        timeoutMs,
+        maxOutputBytes
     };
+}
+
+export function getAllowedSandboxCommands() {
+    return [
+        ...ALLOWED_COMMANDS,
+        "node <project-relative-file>.js",
+        "node <project-relative-file>.mjs",
+        "node <project-relative-file>.cjs"
+    ];
 }
