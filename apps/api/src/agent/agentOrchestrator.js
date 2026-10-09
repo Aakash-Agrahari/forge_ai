@@ -23,6 +23,7 @@ import { validateToolCall } from "./toolCallValidator.js";
 
 const MAX_ITERATIONS = 10;
 const MAX_IDENTICAL_TOOL_CALLS = 3;
+const MAX_REPEATED_TOOL_RECOVERIES = 2;
 const MAX_EARLY_COMPLETION_RETRIES = 2;
 
 /*
@@ -360,6 +361,7 @@ export async function runAgent({
     const toolResults = [];
 
     let earlyCompletionRetries = 0;
+    let repeatedToolRecoveries = 0;
     let hasPerformedWork = false;
 
     const taskRequirements =
