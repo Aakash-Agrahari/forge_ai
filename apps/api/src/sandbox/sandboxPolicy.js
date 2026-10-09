@@ -40,8 +40,9 @@ function isSafeNodeCommand(command) {
     }
 
     /*
-     * Only allow JavaScript source files that
-     * are relative to the sandbox project workspace.
+     * Only allow JavaScript source files
+     * that are relative to the sandbox
+     * project workspace.
      */
     const supportedExtensions = [
         ".js",
@@ -59,7 +60,9 @@ function isSafeNodeCommand(command) {
     }
 
     /*
-     * Never allow shell operators or flags.
+     * Never allow shell operators,
+     * command chaining, redirection,
+     * or shell substitution.
      */
     if (
         filePath.startsWith("-") ||
@@ -68,7 +71,9 @@ function isSafeNodeCommand(command) {
         filePath.includes(";") ||
         filePath.includes("|") ||
         filePath.includes(">") ||
-        filePath.includes("<")
+        filePath.includes("<") ||
+        filePath.includes("$(") ||
+        filePath.includes("`")
     ) {
         return false;
     }
