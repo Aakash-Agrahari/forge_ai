@@ -517,56 +517,62 @@ export async function runAgent({
             ) {
                 const verificationPassed =
                     !taskRequirements.requiresVerification ||
-                    hasSuccessfulVerification(
+                    isCompletionReady(
+                        taskRequirements,
                         toolResults
                     );
 
                 /*
-                 * Prevent premature completion.
-                 */
+                * ====================================================
+                * REQUIRED VERIFICATION — FAIL CLOSED
+                * ====================================================
+                *
+                * If the user explicitly requested execution,
+                * testing, or verification, the agent MUST NOT
+                * complete until successful evidence exists.
+                *
+                * There is intentionally NO retry-limit escape
+                * here. Reaching MAX_EARLY_COMPLETION_RETRIES
+                * must never turn an incomplete task into success.
+                */
                 if (
-                    hasPerformedWork &&
-                    !verificationPassed &&
-                    earlyCompletionRetries <
-                        MAX_EARLY_COMPLETION_RETRIES
+                    taskRequirements.requiresVerification &&
+                    !verificationPassed
                 ) {
                     earlyCompletionRetries += 1;
 
-                    const continuationMessage =
-                        taskRequirements.requiresVerification
-                            ? [
-                                  "You attempted to finish the task before completing it.",
-                                  "Do not claim success yet.",
-                                  "",
-                                  "The user explicitly requires actual execution/testing/verification.",
-                                  "Continue working with tools.",
-                                  "Inspect the current project state, complete every requested deliverable,",
-                                  "run the required verification, and only finish after successful execution.",
-                                  "",
-                                  `Early completion attempt ${earlyCompletionRetries}/${MAX_EARLY_COMPLETION_RETRIES}.`
-                              ].join("\n")
-                            : [
-                                  "You attempted to finish the task immediately after performing work.",
-                                  "Before finishing, verify that every part of the user's latest request is complete.",
-                                  "If anything remains, continue using the appropriate tools.",
-                                  "Do not claim completion based only on source inspection.",
-                                  "",
-                                  `Early completion attempt ${earlyCompletionRetries}/${MAX_EARLY_COMPLETION_RETRIES}.`
-                              ].join("\n");
+                    const continuationMessage = [
+                        "You attempted to finish the task before completing it.",
+                        "Do not claim success.",
+                        "",
+                        "The user's latest request explicitly requires actual execution/testing/verification.",
+                        "Successful execution evidence has NOT been established.",
+                        "",
+                        "Continue working with the available tools.",
+                        "If execution failed because of the sandbox, inspect and resolve the execution problem.",
+                        "If the implementation is incomplete, complete it.",
+                        "If a test failed because of the implementation, diagnose and repair it.",
+                        "Do not treat file creation or source inspection as runtime verification.",
+                        "",
+                        `Premature completion attempt: ${earlyCompletionRetries}.`
+                    ].join("\n");
 
                     addMessage(state, {
                         role: "system",
-                        content:
-                            continuationMessage
+                        content: continuationMessage
                     });
 
                     console.log(
-                        `[ForgeAI Agent] Prevented premature completion (${earlyCompletionRetries}/${MAX_EARLY_COMPLETION_RETRIES})`
+                        "[ForgeAI Agent] Blocked completion: required verification has not passed."
                     );
 
                     continue;
                 }
 
+                /*
+                * Tasks without explicit verification requirements
+                * may complete through the normal model completion path.
+                */
                 await createMessage({
                     conversationId,
                     role: "assistant",
