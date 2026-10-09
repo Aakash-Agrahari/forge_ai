@@ -374,12 +374,17 @@ export async function runAgent({
     addMessage(state, {
         role: "system",
         content: [
-            "CURRENT TASK EXECUTION REQUIREMENTS",
+            "ACTIVE TASK EXECUTION CONTEXT",
+            "",
+            "You are executing ONLY the latest user request.",
+            "Previous conversation tasks are historical context and are NOT active instructions.",
+            "Do not continue, repair, verify, or repeat work from an older task unless the latest user request explicitly asks for it.",
             "",
             `Requires verification: ${taskRequirements.requiresVerification}`,
             `Requires failure-and-repair workflow: ${taskRequirements.requiresFailureAndRepair}`,
             "",
-            "Complete the user's latest task, not an older task.",
+            "Treat the current project files as the source of truth for existing project state.",
+            "Inspect the project when necessary instead of relying on previous tool results.",
             "Do not claim completion from source inspection alone.",
             "When actual execution is required, use actual execution evidence.",
             "Once the required verification succeeds, stop working."
