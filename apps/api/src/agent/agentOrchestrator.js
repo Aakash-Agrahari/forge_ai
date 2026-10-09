@@ -34,7 +34,10 @@ const MAX_EARLY_COMPLETION_RETRIES = 2;
 function getTaskRequirements(messages) {
     const latestUserMessage = [...messages]
         .reverse()
-        .find((message) => message.role === "user");
+        .find(
+            (message) =>
+                message.role === "user"
+        );
 
     const userText = (
         latestUserMessage?.content ?? ""
