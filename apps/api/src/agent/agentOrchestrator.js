@@ -981,62 +981,48 @@ export async function runAgent({
                  * =================================================
                  */
 
-                if (
-                    isCompletionReady(
-                        taskRequirements,
-                        toolResults
-                    )
+                function isCompletionReady(
+                    taskRequirements,
+                    toolResults
                 ) {
-                    const completionMessage =
-                        "Task completed successfully and verified with actual execution evidence.";
+                    // Tasks without explicit verification requirements
+                    // can use the normal completion path.
+                    if (!taskRequirements.requiresVerification) {
+                        return false;
+                    }
 
-                    console.log(
-                        "[ForgeAI Agent] Completion guard triggered."
-                    );
+                    // A successful verification is always required.
+                    if (!hasSuccessfulVerification(toolResults)) {
+                        return false;
+                    }
 
-                    addMessage(state, {
-                        role: "system",
-                        content:
-                            completionMessage
-                    });
+                    /*
+                    * If ANY execution/verification failure was observed,
+                    * the agent must prove that verification succeeded AFTER
+                    * that failure.
+                    *
+                    * This makes the rule deterministic even if the natural-
+                    * language task parser misses a repair keyword.
+                    */
+                    if (hasObservedExecutionFailure(toolResults)) {
+                        return hasSuccessfulVerificationAfterFailure(
+                            toolResults
+                        );
+                    }
 
-                    await createMessage({
-                        conversationId,
-                        role: "assistant",
-                        content:
-                            completionMessage
-                    });
+                    /*
+                    * If the user explicitly requested a failure -> repair ->
+                    * verification workflow, require that sequence as well.
+                    */
+                    if (
+                        taskRequirements.requiresFailureAndRepair
+                    ) {
+                        return hasSuccessfulVerificationAfterFailure(
+                            toolResults
+                        );
+                    }
 
-                    completeAgentState(
-                        state,
-                        "completed"
-                    );
-
-                    await updateAgentRun({
-                        runId,
-                        conversationId,
-                        data: {
-                            status: "completed",
-                            provider:
-                                result.provider,
-                            model:
-                                result.model,
-                            completedAt:
-                                new Date()
-                        }
-                    });
-
-                    return {
-                        state,
-                        result: {
-                            ...result,
-                            content:
-                                result.content ||
-                                completionMessage,
-                            completionGuardTriggered:
-                                true
-                        }
-                    };
+                    return true;
                 }
 
                 /*
