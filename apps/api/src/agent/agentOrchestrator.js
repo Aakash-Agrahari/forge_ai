@@ -669,20 +669,92 @@ export async function runAgent({
                  * Prevent the model from endlessly repeating
                  * exactly the same operation.
                  */
+                /*
+                * ============================================================
+                * REPEATED TOOL CALL RECOVERY
+                * ============================================================
+                *
+                * Do not immediately fail the entire agent when the model
+                * repeats an identical tool call.
+                *
+                * A repeated call usually means the model has lost track of
+                * the current project state or has failed to transition from
+                * "write" -> "inspect" -> "verify".
+                *
+                * Block the duplicate call and give the model an explicit
+                * recovery instruction.
+                *
+                * A hard recovery limit still exists so a genuinely stuck
+                * model cannot loop forever.
+                * ============================================================
+                */
+
                 if (
                     currentCount >
                     MAX_IDENTICAL_TOOL_CALLS
                 ) {
-                    const error = new Error(
-                        `Agent repeated the same tool call too many times: ${validatedToolCall.name}`
+                    repeatedToolRecoveries += 1;
+
+                    console.warn(
+                        `[ForgeAI Agent] Blocked repeated tool call: ${validatedToolCall.name}`,
+                        {
+                            currentCount,
+                            recoveryAttempt:
+                                repeatedToolRecoveries
+                        }
                     );
 
-                    error.code =
-                        "REPEATED_TOOL_CALL";
+                    if (
+                        repeatedToolRecoveries >
+                        MAX_REPEATED_TOOL_RECOVERIES
+                    ) {
+                        const error = new Error(
+                            `Agent could not recover from repeated tool call: ${validatedToolCall.name}`
+                        );
 
-                    error.statusCode = 503;
+                        error.code =
+                            "REPEATED_TOOL_CALL_RECOVERY_FAILED";
 
-                    throw error;
+                        error.statusCode = 503;
+
+                        throw error;
+                    }
+
+                    const recoveryMessage = [
+                        "REPEATED TOOL CALL DETECTED.",
+                        "",
+                        `You attempted to call "${validatedToolCall.name}" with the exact same arguments multiple times.`,
+                        "That operation has already been attempted and must NOT be repeated unchanged.",
+                        "",
+                        "STOP repeating the same tool call.",
+                        "",
+                        "Inspect the current project state and continue from the result of the previous operation.",
+                        "",
+                        "If you just created or modified a file:",
+                        "1. Read the file using read_file.",
+                        "2. Inspect the actual contents.",
+                        "3. Run the appropriate execution or verification tool.",
+                        "4. Inspect the actual error or result.",
+                        "5. Repair the implementation only if the evidence requires a repair.",
+                        "6. Run the verification again.",
+                        "",
+                        "For a JavaScript task requiring behavioral verification, use run_javascript_test.",
+                        "Do not claim completion from write_file success or source inspection alone.",
+                        "",
+                        `Recovery attempt: ${repeatedToolRecoveries}/${MAX_REPEATED_TOOL_RECOVERIES}`
+                    ].join("\n");
+
+                    addMessage(state, {
+                        role: "system",
+                        content: recoveryMessage
+                    });
+
+                    /*
+                    * Do not execute the duplicate tool call.
+                    * Move directly to the next model iteration so the model
+                    * can choose a different corrective action.
+                    */
+                    continue;
                 }
 
                 recordToolCall(state, {
