@@ -392,16 +392,28 @@ export async function runAgent({
          * Load them into the in-memory agent state,
          * but do not persist them again.
          */
-        for (const message of messages) {
-            addMessage(state, {
-                role: message.role,
-                content: message.content ?? "",
-                toolCallId: message.toolCallId ?? null,
-                toolName: message.toolName ?? null,
-                toolArguments: message.toolArguments ?? null,
-                toolResult: message.toolResult ?? null
-            });
+        const latestUserMessage = [...messages]
+            .reverse()
+            .find((message) => message.role === "user");
+
+        if (!latestUserMessage) {
+            const error = new Error(
+                "No active user task was found"
+            );
+
+            error.code =
+                "ACTIVE_TASK_NOT_FOUND";
+
+            error.statusCode = 400;
+
+            throw error;
         }
+
+        addMessage(state, {
+            role: "user",
+            content:
+                latestUserMessage.content ?? ""
+        });
 
         await updateAgentRun({
             runId,
