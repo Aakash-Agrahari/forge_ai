@@ -32,11 +32,13 @@ const MAX_EARLY_COMPLETION_RETRIES = 2;
  */
 
 function getTaskRequirements(messages) {
-    const userText = messages
-        .filter((message) => message.role === "user")
-        .map((message) => message.content ?? "")
-        .join("\n")
-        .toLowerCase();
+    const latestUserMessage = [...messages]
+        .reverse()
+        .find((message) => message.role === "user");
+
+    const userText = (
+        latestUserMessage?.content ?? ""
+    ).toLowerCase();
 
     const verificationKeywords = [
         "run test",
@@ -56,9 +58,11 @@ function getTaskRequirements(messages) {
         "fix incorrect"
     ];
 
-    const requiresVerification = verificationKeywords.some(
-        (keyword) => userText.includes(keyword)
-    );
+    const requiresVerification =
+        verificationKeywords.some(
+            (keyword) =>
+                userText.includes(keyword)
+        );
 
     const repairKeywords = [
         "intentionally introduce",
@@ -74,9 +78,11 @@ function getTaskRequirements(messages) {
         "fix incorrect"
     ];
 
-    const requiresFailureAndRepair = repairKeywords.some(
-        (keyword) => userText.includes(keyword)
-    );
+    const requiresFailureAndRepair =
+        repairKeywords.some(
+            (keyword) =>
+                userText.includes(keyword)
+        );
 
     return {
         requiresVerification,
