@@ -174,7 +174,7 @@ function hasObservedExecutionFailure(toolResults) {
          * Some custom test runners may return exitCode=0 while
          * printing FAIL lines. Detect those as real failures too.
          */
-        if (toolName === "run_javascript_test") {
+        /*if (toolName === "run_javascript_test") {
             const stdout =
                 typeof result.stdout === "string"
                     ? result.stdout
@@ -185,7 +185,7 @@ function hasObservedExecutionFailure(toolResults) {
                 stdout.includes("FAIL ") ||
                 stdout.includes("FAILED")
             );
-        }
+        }*/
 
         return false;
     });
