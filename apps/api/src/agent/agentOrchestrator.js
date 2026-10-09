@@ -28,6 +28,30 @@ const MAX_EARLY_COMPLETION_RETRIES = 2;
 
 /*
  * ============================================================
+ * TIMING HELPERS
+ * ============================================================
+ */
+
+function elapsedMs(startedAt) {
+    return Date.now() - startedAt;
+}
+
+function logAgentTiming(
+    label,
+    startedAt,
+    metadata = {}
+) {
+    console.log(
+        `[ForgeAI Agent][Timing] ${label}`,
+        JSON.stringify({
+            elapsedMs: elapsedMs(startedAt),
+            ...metadata
+        })
+    );
+}
+
+/*
+ * ============================================================
  * TASK REQUIREMENTS
  * ============================================================
  */
@@ -100,13 +124,16 @@ function getTaskRequirements(messages) {
  * ============================================================
  */
 
-function hasSuccessfulVerification(toolResults) {
+function hasSuccessfulVerification(
+    toolResults
+) {
     return toolResults.some((result) => {
         if (!result?.success) {
             return false;
         }
 
-        const toolName = result.toolName;
+        const toolName =
+            result.toolName;
 
         if (
             toolName === "run_command" ||
@@ -114,12 +141,22 @@ function hasSuccessfulVerification(toolResults) {
             toolName === "run_javascript_test" ||
             toolName === "verify_javascript"
         ) {
-            if (toolName === "run_javascript_test") {
-                return result.passed === true;
+            if (
+                toolName ===
+                "run_javascript_test"
+            ) {
+                return (
+                    result.passed === true
+                );
             }
 
-            if (toolName === "verify_javascript") {
-                return result.verified === true;
+            if (
+                toolName ===
+                "verify_javascript"
+            ) {
+                return (
+                    result.verified === true
+                );
             }
 
             return (
@@ -132,26 +169,38 @@ function hasSuccessfulVerification(toolResults) {
     });
 }
 
-function hasObservedExecutionFailure(toolResults) {
+function hasObservedExecutionFailure(
+    toolResults
+) {
     return toolResults.some((result) => {
         if (!result) {
             return false;
         }
 
-        const toolName = result.toolName;
+        const toolName =
+            result.toolName;
 
         /*
-         * run_javascript_test has an explicit passed field.
+         * run_javascript_test has an
+         * explicit passed field.
          */
-        if (toolName === "run_javascript_test") {
-            return result.passed === false;
+        if (
+            toolName ===
+            "run_javascript_test"
+        ) {
+            return (
+                result.passed === false
+            );
         }
 
         /*
-         * execute_javascript reports runtime failure using
-         * success=false, non-zero exit code, timeout, etc.
+         * execute_javascript reports
+         * runtime/execution failures.
          */
-        if (toolName === "execute_javascript") {
+        if (
+            toolName ===
+            "execute_javascript"
+        ) {
             return (
                 result.success === false ||
                 result.exitCode !== 0 ||
@@ -160,9 +209,13 @@ function hasObservedExecutionFailure(toolResults) {
         }
 
         /*
-         * run_command normally exposes success/exitCode.
+         * run_command normally exposes
+         * success and exitCode.
          */
-        if (toolName === "run_command") {
+        if (
+            toolName ===
+            "run_command"
+        ) {
             return (
                 result.success === false ||
                 result.exitCode !== 0 ||
@@ -171,12 +224,16 @@ function hasObservedExecutionFailure(toolResults) {
         }
 
         /*
-         * Some custom test runners may return exitCode=0 while
-         * printing FAIL lines. Detect those as real failures too.
+         * Some custom test runners can
+         * expose FAIL text.
          */
-        /*if (toolName === "run_javascript_test") {
+        if (
+            toolName ===
+            "run_javascript_test"
+        ) {
             const stdout =
-                typeof result.stdout === "string"
+                typeof result.stdout ===
+                "string"
                     ? result.stdout
                     : "";
 
@@ -185,24 +242,32 @@ function hasObservedExecutionFailure(toolResults) {
                 stdout.includes("FAIL ") ||
                 stdout.includes("FAILED")
             );
-        }*/
+        }
 
         return false;
     });
 }
 
-function hasSuccessfulVerificationAfterFailure(toolResults) {
+function hasSuccessfulVerificationAfterFailure(
+    toolResults
+) {
     let failureObserved = false;
 
     for (const result of toolResults) {
-        if (hasObservedExecutionFailure([result])) {
+        if (
+            hasObservedExecutionFailure(
+                [result]
+            )
+        ) {
             failureObserved = true;
             continue;
         }
 
         if (
             failureObserved &&
-            hasSuccessfulVerification([result])
+            hasSuccessfulVerification(
+                [result]
+            )
         ) {
             return true;
         }
@@ -216,16 +281,11 @@ function hasSuccessfulVerificationAfterFailure(toolResults) {
  * DETERMINISTIC COMPLETION GUARD
  * ============================================================
  *
- * This is the important new protection.
+ * Once the user's required verification
+ * is actually proven, the orchestrator stops.
  *
- * Once the user's requested verification workflow is actually
- * proven, the orchestrator stops immediately.
- *
- * The model does NOT get another chance to make an unnecessary
- * tool call such as:
- *
- *     cat /etc/os-release
- *
+ * This prevents unnecessary follow-up calls
+ * after a successful verification.
  * ============================================================
  */
 
@@ -234,27 +294,30 @@ function isCompletionReady(
     toolResults
 ) {
     /*
-     * Normal tasks without explicit verification requirements
-     * can complete through the normal no-tool-call path.
-     */
-    if (!taskRequirements.requiresVerification) {
-        return false;
-    }
-
-    /*
-     * The task requires actual execution/testing/verification.
-     * We must have successful evidence.
+     * Tasks without explicit verification
+     * requirements do not use this guard.
      */
     if (
-        !hasSuccessfulVerification(toolResults)
+        !taskRequirements.requiresVerification
     ) {
         return false;
     }
 
     /*
-     * If the user explicitly requested a bug → failure →
-     * diagnosis → repair → successful verification workflow,
-     * we require both the observed failure and the later success.
+     * We need actual successful evidence.
+     */
+    if (
+        !hasSuccessfulVerification(
+            toolResults
+        )
+    ) {
+        return false;
+    }
+
+    /*
+     * If the user requested a bug ->
+     * failure -> repair -> verification flow,
+     * we require both failure and later success.
      */
     if (
         taskRequirements.requiresFailureAndRepair
@@ -273,8 +336,12 @@ function isCompletionReady(
  * ============================================================
  */
 
-function getJavaScriptVerificationStatus(toolResult) {
-    if (toolResult?.passed === true) {
+function getJavaScriptVerificationStatus(
+    toolResult
+) {
+    if (
+        toolResult?.passed === true
+    ) {
         return {
             category: "PASSED",
             message:
@@ -293,7 +360,8 @@ function getJavaScriptVerificationStatus(toolResult) {
         case "TEST_FAILURE":
         case "BEHAVIOR_MISMATCH":
             return {
-                category: "REPAIR_REQUIRED",
+                category:
+                    "REPAIR_REQUIRED",
                 message:
                     "JavaScript behavioral test failed. The actual function behavior did not match the expected result. Inspect the test output and relevant implementation, diagnose the root cause, repair the incorrect code, and run run_javascript_test again."
             };
@@ -302,7 +370,8 @@ function getJavaScriptVerificationStatus(toolResult) {
         case "FUNCTION_NOT_FOUND":
         case "MODULE_IMPORT_FAILED":
             return {
-                category: "TEST_SETUP_ERROR",
+                category:
+                    "TEST_SETUP_ERROR",
                 message:
                     "JavaScript behavioral verification could not be completed because of a test setup or module/function discovery problem. This is not evidence that the implementation is incorrect. Do not blindly modify the application code. Inspect the function name, exports, module format, imports, and test configuration first."
             };
@@ -310,7 +379,8 @@ function getJavaScriptVerificationStatus(toolResult) {
         case "FUNCTION_EXECUTION_FAILED":
         case "RUNTIME_FAILURE":
             return {
-                category: "REPAIR_REQUIRED",
+                category:
+                    "REPAIR_REQUIRED",
                 message:
                     "JavaScript behavioral verification failed because the target function threw a runtime error. Inspect the reported error, diagnose the root cause, repair the relevant code if necessary, and run run_javascript_test again."
             };
@@ -318,21 +388,24 @@ function getJavaScriptVerificationStatus(toolResult) {
         case "TEST_TIMEOUT":
         case "TIMEOUT":
             return {
-                category: "EXECUTION_PROBLEM",
+                category:
+                    "EXECUTION_PROBLEM",
                 message:
                     "JavaScript behavioral verification timed out. Inspect the function for an execution or infinite-loop problem and use the test result to determine whether code repair is required."
             };
 
         case "SANDBOX_FAILURE":
             return {
-                category: "EXECUTION_PROBLEM",
+                category:
+                    "EXECUTION_PROBLEM",
                 message:
                     "JavaScript behavioral verification could not complete because the sandbox failed. This does not by itself prove that the application code is incorrect. Inspect the sandbox error before modifying the implementation."
             };
 
         default:
             return {
-                category: "VERIFICATION_ERROR",
+                category:
+                    "VERIFICATION_ERROR",
                 message:
                     "JavaScript behavioral verification did not pass. Inspect the complete test result and determine whether the failure is an implementation problem, execution problem, or test setup problem. Do not modify correct application code solely to satisfy a broken test."
             };
@@ -351,31 +424,50 @@ export async function runAgent({
     conversationId,
     messages
 }) {
-    const state = createAgentState({
-        runId,
-        projectId,
-        conversationId
-    });
+    const runStartedAt =
+        Date.now();
 
-    const toolCallHistory = new Map();
+    const state =
+        createAgentState({
+            runId,
+            projectId,
+            conversationId
+        });
+
+    const toolCallHistory =
+        new Map();
+
     const toolResults = [];
 
     let earlyCompletionRetries = 0;
+
     let repeatedToolRecoveries = 0;
+
     let hasPerformedWork = false;
 
     const taskRequirements =
-        getTaskRequirements(messages);
+        getTaskRequirements(
+            messages
+        );
+
+    /*
+     * ============================================================
+     * SYSTEM PROMPT
+     * ============================================================
+     */
 
     addMessage(state, {
         role: "system",
-        content: AGENT_SYSTEM_PROMPT
+        content:
+            AGENT_SYSTEM_PROMPT
     });
 
     /*
-     * Give the model explicit awareness of the current task
-     * requirements.
+     * ============================================================
+     * ACTIVE TASK CONTEXT
+     * ============================================================
      */
+
     addMessage(state, {
         role: "system",
         content: [
@@ -398,18 +490,27 @@ export async function runAgent({
 
     try {
         /*
-         * Messages already exist in the database.
-         * Load them into the in-memory agent state,
-         * but do not persist them again.
+         * ========================================================
+         * FIND ACTIVE USER TASK
+         * ========================================================
          */
-        const latestUserMessage = [...messages]
-            .reverse()
-            .find((message) => message.role === "user");
 
-        if (!latestUserMessage) {
-            const error = new Error(
-                "No active user task was found"
-            );
+        const latestUserMessage =
+            [...messages]
+                .reverse()
+                .find(
+                    (message) =>
+                        message.role ===
+                        "user"
+                );
+
+        if (
+            !latestUserMessage
+        ) {
+            const error =
+                new Error(
+                    "No active user task was found"
+                );
 
             error.code =
                 "ACTIVE_TASK_NOT_FOUND";
@@ -422,8 +523,15 @@ export async function runAgent({
         addMessage(state, {
             role: "user",
             content:
-                latestUserMessage.content ?? ""
+                latestUserMessage.content ??
+                ""
         });
+
+        /*
+         * ========================================================
+         * UPDATE RUN STATUS
+         * ========================================================
+         */
 
         await updateAgentRun({
             runId,
@@ -433,53 +541,126 @@ export async function runAgent({
             }
         });
 
-        const tools = getAgentTools();
+        /*
+         * ========================================================
+         * LOAD TOOLS
+         * ========================================================
+         */
 
-        const models = selectModelsForRequest({
-            task: "code",
-            freeOnly: true,
-            toolCalling: true
-        });
+        const tools =
+            getAgentTools();
 
-        if (models.length === 0) {
-            const error = new Error(
-                "No eligible tool-calling models available"
-            );
+        /*
+         * ========================================================
+         * LOAD FREE TOOL-CALLING MODELS
+         * ========================================================
+         */
 
-            error.code = "NO_TOOL_CALLING_MODELS";
+        const models =
+            selectModelsForRequest({
+                task: "code",
+                freeOnly: true,
+                toolCalling: true
+            });
+
+        if (
+            models.length === 0
+        ) {
+            const error =
+                new Error(
+                    "No eligible tool-calling models available"
+                );
+
+            error.code =
+                "NO_TOOL_CALLING_MODELS";
+
             error.statusCode = 503;
 
             throw error;
         }
 
+        /*
+         * ========================================================
+         * MAIN AGENT LOOP
+         * ========================================================
+         */
+
         while (
-            state.iteration < MAX_ITERATIONS
+            state.iteration <
+            MAX_ITERATIONS
         ) {
-            incrementIteration(state);
+            incrementIteration(
+                state
+            );
+
+            const iterationStartedAt =
+                Date.now();
+
+            console.log(
+                `[ForgeAI Agent] Iteration ${state.iteration}/${MAX_ITERATIONS} started`
+            );
+
+            /*
+             * ====================================================
+             * CREATE MODEL REQUEST
+             * ====================================================
+             */
 
             const request =
                 createAgentModelRequest({
-                    messages: state.messages,
+                    messages:
+                        state.messages,
                     tools,
-                    toolChoice: "auto",
-                    temperature: 0.2,
-                    maxTokens: 8192
+                    toolChoice:
+                        "auto",
+                    temperature:
+                        0.2,
+                    maxTokens:
+                        8192
                 });
+
+            /*
+             * ====================================================
+             * MODEL EXECUTION
+             * ====================================================
+             */
 
             const rawResult =
                 await executeWithFallback({
                     models,
-                    messages: request.messages,
-                    tools: request.tools,
-                    toolChoice: request.toolChoice,
-                    temperature: request.temperature,
-                    maxTokens: request.maxTokens
+                    messages:
+                        request.messages,
+                    tools:
+                        request.tools,
+                    toolChoice:
+                        request.toolChoice,
+                    temperature:
+                        request.temperature,
+                    maxTokens:
+                        request.maxTokens
                 });
 
             const result =
                 normalizeAgentModelResult(
                     rawResult
                 );
+
+            logAgentTiming(
+                "model iteration",
+                iterationStartedAt,
+                {
+                    iteration:
+                        state.iteration,
+                    provider:
+                        result.provider,
+                    model:
+                        result.model,
+                    toolCalls:
+                        result.toolCalls
+                            ?.length ??
+                        0
+                }
+            );
 
             console.log(
                 `[ForgeAI Agent] Iteration ${state.iteration}`,
@@ -499,17 +680,27 @@ export async function runAgent({
                 )
             );
 
+            /*
+             * ====================================================
+             * STORE MODEL MESSAGE IN MEMORY
+             * ====================================================
+             */
+
             addMessage(state, {
                 role: "assistant",
-                content: result.content,
-                toolCalls: result.toolCalls,
-                provider: result.provider,
-                model: result.model
+                content:
+                    result.content,
+                toolCalls:
+                    result.toolCalls,
+                provider:
+                    result.provider,
+                model:
+                    result.model
             });
 
             /*
              * ====================================================
-             * MODEL WANTS TO FINISH WITHOUT A TOOL CALL
+             * MODEL WANTS TO FINISH WITHOUT TOOL
              * ====================================================
              */
 
@@ -525,44 +716,46 @@ export async function runAgent({
                     );
 
                 /*
-                * ====================================================
-                * REQUIRED VERIFICATION — FAIL CLOSED
-                * ====================================================
-                *
-                * If the user explicitly requested execution,
-                * testing, or verification, the agent MUST NOT
-                * complete until successful evidence exists.
-                *
-                * There is intentionally NO retry-limit escape
-                * here. Reaching MAX_EARLY_COMPLETION_RETRIES
-                * must never turn an incomplete task into success.
-                */
+                 * =================================================
+                 * REQUIRED VERIFICATION — FAIL CLOSED
+                 * =================================================
+                 *
+                 * Never allow the model to claim completion
+                 * when the user explicitly requested testing,
+                 * execution, or verification.
+                 */
+
                 if (
                     taskRequirements.requiresVerification &&
                     !verificationPassed
                 ) {
                     earlyCompletionRetries += 1;
 
-                    const continuationMessage = [
-                        "You attempted to finish the task before completing it.",
-                        "Do not claim success.",
-                        "",
-                        "The user's latest request explicitly requires actual execution/testing/verification.",
-                        "Successful execution evidence has NOT been established.",
-                        "",
-                        "Continue working with the available tools.",
-                        "If execution failed because of the sandbox, inspect and resolve the execution problem.",
-                        "If the implementation is incomplete, complete it.",
-                        "If a test failed because of the implementation, diagnose and repair it.",
-                        "Do not treat file creation or source inspection as runtime verification.",
-                        "",
-                        `Premature completion attempt: ${earlyCompletionRetries}.`
-                    ].join("\n");
+                    const continuationMessage =
+                        [
+                            "You attempted to finish the task before completing it.",
+                            "Do not claim success.",
+                            "",
+                            "The user's latest request explicitly requires actual execution/testing/verification.",
+                            "Successful execution evidence has NOT been established.",
+                            "",
+                            "Continue working with the available tools.",
+                            "If execution failed because of the sandbox, inspect and resolve the execution problem.",
+                            "If the implementation is incomplete, complete it.",
+                            "If a test failed because of the implementation, diagnose and repair it.",
+                            "Do not treat file creation or source inspection as runtime verification.",
+                            "",
+                            `Premature completion attempt: ${earlyCompletionRetries}.`
+                        ].join("\n");
 
-                    addMessage(state, {
-                        role: "system",
-                        content: continuationMessage
-                    });
+                    addMessage(
+                        state,
+                        {
+                            role: "system",
+                            content:
+                                continuationMessage
+                        }
+                    );
 
                     console.log(
                         "[ForgeAI Agent] Blocked completion: required verification has not passed."
@@ -572,14 +765,17 @@ export async function runAgent({
                 }
 
                 /*
-                * Tasks without explicit verification requirements
-                * may complete through the normal model completion path.
-                */
+                 * =================================================
+                 * NORMAL COMPLETION
+                 * =================================================
+                 */
+
                 await createMessage({
                     conversationId,
                     role: "assistant",
                     content:
-                        result.content ?? ""
+                        result.content ??
+                        ""
                 });
 
                 completeAgentState(
@@ -591,7 +787,8 @@ export async function runAgent({
                     runId,
                     conversationId,
                     data: {
-                        status: "completed",
+                        status:
+                            "completed",
                         provider:
                             result.provider,
                         model:
@@ -600,6 +797,17 @@ export async function runAgent({
                             new Date()
                     }
                 });
+
+                logAgentTiming(
+                    "agent completed",
+                    runStartedAt,
+                    {
+                        iterations:
+                            state.iteration,
+                        reason:
+                            "model_completion"
+                    }
+                );
 
                 return {
                     state,
@@ -613,12 +821,16 @@ export async function runAgent({
              * ====================================================
              */
 
-            for (const toolCall of result.toolCalls) {
+            for (
+                const toolCall
+                of result.toolCalls
+            ) {
                 await createMessage({
                     conversationId,
                     role: "assistant",
                     content:
-                        result.content ?? "",
+                        result.content ??
+                        "",
                     toolCallId:
                         toolCall.id,
                     toolName:
@@ -630,19 +842,30 @@ export async function runAgent({
 
             /*
              * ====================================================
-             * EXECUTE TOOLS
+             * EXECUTE MODEL TOOLS
              * ====================================================
              */
 
-            for (const toolCall of result.toolCalls) {
+            for (
+                const toolCall
+                of result.toolCalls
+            ) {
                 /*
-                 * Validate the model-generated tool call
-                 * before executing anything.
+                 * =================================================
+                 * VALIDATE TOOL CALL
+                 * =================================================
                  */
+
                 const validatedToolCall =
                     validateToolCall(
                         toolCall
                     );
+
+                /*
+                 * =================================================
+                 * IDENTICAL TOOL CALL DETECTION
+                 * =================================================
+                 */
 
                 const toolCallKey =
                     JSON.stringify({
@@ -666,28 +889,10 @@ export async function runAgent({
                 );
 
                 /*
-                 * Prevent the model from endlessly repeating
-                 * exactly the same operation.
+                 * =================================================
+                 * REPEATED TOOL CALL RECOVERY
+                 * =================================================
                  */
-                /*
-                * ============================================================
-                * REPEATED TOOL CALL RECOVERY
-                * ============================================================
-                *
-                * Do not immediately fail the entire agent when the model
-                * repeats an identical tool call.
-                *
-                * A repeated call usually means the model has lost track of
-                * the current project state or has failed to transition from
-                * "write" -> "inspect" -> "verify".
-                *
-                * Block the duplicate call and give the model an explicit
-                * recovery instruction.
-                *
-                * A hard recovery limit still exists so a genuinely stuck
-                * model cannot loop forever.
-                * ============================================================
-                */
 
                 if (
                     currentCount >
@@ -708,66 +913,92 @@ export async function runAgent({
                         repeatedToolRecoveries >
                         MAX_REPEATED_TOOL_RECOVERIES
                     ) {
-                        const error = new Error(
-                            `Agent could not recover from repeated tool call: ${validatedToolCall.name}`
-                        );
+                        const error =
+                            new Error(
+                                `Agent could not recover from repeated tool call: ${validatedToolCall.name}`
+                            );
 
                         error.code =
                             "REPEATED_TOOL_CALL_RECOVERY_FAILED";
 
-                        error.statusCode = 503;
+                        error.statusCode =
+                            503;
 
                         throw error;
                     }
 
-                    const recoveryMessage = [
-                        "REPEATED TOOL CALL DETECTED.",
-                        "",
-                        `You attempted to call "${validatedToolCall.name}" with the exact same arguments multiple times.`,
-                        "That operation has already been attempted and must NOT be repeated unchanged.",
-                        "",
-                        "STOP repeating the same tool call.",
-                        "",
-                        "Inspect the current project state and continue from the result of the previous operation.",
-                        "",
-                        "If you just created or modified a file:",
-                        "1. Read the file using read_file.",
-                        "2. Inspect the actual contents.",
-                        "3. Run the appropriate execution or verification tool.",
-                        "4. Inspect the actual error or result.",
-                        "5. Repair the implementation only if the evidence requires a repair.",
-                        "6. Run the verification again.",
-                        "",
-                        "For a JavaScript task requiring behavioral verification, use run_javascript_test.",
-                        "Do not claim completion from write_file success or source inspection alone.",
-                        "",
-                        `Recovery attempt: ${repeatedToolRecoveries}/${MAX_REPEATED_TOOL_RECOVERIES}`
-                    ].join("\n");
+                    const recoveryMessage =
+                        [
+                            "REPEATED TOOL CALL DETECTED.",
+                            "",
+                            `You attempted to call "${validatedToolCall.name}" with the exact same arguments multiple times.`,
+                            "That operation has already been attempted and must NOT be repeated unchanged.",
+                            "",
+                            "STOP repeating the same tool call.",
+                            "",
+                            "Inspect the current project state and continue from the result of the previous operation.",
+                            "",
+                            "If you just created or modified a file:",
+                            "1. Read the file using read_file.",
+                            "2. Inspect the actual contents.",
+                            "3. Run the appropriate execution or verification tool.",
+                            "4. Inspect the actual error or result.",
+                            "5. Repair the implementation only if the evidence requires a repair.",
+                            "6. Run the verification again.",
+                            "",
+                            "For a JavaScript task requiring behavioral verification, use run_javascript_test.",
+                            "Do not claim completion from write_file success or source inspection alone.",
+                            "",
+                            `Recovery attempt: ${repeatedToolRecoveries}/${MAX_REPEATED_TOOL_RECOVERIES}`
+                        ].join("\n");
 
-                    addMessage(state, {
-                        role: "system",
-                        content: recoveryMessage
-                    });
+                    addMessage(
+                        state,
+                        {
+                            role: "system",
+                            content:
+                                recoveryMessage
+                        }
+                    );
 
                     /*
-                    * Do not execute the duplicate tool call.
-                    * Move directly to the next model iteration so the model
-                    * can choose a different corrective action.
-                    */
+                     * Do not execute the duplicate.
+                     * Give the model another iteration.
+                     */
+
                     continue;
                 }
 
-                recordToolCall(state, {
-                    id: validatedToolCall.id,
-                    name:
-                        validatedToolCall.name,
-                    input:
-                        validatedToolCall.arguments,
-                    iteration:
-                        state.iteration
-                });
+                /*
+                 * =================================================
+                 * RECORD TOOL CALL
+                 * =================================================
+                 */
+
+                recordToolCall(
+                    state,
+                    {
+                        id:
+                            validatedToolCall.id,
+                        name:
+                            validatedToolCall.name,
+                        input:
+                            validatedToolCall.arguments,
+                        iteration:
+                            state.iteration
+                    }
+                );
+
+                /*
+                 * =================================================
+                 * EXECUTE TOOL
+                 * =================================================
+                 */
 
                 let toolResult;
+
+                const toolStartedAt =
+                    Date.now();
 
                 try {
                     toolResult =
@@ -801,7 +1032,33 @@ export async function runAgent({
 
                 /*
                  * =================================================
-                 * VERIFICATION / EXECUTION FEEDBACK
+                 * TOOL TIMING
+                 * =================================================
+                 */
+
+                logAgentTiming(
+                    "tool execution",
+                    toolStartedAt,
+                    {
+                        iteration:
+                            state.iteration,
+                        tool:
+                            validatedToolCall.name,
+                        success:
+                            toolResult?.success ===
+                            true,
+                        passed:
+                            toolResult?.passed ===
+                            true,
+                        failureType:
+                            toolResult?.failureType ??
+                            null
+                    }
+                );
+
+                /*
+                 * =================================================
+                 * JAVASCRIPT TEST FEEDBACK
                  * =================================================
                  */
 
@@ -814,11 +1071,14 @@ export async function runAgent({
                             toolResult
                         );
 
-                    addMessage(state, {
-                        role: "system",
-                        content:
-                            verification.message
-                    });
+                    addMessage(
+                        state,
+                        {
+                            role: "system",
+                            content:
+                                verification.message
+                        }
+                    );
 
                     console.log(
                         "[ForgeAI Agent] JavaScript verification:",
@@ -853,17 +1113,26 @@ export async function runAgent({
                             ? "JavaScript structural verification passed."
                             : "JavaScript structural verification failed. Inspect the verification result and repair the file if necessary.";
 
-                    addMessage(state, {
-                        role: "system",
-                        content:
-                            verificationStatus
-                    });
+                    addMessage(
+                        state,
+                        {
+                            role: "system",
+                            content:
+                                verificationStatus
+                        }
+                    );
 
                     console.log(
                         "[ForgeAI Agent] Verification status:",
                         verificationStatus
                     );
                 }
+
+                /*
+                 * =================================================
+                 * LOG TOOL RESULT
+                 * =================================================
+                 */
 
                 console.log(
                     `[ForgeAI Agent] Tool result: ${validatedToolCall.name}`,
@@ -932,11 +1201,14 @@ export async function runAgent({
                             ? "JavaScript execution succeeded. The program ran successfully."
                             : "JavaScript execution failed. Inspect stdout and stderr, determine the cause, repair the relevant file, and execute it again.";
 
-                    addMessage(state, {
-                        role: "system",
-                        content:
-                            executionStatus
-                    });
+                    addMessage(
+                        state,
+                        {
+                            role: "system",
+                            content:
+                                executionStatus
+                        }
+                    );
 
                     console.log(
                         "[ForgeAI Agent] Execution status:",
@@ -946,7 +1218,7 @@ export async function runAgent({
 
                 /*
                  * =================================================
-                 * STORE TOOL RESULT
+                 * STORE TOOL RESULT IN MEMORY
                  * =================================================
                  */
 
@@ -956,73 +1228,11 @@ export async function runAgent({
                     ...toolResult
                 });
 
-                if (toolResult?.success) {
-                    hasPerformedWork = true;
-                }
-
-                /*
-                 * =================================================
-                 * 🔥 DETERMINISTIC COMPLETION GUARD
-                 * =================================================
-                 *
-                 * IMPORTANT:
-                 *
-                 * This check happens immediately after receiving
-                 * the tool result.
-                 *
-                 * If the user's required workflow is now complete,
-                 * we DO NOT ask the model for another iteration.
-                 *
-                 * This prevents unnecessary calls such as:
-                 *
-                 *     cat /etc/os-release
-                 *
-                 * after the actual task already succeeded.
-                 * =================================================
-                 */
-
-                function isCompletionReady(
-                    taskRequirements,
-                    toolResults
+                if (
+                    toolResult?.success
                 ) {
-                    // Tasks without explicit verification requirements
-                    // can use the normal completion path.
-                    if (!taskRequirements.requiresVerification) {
-                        return false;
-                    }
-
-                    // A successful verification is always required.
-                    if (!hasSuccessfulVerification(toolResults)) {
-                        return false;
-                    }
-
-                    /*
-                    * If ANY execution/verification failure was observed,
-                    * the agent must prove that verification succeeded AFTER
-                    * that failure.
-                    *
-                    * This makes the rule deterministic even if the natural-
-                    * language task parser misses a repair keyword.
-                    */
-                    if (hasObservedExecutionFailure(toolResults)) {
-                        return hasSuccessfulVerificationAfterFailure(
-                            toolResults
-                        );
-                    }
-
-                    /*
-                    * If the user explicitly requested a failure -> repair ->
-                    * verification workflow, require that sequence as well.
-                    */
-                    if (
-                        taskRequirements.requiresFailureAndRepair
-                    ) {
-                        return hasSuccessfulVerificationAfterFailure(
-                            toolResults
-                        );
-                    }
-
-                    return true;
+                    hasPerformedWork =
+                        true;
                 }
 
                 /*
@@ -1049,23 +1259,27 @@ export async function runAgent({
                 });
 
                 /*
-                 * Add the tool result back into the agent's
-                 * in-memory conversation so the next model
-                 * iteration can reason over it.
+                 * =================================================
+                 * ADD TOOL RESULT TO AGENT MEMORY
+                 * =================================================
                  */
-                addMessage(state, {
-                    role: "tool",
-                    toolCallId:
-                        validatedToolCall.id,
-                    toolName:
-                        validatedToolCall.name,
-                    content:
-                        serializedToolResult
-                });
+
+                addMessage(
+                    state,
+                    {
+                        role: "tool",
+                        toolCallId:
+                            validatedToolCall.id,
+                        toolName:
+                            validatedToolCall.name,
+                        content:
+                            serializedToolResult
+                    }
+                );
 
                 /*
                  * =================================================
-                 * EXPLICIT TOOL STATUS FOR THE MODEL
+                 * EXPLICIT TOOL STATUS
                  * =================================================
                  */
 
@@ -1097,10 +1311,115 @@ export async function runAgent({
                             : `Tool "${validatedToolCall.name}" failed. Inspect the returned error, determine the cause, and take a different corrective action if possible.`;
                 }
 
-                addMessage(state, {
-                    role: "system",
-                    content: toolStatus
-                });
+                addMessage(
+                    state,
+                    {
+                        role: "system",
+                        content:
+                            toolStatus
+                    }
+                );
+
+                /*
+                 * =================================================
+                 * DETERMINISTIC COMPLETION GUARD
+                 * =================================================
+                 *
+                 * IMPORTANT:
+                 *
+                 * This happens AFTER the tool result has been
+                 * persisted and added to agent memory.
+                 *
+                 * If verification has succeeded, stop immediately.
+                 *
+                 * Do NOT allow another model iteration.
+                 * =================================================
+                 */
+
+                if (
+                    isCompletionReady(
+                        taskRequirements,
+                        toolResults
+                    )
+                ) {
+                    const completionMessage =
+                        "Task completed successfully and verified with actual execution evidence.";
+
+                    console.log(
+                        "[ForgeAI Agent] Completion guard triggered.",
+                        {
+                            iteration:
+                                state.iteration,
+                            elapsedMs:
+                                elapsedMs(
+                                    runStartedAt
+                                ),
+                            verifiedBy:
+                                validatedToolCall.name
+                        }
+                    );
+
+                    addMessage(
+                        state,
+                        {
+                            role: "system",
+                            content:
+                                completionMessage
+                        }
+                    );
+
+                    await createMessage({
+                        conversationId,
+                        role: "assistant",
+                        content:
+                            completionMessage
+                    });
+
+                    completeAgentState(
+                        state,
+                        "completed"
+                    );
+
+                    await updateAgentRun({
+                        runId,
+                        conversationId,
+                        data: {
+                            status:
+                                "completed",
+                            provider:
+                                result.provider,
+                            model:
+                                result.model,
+                            completedAt:
+                                new Date()
+                        }
+                    });
+
+                    logAgentTiming(
+                        "agent completed",
+                        runStartedAt,
+                        {
+                            iterations:
+                                state.iteration,
+                            reason:
+                                "verified_completion",
+                            verifiedBy:
+                                validatedToolCall.name
+                        }
+                    );
+
+                    return {
+                        state,
+                        result: {
+                            ...result,
+                            content:
+                                result.content ||
+                                completionMessage,
+                            completionGuardTriggered:
+                                true
+                        }
+                    };
+                }
             }
         }
 
@@ -1110,22 +1429,57 @@ export async function runAgent({
          * ========================================================
          */
 
-        const error = new Error(
-            `Agent exceeded maximum iterations (${MAX_ITERATIONS})`
-        );
+        const error =
+            new Error(
+                `Agent exceeded maximum iterations (${MAX_ITERATIONS})`
+            );
 
         error.code =
             "MAX_AGENT_ITERATIONS";
 
-        error.statusCode = 503;
+        error.statusCode =
+            503;
+
+        logAgentTiming(
+            "agent iteration limit reached",
+            runStartedAt,
+            {
+                iterations:
+                    state.iteration
+            }
+        );
 
         throw error;
+
     } catch (error) {
-        recordError(state, error);
+        /*
+         * ========================================================
+         * AGENT FAILURE
+         * ========================================================
+         */
+
+        recordError(
+            state,
+            error
+        );
 
         completeAgentState(
             state,
             "failed"
+        );
+
+        logAgentTiming(
+            "agent failed",
+            runStartedAt,
+            {
+                iterations:
+                    state.iteration,
+                errorCode:
+                    error.code ??
+                    null,
+                error:
+                    error.message
+            }
         );
 
         await updateAgentRun({
@@ -1133,8 +1487,10 @@ export async function runAgent({
             conversationId,
             data: {
                 status: "failed",
-                error: error.message,
-                completedAt: new Date()
+                error:
+                    error.message,
+                completedAt:
+                    new Date()
             }
         });
 
