@@ -1,7 +1,7 @@
 import { createTool } from "./toolContract.js";
 import { executeProjectCommand } from "../../sandbox/sandboxService.js";
 import { validateProjectPath } from "../projectPath.js";
-import { prisma } from "../../db/prisma.js";
+import prisma from "../../config/prisma.js";
 
 function createTemporaryTestFileName() {
     return `.forgeai-test-${Date.now()}-${Math.random()
