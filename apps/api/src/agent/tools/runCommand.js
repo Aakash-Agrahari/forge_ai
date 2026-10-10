@@ -63,7 +63,10 @@ export const runCommandTool = createTool({
                     context.projectId,
 
                 command:
-                    input.command
+                    input.command,
+
+                timeoutMs:
+                    input.timeoutMs
             });
 
         return {
