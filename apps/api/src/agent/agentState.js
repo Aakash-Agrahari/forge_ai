@@ -10,7 +10,18 @@ export function createAgentState({
 
         status: "running",
 
+        // Agent lifecycle state
+        phase: "queued",
+
+        // Execution counters
         iteration: 0,
+        toolCount: 0,
+
+        // Currently executing tool
+        currentTool: null,
+
+        // Runtime heartbeat
+        lastHeartbeatAt: new Date().toISOString(),
 
         messages: [],
 
@@ -30,17 +41,48 @@ export function createAgentState({
     };
 }
 
+
 export function incrementIteration(state) {
     state.iteration += 1;
 
     return state;
 }
 
+
+export function setAgentPhase(state, phase) {
+    state.phase = phase;
+
+    return state;
+}
+
+
+export function setCurrentTool(state, toolName) {
+    state.currentTool = toolName;
+
+    return state;
+}
+
+
+export function recordToolExecution(state) {
+    state.toolCount += 1;
+
+    return state;
+}
+
+
+export function heartbeatAgentState(state) {
+    state.lastHeartbeatAt = new Date().toISOString();
+
+    return state;
+}
+
+
 export function addMessage(state, message) {
     state.messages.push(message);
 
     return state;
 }
+
 
 export function recordToolCall(state, toolCall) {
     state.toolCalls.push({
@@ -50,6 +92,7 @@ export function recordToolCall(state, toolCall) {
 
     return state;
 }
+
 
 export function recordVerificationResult(state, result) {
     state.verificationResults.push({
@@ -67,6 +110,7 @@ export function recordVerificationResult(state, result) {
     return state;
 }
 
+
 export function recordExecutionResult(state, result) {
     state.executionResults.push({
         success: result?.success ?? false,
@@ -82,6 +126,7 @@ export function recordExecutionResult(state, result) {
     return state;
 }
 
+
 export function recordFileChange(state, file) {
     if (!state.filesChanged.includes(file)) {
         state.filesChanged.push(file);
@@ -89,6 +134,7 @@ export function recordFileChange(state, file) {
 
     return state;
 }
+
 
 export function recordError(state, error) {
     state.errors.push({
@@ -100,6 +146,7 @@ export function recordError(state, error) {
     return state;
 }
 
+
 export function completeAgentState(
     state,
     status = "completed"
@@ -108,6 +155,8 @@ export function completeAgentState(
 
     state.completedAt =
         new Date().toISOString();
+
+    state.currentTool = null;
 
     return state;
 }
