@@ -69,7 +69,21 @@ export async function getAgentRun(runId) {
         where: {
             id: runId
         },
-        select: RUN_SELECT
+        select: {
+            id: true,
+            conversationId: true,
+            status: true,
+            phase: true,
+            provider: true,
+            model: true,
+            iteration: true,
+            toolCount: true,
+            currentTool: true,
+            startedAt: true,
+            lastHeartbeatAt: true,
+            completedAt: true,
+            error: true
+        }
     });
 }
 
