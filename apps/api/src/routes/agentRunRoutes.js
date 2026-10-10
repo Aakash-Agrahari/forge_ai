@@ -354,10 +354,7 @@ router.post(
                 });
             }
 
-            const run = await getAgentRun({
-                runId: req.params.runId,
-                conversationId: req.params.conversationId
-            });
+            const run = await getAgentRun(req.params.runId);
 
             if (!run) {
                 return res.status(404).json({
