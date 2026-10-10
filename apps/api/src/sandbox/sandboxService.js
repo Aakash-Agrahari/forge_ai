@@ -60,7 +60,7 @@ async function removeWorkspace(workspacePath) {
 export async function executeProjectCommand({
     projectId,
     command,
-    timeoutMs = 30_000,
+    timeoutMs = 300_000,
     maxOutputBytes = 1_000_000
 }) {
     if (!projectId) {
