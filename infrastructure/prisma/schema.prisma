@@ -100,18 +100,31 @@ model Message {
 }
 
 model AgentRun {
-  id             String    @id @default(cuid())
+  id             String           @id @default(cuid())
   conversationId String
+
   status         String
+  phase          String           @default("queued")
+
   provider       String?
   model          String?
-  startedAt      DateTime  @default(now())
+
+  iteration      Int              @default(0)
+  toolCount      Int              @default(0)
+  currentTool    String?
+
+  startedAt      DateTime         @default(now())
+  lastHeartbeatAt DateTime        @default(now())
   completedAt    DateTime?
+
   error          String?
 
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversation   Conversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  events         AgentRunEvent[]
 
   @@index([conversationId])
   @@index([status])
+  @@index([phase])
   @@index([startedAt])
+  @@index([lastHeartbeatAt])
 }
