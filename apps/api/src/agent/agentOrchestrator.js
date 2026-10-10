@@ -7,7 +7,11 @@ import {
     recordError,
     recordVerificationResult,
     recordExecutionResult,
-    completeAgentState
+    completeAgentState,
+    setAgentPhase,
+    setCurrentTool,
+    recordToolExecution,
+    heartbeatAgentState
 } from "./agentState.js";
 
 import { executeTool } from "./toolRegistery.js";
@@ -17,7 +21,13 @@ import { normalizeAgentModelResult } from "./agentModel.js";
 import { selectModelsForRequest } from "../llm/modelSelectionService.js";
 import { executeWithFallback } from "../llm/fallbackExecutor.js";
 import { createMessage } from "../services/messageService.js";
-import { updateAgentRun } from "../services/agentRunService.js";
+import {
+    updateAgentRun,
+    updateAgentRunPhase,
+    heartbeatAgentRun,
+    createAgentRunEvent,
+    isAgentRunCancellationRequested
+} from "../services/agentRunService.js";
 import { AGENT_SYSTEM_PROMPT } from "./agentSystemPrompt.js";
 import { validateToolCall } from "./toolCallValidator.js";
 
@@ -223,27 +233,6 @@ function hasObservedExecutionFailure(
             );
         }
 
-        /*
-         * Some custom test runners can
-         * expose FAIL text.
-         */
-        if (
-            toolName ===
-            "run_javascript_test"
-        ) {
-            const stdout =
-                typeof result.stdout ===
-                "string"
-                    ? result.stdout
-                    : "";
-
-            return (
-                stdout.includes("FAIL:") ||
-                stdout.includes("FAIL ") ||
-                stdout.includes("FAILED")
-            );
-        }
-
         return false;
     });
 }
@@ -414,6 +403,121 @@ function getJavaScriptVerificationStatus(
 
 /*
  * ============================================================
+ * PHASE / RUN STATE HELPERS
+ * ============================================================
+ */
+
+async function persistAgentPhase({
+    state,
+    runId,
+    phase,
+    message = null,
+    metadata = null
+}) {
+    setAgentPhase(state, phase);
+    heartbeatAgentState(state);
+
+    await updateAgentRunPhase(
+        runId,
+        phase,
+        {
+            message,
+            metadata
+        }
+    );
+}
+
+async function persistAgentHeartbeat({
+    state,
+    runId,
+    extraData = {}
+}) {
+    heartbeatAgentState(state);
+
+    await heartbeatAgentRun(
+        runId,
+        {
+            iteration: state.iteration,
+            toolCount: state.toolCount,
+            currentTool: state.currentTool,
+            ...extraData
+        }
+    );
+}
+
+async function persistToolState({
+    state,
+    runId,
+    toolName,
+    status,
+    metadata = null
+}) {
+    await createAgentRunEvent({
+        runId,
+        type: "tool_status",
+        message: status,
+        metadata: {
+            tool: toolName,
+            iteration: state.iteration,
+            toolCount: state.toolCount,
+            ...(metadata ?? {})
+        }
+    });
+
+    await heartbeatAgentRun(
+        runId,
+        {
+            iteration: state.iteration,
+            toolCount: state.toolCount,
+            currentTool: state.currentTool
+        }
+    );
+}
+
+async function handleCancellation({
+    state,
+    runId,
+    conversationId,
+    provider = null,
+    model = null
+}) {
+    const requested =
+        await isAgentRunCancellationRequested(runId);
+
+    if (!requested) {
+        return false;
+    }
+
+    setAgentPhase(state, "cancelled");
+    setCurrentTool(state, null);
+    completeAgentState(state, "cancelled");
+
+    await createAgentRunEvent({
+        runId,
+        type: "cancelled",
+        message: "Agent run cancelled by user.",
+        metadata: {
+            iteration: state.iteration,
+            toolCount: state.toolCount
+        }
+    });
+
+    await updateAgentRun(runId, {
+        status: "cancelled",
+        phase: "cancelled",
+        currentTool: null,
+        iteration: state.iteration,
+        toolCount: state.toolCount,
+        provider,
+        model,
+        completedAt: new Date()
+    });
+
+    return true;
+}
+
+/*
+ * ============================================================
  * AGENT
  * ============================================================
  */
@@ -444,6 +548,8 @@ export async function runAgent({
     let repeatedToolRecoveries = 0;
 
     let hasPerformedWork = false;
+    let heartbeatTimer = null;
+    let cancellationObserved = false;
 
     const taskRequirements =
         getTaskRequirements(
@@ -489,6 +595,30 @@ export async function runAgent({
     });
 
     try {
+        heartbeatTimer = setInterval(() => {
+            void (async () => {
+                try {
+                    const requested =
+                        await isAgentRunCancellationRequested(runId);
+
+                    if (requested) {
+                        cancellationObserved = true;
+                        return;
+                    }
+
+                    await persistAgentHeartbeat({
+                        state,
+                        runId
+                    });
+                } catch (heartbeatError) {
+                    console.warn(
+                        "[ForgeAI Agent] Heartbeat update failed:",
+                        heartbeatError.message
+                    );
+                }
+            })();
+        }, 10000);
+
         /*
          * ========================================================
          * FIND ACTIVE USER TASK
@@ -533,13 +663,25 @@ export async function runAgent({
          * ========================================================
          */
 
-        await updateAgentRun({
+        await updateAgentRun(runId, {
+            status: "running",
+            phase: "planning",
+            iteration: state.iteration,
+            toolCount: state.toolCount,
+            currentTool: null,
+            lastHeartbeatAt: new Date()
+        });
+
+        await createAgentRunEvent({
             runId,
-            conversationId,
-            data: {
-                status: "running"
+            type: "run_started",
+            message: "Agent run started.",
+            metadata: {
+                phase: "planning"
             }
         });
+
+        setAgentPhase(state, "planning");
 
         /*
          * ========================================================
@@ -593,6 +735,31 @@ export async function runAgent({
                 state
             );
 
+            await persistAgentHeartbeat({
+                state,
+                runId,
+                extraData: {
+                    phase: "planning"
+                }
+            });
+
+            await createAgentRunEvent({
+                runId,
+                type: "iteration_started",
+                message: `Iteration ${state.iteration} started.`,
+                metadata: {
+                    iteration: state.iteration
+                }
+            });
+
+            if (cancellationObserved || await handleCancellation({
+                state,
+                runId,
+                conversationId
+            })) {
+                return { state, result: null, cancelled: true };
+            }
+
             const iterationStartedAt =
                 Date.now();
 
@@ -625,6 +792,16 @@ export async function runAgent({
              * ====================================================
              */
 
+            await persistAgentPhase({
+                state,
+                runId,
+                phase: "planning",
+                message: `Preparing model request for iteration ${state.iteration}.`,
+                metadata: {
+                    iteration: state.iteration
+                }
+            });
+
             const rawResult =
                 await executeWithFallback({
                     models,
@@ -644,6 +821,14 @@ export async function runAgent({
                 normalizeAgentModelResult(
                     rawResult
                 );
+
+            await updateAgentRun(runId, {
+                provider: result.provider ?? null,
+                model: result.model ?? null,
+                iteration: state.iteration,
+                toolCount: state.toolCount,
+                lastHeartbeatAt: new Date()
+            });
 
             logAgentTiming(
                 "model iteration",
@@ -708,6 +893,28 @@ export async function runAgent({
                 !result.toolCalls ||
                 result.toolCalls.length === 0
             ) {
+                if (taskRequirements.requiresVerification) {
+                    await persistAgentPhase({
+                        state,
+                        runId,
+                        phase: "verifying",
+                        message: "Checking whether required verification evidence exists.",
+                        metadata: {
+                            iteration: state.iteration
+                        }
+                    });
+                }
+
+                if (await handleCancellation({
+                    state,
+                    runId,
+                    conversationId,
+                    provider: result.provider,
+                    model: result.model
+                })) {
+                    return { state, result: null, cancelled: true };
+                }
+
                 const verificationPassed =
                     !taskRequirements.requiresVerification ||
                     isCompletionReady(
@@ -761,6 +968,24 @@ export async function runAgent({
                         "[ForgeAI Agent] Blocked completion: required verification has not passed."
                     );
 
+                    if (
+                        earlyCompletionRetries >=
+                        MAX_EARLY_COMPLETION_RETRIES
+                    ) {
+                        const error =
+                            new Error(
+                                "Agent repeatedly attempted to complete before required verification succeeded."
+                            );
+
+                        error.code =
+                            "PREMATURE_COMPLETION";
+
+                        error.statusCode =
+                            503;
+
+                        throw error;
+                    }
+
                     continue;
                 }
 
@@ -783,19 +1008,32 @@ export async function runAgent({
                     "completed"
                 );
 
-                await updateAgentRun({
+                setAgentPhase(state, "completed");
+                setCurrentTool(state, null);
+
+                await createAgentRunEvent({
                     runId,
-                    conversationId,
-                    data: {
-                        status:
-                            "completed",
-                        provider:
-                            result.provider,
-                        model:
-                            result.model,
-                        completedAt:
-                            new Date()
+                    type: "completed",
+                    message: "Agent run completed successfully.",
+                    metadata: {
+                        iteration: state.iteration,
+                        toolCount: state.toolCount
                     }
+                });
+
+                await updateAgentRun(runId, {
+                    status:
+                        "completed",
+                    provider:
+                        result.provider,
+                    model:
+                        result.model,
+                    iteration: state.iteration,
+                    toolCount: state.toolCount,
+                    currentTool: null,
+                    phase: "completed",
+                    completedAt:
+                        new Date()
                 });
 
                 logAgentTiming(
@@ -846,6 +1084,17 @@ export async function runAgent({
              * ====================================================
              */
 
+            await persistAgentPhase({
+                state,
+                runId,
+                phase: "executing",
+                message: `Executing ${result.toolCalls.length} tool call(s).`,
+                metadata: {
+                    iteration: state.iteration,
+                    toolCalls: result.toolCalls.length
+                }
+            });
+
             for (
                 const toolCall
                 of result.toolCalls
@@ -860,6 +1109,16 @@ export async function runAgent({
                     validateToolCall(
                         toolCall
                     );
+
+                if (cancellationObserved || await handleCancellation({
+                    state,
+                    runId,
+                    conversationId,
+                    provider: result.provider,
+                    model: result.model
+                })) {
+                    return { state, result: null, cancelled: true };
+                }
 
                 /*
                  * =================================================
@@ -968,6 +1227,50 @@ export async function runAgent({
 
                     continue;
                 }
+
+                /*
+                 * =================================================
+                 * START REAL TOOL EXECUTION
+                 * =================================================
+                 */
+
+                setCurrentTool(
+                    state,
+                    validatedToolCall.name
+                );
+
+                recordToolExecution(
+                    state
+                );
+
+                await heartbeatAgentRun(
+                    runId,
+                    {
+                        iteration:
+                            state.iteration,
+                        toolCount:
+                            state.toolCount,
+                        currentTool:
+                            validatedToolCall.name,
+                        phase:
+                            "executing"
+                    }
+                );
+
+                await createAgentRunEvent({
+                    runId,
+                    type: "tool_started",
+                    message:
+                        `Tool ${validatedToolCall.name} started.`,
+                    metadata: {
+                        tool:
+                            validatedToolCall.name,
+                        iteration:
+                            state.iteration,
+                        toolCount:
+                            state.toolCount
+                    }
+                });
 
                 /*
                  * =================================================
@@ -1277,6 +1580,40 @@ export async function runAgent({
                     }
                 );
 
+                await createAgentRunEvent({
+                    runId,
+                    type: "tool_completed",
+                    message:
+                        `Tool ${validatedToolCall.name} completed.`,
+                    metadata: {
+                        tool:
+                            validatedToolCall.name,
+                        iteration:
+                            state.iteration,
+                        toolCount:
+                            state.toolCount,
+                        success:
+                            toolResult?.success ===
+                            true,
+                        passed:
+                            toolResult?.passed ===
+                            true,
+                        failureType:
+                            toolResult?.failureType ??
+                            null
+                    }
+                });
+
+                setCurrentTool(
+                    state,
+                    null
+                );
+
+                await persistAgentHeartbeat({
+                    state,
+                    runId
+                });
+
                 /*
                  * =================================================
                  * EXPLICIT TOOL STATUS
@@ -1336,6 +1673,20 @@ export async function runAgent({
                  * =================================================
                  */
 
+                if (cancellationObserved || await handleCancellation({
+                    state,
+                    runId,
+                    conversationId,
+                    provider: result.provider,
+                    model: result.model
+                })) {
+                    return {
+                        state,
+                        result: null,
+                        cancelled: true
+                    };
+                }
+
                 if (
                     isCompletionReady(
                         taskRequirements,
@@ -1380,19 +1731,48 @@ export async function runAgent({
                         "completed"
                     );
 
-                    await updateAgentRun({
+                    setAgentPhase(
+                        state,
+                        "completed"
+                    );
+
+                    setCurrentTool(
+                        state,
+                        null
+                    );
+
+                    await createAgentRunEvent({
                         runId,
-                        conversationId,
-                        data: {
-                            status:
-                                "completed",
-                            provider:
-                                result.provider,
-                            model:
-                                result.model,
-                            completedAt:
-                                new Date()
+                        type: "completed",
+                        message:
+                            "Task completed successfully and verification evidence was recorded.",
+                        metadata: {
+                            iteration:
+                                state.iteration,
+                            toolCount:
+                                state.toolCount,
+                            verifiedBy:
+                                validatedToolCall.name
                         }
+                    });
+
+                    await updateAgentRun(runId, {
+                        status:
+                            "completed",
+                        provider:
+                            result.provider,
+                        model:
+                            result.model,
+                        iteration:
+                            state.iteration,
+                        toolCount:
+                            state.toolCount,
+                        currentTool:
+                            null,
+                        phase:
+                            "completed",
+                        completedAt:
+                            new Date()
                     });
 
                     logAgentTiming(
@@ -1482,18 +1862,117 @@ export async function runAgent({
             }
         );
 
-        await updateAgentRun({
-            runId,
-            conversationId,
-            data: {
-                status: "failed",
-                error:
-                    error.message,
+        const cancellationRequested =
+            error?.code ===
+                "AGENT_RUN_CANCELLED" ||
+            await isAgentRunCancellationRequested(
+                runId
+            );
+
+        if (cancellationRequested) {
+            setAgentPhase(
+                state,
+                "cancelled"
+            );
+
+            setCurrentTool(
+                state,
+                null
+            );
+
+            completeAgentState(
+                state,
+                "cancelled"
+            );
+
+            await createAgentRunEvent({
+                runId,
+                type: "cancelled",
+                message:
+                    "Agent run cancelled.",
+                metadata: {
+                    iteration:
+                        state.iteration,
+                    toolCount:
+                        state.toolCount
+                }
+            });
+
+            await updateAgentRun(runId, {
+                status:
+                    "cancelled",
+                phase:
+                    "cancelled",
+                currentTool:
+                    null,
+                iteration:
+                    state.iteration,
+                toolCount:
+                    state.toolCount,
                 completedAt:
                     new Date()
+            });
+
+            return {
+                state,
+                result: null,
+                cancelled: true
+            };
+        }
+
+        setAgentPhase(
+            state,
+            "failed"
+        );
+
+        setCurrentTool(
+            state,
+            null
+        );
+
+        await createAgentRunEvent({
+            runId,
+            type: "failed",
+            message:
+                error.message,
+            metadata: {
+                code:
+                    error.code ??
+                    null,
+                iteration:
+                    state.iteration,
+                toolCount:
+                    state.toolCount
             }
         });
 
+        await updateAgentRun(runId, {
+            status:
+                "failed",
+            phase:
+                "failed",
+            currentTool:
+                null,
+            iteration:
+                state.iteration,
+            toolCount:
+                state.toolCount,
+            error:
+                error.message,
+            completedAt:
+                new Date()
+        });
+
         throw error;
+
+    } finally {
+        if (heartbeatTimer) {
+            clearInterval(
+                heartbeatTimer
+            );
+
+            heartbeatTimer =
+                null;
+        }
     }
 }
