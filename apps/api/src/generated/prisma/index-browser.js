@@ -180,11 +180,25 @@ exports.Prisma.AgentRunScalarFieldEnum = {
   id: 'id',
   conversationId: 'conversationId',
   status: 'status',
+  phase: 'phase',
   provider: 'provider',
   model: 'model',
+  iteration: 'iteration',
+  toolCount: 'toolCount',
+  currentTool: 'currentTool',
   startedAt: 'startedAt',
+  lastHeartbeatAt: 'lastHeartbeatAt',
   completedAt: 'completedAt',
   error: 'error'
+};
+
+exports.Prisma.AgentRunEventScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  type: 'type',
+  message: 'message',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -221,7 +235,8 @@ exports.Prisma.ModelName = {
   ProjectFile: 'ProjectFile',
   Conversation: 'Conversation',
   Message: 'Message',
-  AgentRun: 'AgentRun'
+  AgentRun: 'AgentRun',
+  AgentRunEvent: 'AgentRunEvent'
 };
 
 /**

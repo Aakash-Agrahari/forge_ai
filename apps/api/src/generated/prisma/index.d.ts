@@ -48,6 +48,11 @@ export type Message = $Result.DefaultSelection<Prisma.$MessagePayload>
  * 
  */
 export type AgentRun = $Result.DefaultSelection<Prisma.$AgentRunPayload>
+/**
+ * Model AgentRunEvent
+ * 
+ */
+export type AgentRunEvent = $Result.DefaultSelection<Prisma.$AgentRunEventPayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -239,6 +244,16 @@ export class PrismaClient<
     * ```
     */
   get agentRun(): Prisma.AgentRunDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.agentRunEvent`: Exposes CRUD operations for the **AgentRunEvent** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AgentRunEvents
+    * const agentRunEvents = await prisma.agentRunEvent.findMany()
+    * ```
+    */
+  get agentRunEvent(): Prisma.AgentRunEventDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -692,7 +707,8 @@ export namespace Prisma {
     ProjectFile: 'ProjectFile',
     Conversation: 'Conversation',
     Message: 'Message',
-    AgentRun: 'AgentRun'
+    AgentRun: 'AgentRun',
+    AgentRunEvent: 'AgentRunEvent'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -708,7 +724,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "session" | "project" | "projectFile" | "conversation" | "message" | "agentRun"
+      modelProps: "user" | "session" | "project" | "projectFile" | "conversation" | "message" | "agentRun" | "agentRunEvent"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1230,6 +1246,80 @@ export namespace Prisma {
           }
         }
       }
+      AgentRunEvent: {
+        payload: Prisma.$AgentRunEventPayload<ExtArgs>
+        fields: Prisma.AgentRunEventFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AgentRunEventFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRunEventPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AgentRunEventFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRunEventPayload>
+          }
+          findFirst: {
+            args: Prisma.AgentRunEventFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRunEventPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AgentRunEventFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRunEventPayload>
+          }
+          findMany: {
+            args: Prisma.AgentRunEventFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRunEventPayload>[]
+          }
+          create: {
+            args: Prisma.AgentRunEventCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRunEventPayload>
+          }
+          createMany: {
+            args: Prisma.AgentRunEventCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AgentRunEventCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRunEventPayload>[]
+          }
+          delete: {
+            args: Prisma.AgentRunEventDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRunEventPayload>
+          }
+          update: {
+            args: Prisma.AgentRunEventUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRunEventPayload>
+          }
+          deleteMany: {
+            args: Prisma.AgentRunEventDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AgentRunEventUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AgentRunEventUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRunEventPayload>[]
+          }
+          upsert: {
+            args: Prisma.AgentRunEventUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentRunEventPayload>
+          }
+          aggregate: {
+            args: Prisma.AgentRunEventAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAgentRunEvent>
+          }
+          groupBy: {
+            args: Prisma.AgentRunEventGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AgentRunEventGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AgentRunEventCountArgs<ExtArgs>
+            result: $Utils.Optional<AgentRunEventCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1360,6 +1450,7 @@ export namespace Prisma {
     conversation?: ConversationOmit
     message?: MessageOmit
     agentRun?: AgentRunOmit
+    agentRunEvent?: AgentRunEventOmit
   }
 
   /* Types for Logging */
@@ -1552,6 +1643,37 @@ export namespace Prisma {
    */
   export type ConversationCountOutputTypeCountAgentRunsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: AgentRunWhereInput
+  }
+
+
+  /**
+   * Count Type AgentRunCountOutputType
+   */
+
+  export type AgentRunCountOutputType = {
+    events: number
+  }
+
+  export type AgentRunCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    events?: boolean | AgentRunCountOutputTypeCountEventsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * AgentRunCountOutputType without action
+   */
+  export type AgentRunCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRunCountOutputType
+     */
+    select?: AgentRunCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * AgentRunCountOutputType without action
+   */
+  export type AgentRunCountOutputTypeCountEventsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AgentRunEventWhereInput
   }
 
 
@@ -8195,17 +8317,34 @@ export namespace Prisma {
 
   export type AggregateAgentRun = {
     _count: AgentRunCountAggregateOutputType | null
+    _avg: AgentRunAvgAggregateOutputType | null
+    _sum: AgentRunSumAggregateOutputType | null
     _min: AgentRunMinAggregateOutputType | null
     _max: AgentRunMaxAggregateOutputType | null
+  }
+
+  export type AgentRunAvgAggregateOutputType = {
+    iteration: number | null
+    toolCount: number | null
+  }
+
+  export type AgentRunSumAggregateOutputType = {
+    iteration: number | null
+    toolCount: number | null
   }
 
   export type AgentRunMinAggregateOutputType = {
     id: string | null
     conversationId: string | null
     status: string | null
+    phase: string | null
     provider: string | null
     model: string | null
+    iteration: number | null
+    toolCount: number | null
+    currentTool: string | null
     startedAt: Date | null
+    lastHeartbeatAt: Date | null
     completedAt: Date | null
     error: string | null
   }
@@ -8214,9 +8353,14 @@ export namespace Prisma {
     id: string | null
     conversationId: string | null
     status: string | null
+    phase: string | null
     provider: string | null
     model: string | null
+    iteration: number | null
+    toolCount: number | null
+    currentTool: string | null
     startedAt: Date | null
+    lastHeartbeatAt: Date | null
     completedAt: Date | null
     error: string | null
   }
@@ -8225,22 +8369,42 @@ export namespace Prisma {
     id: number
     conversationId: number
     status: number
+    phase: number
     provider: number
     model: number
+    iteration: number
+    toolCount: number
+    currentTool: number
     startedAt: number
+    lastHeartbeatAt: number
     completedAt: number
     error: number
     _all: number
   }
 
 
+  export type AgentRunAvgAggregateInputType = {
+    iteration?: true
+    toolCount?: true
+  }
+
+  export type AgentRunSumAggregateInputType = {
+    iteration?: true
+    toolCount?: true
+  }
+
   export type AgentRunMinAggregateInputType = {
     id?: true
     conversationId?: true
     status?: true
+    phase?: true
     provider?: true
     model?: true
+    iteration?: true
+    toolCount?: true
+    currentTool?: true
     startedAt?: true
+    lastHeartbeatAt?: true
     completedAt?: true
     error?: true
   }
@@ -8249,9 +8413,14 @@ export namespace Prisma {
     id?: true
     conversationId?: true
     status?: true
+    phase?: true
     provider?: true
     model?: true
+    iteration?: true
+    toolCount?: true
+    currentTool?: true
     startedAt?: true
+    lastHeartbeatAt?: true
     completedAt?: true
     error?: true
   }
@@ -8260,9 +8429,14 @@ export namespace Prisma {
     id?: true
     conversationId?: true
     status?: true
+    phase?: true
     provider?: true
     model?: true
+    iteration?: true
+    toolCount?: true
+    currentTool?: true
     startedAt?: true
+    lastHeartbeatAt?: true
     completedAt?: true
     error?: true
     _all?: true
@@ -8306,6 +8480,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: AgentRunAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: AgentRunSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: AgentRunMinAggregateInputType
@@ -8336,6 +8522,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: AgentRunCountAggregateInputType | true
+    _avg?: AgentRunAvgAggregateInputType
+    _sum?: AgentRunSumAggregateInputType
     _min?: AgentRunMinAggregateInputType
     _max?: AgentRunMaxAggregateInputType
   }
@@ -8344,12 +8532,19 @@ export namespace Prisma {
     id: string
     conversationId: string
     status: string
+    phase: string
     provider: string | null
     model: string | null
+    iteration: number
+    toolCount: number
+    currentTool: string | null
     startedAt: Date
+    lastHeartbeatAt: Date
     completedAt: Date | null
     error: string | null
     _count: AgentRunCountAggregateOutputType | null
+    _avg: AgentRunAvgAggregateOutputType | null
+    _sum: AgentRunSumAggregateOutputType | null
     _min: AgentRunMinAggregateOutputType | null
     _max: AgentRunMaxAggregateOutputType | null
   }
@@ -8372,21 +8567,33 @@ export namespace Prisma {
     id?: boolean
     conversationId?: boolean
     status?: boolean
+    phase?: boolean
     provider?: boolean
     model?: boolean
+    iteration?: boolean
+    toolCount?: boolean
+    currentTool?: boolean
     startedAt?: boolean
+    lastHeartbeatAt?: boolean
     completedAt?: boolean
     error?: boolean
     conversation?: boolean | ConversationDefaultArgs<ExtArgs>
+    events?: boolean | AgentRun$eventsArgs<ExtArgs>
+    _count?: boolean | AgentRunCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["agentRun"]>
 
   export type AgentRunSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     conversationId?: boolean
     status?: boolean
+    phase?: boolean
     provider?: boolean
     model?: boolean
+    iteration?: boolean
+    toolCount?: boolean
+    currentTool?: boolean
     startedAt?: boolean
+    lastHeartbeatAt?: boolean
     completedAt?: boolean
     error?: boolean
     conversation?: boolean | ConversationDefaultArgs<ExtArgs>
@@ -8396,9 +8603,14 @@ export namespace Prisma {
     id?: boolean
     conversationId?: boolean
     status?: boolean
+    phase?: boolean
     provider?: boolean
     model?: boolean
+    iteration?: boolean
+    toolCount?: boolean
+    currentTool?: boolean
     startedAt?: boolean
+    lastHeartbeatAt?: boolean
     completedAt?: boolean
     error?: boolean
     conversation?: boolean | ConversationDefaultArgs<ExtArgs>
@@ -8408,16 +8620,23 @@ export namespace Prisma {
     id?: boolean
     conversationId?: boolean
     status?: boolean
+    phase?: boolean
     provider?: boolean
     model?: boolean
+    iteration?: boolean
+    toolCount?: boolean
+    currentTool?: boolean
     startedAt?: boolean
+    lastHeartbeatAt?: boolean
     completedAt?: boolean
     error?: boolean
   }
 
-  export type AgentRunOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "conversationId" | "status" | "provider" | "model" | "startedAt" | "completedAt" | "error", ExtArgs["result"]["agentRun"]>
+  export type AgentRunOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "conversationId" | "status" | "phase" | "provider" | "model" | "iteration" | "toolCount" | "currentTool" | "startedAt" | "lastHeartbeatAt" | "completedAt" | "error", ExtArgs["result"]["agentRun"]>
   export type AgentRunInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     conversation?: boolean | ConversationDefaultArgs<ExtArgs>
+    events?: boolean | AgentRun$eventsArgs<ExtArgs>
+    _count?: boolean | AgentRunCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type AgentRunIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     conversation?: boolean | ConversationDefaultArgs<ExtArgs>
@@ -8430,14 +8649,20 @@ export namespace Prisma {
     name: "AgentRun"
     objects: {
       conversation: Prisma.$ConversationPayload<ExtArgs>
+      events: Prisma.$AgentRunEventPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       conversationId: string
       status: string
+      phase: string
       provider: string | null
       model: string | null
+      iteration: number
+      toolCount: number
+      currentTool: string | null
       startedAt: Date
+      lastHeartbeatAt: Date
       completedAt: Date | null
       error: string | null
     }, ExtArgs["result"]["agentRun"]>
@@ -8835,6 +9060,7 @@ export namespace Prisma {
   export interface Prisma__AgentRunClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     conversation<T extends ConversationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ConversationDefaultArgs<ExtArgs>>): Prisma__ConversationClient<$Result.GetResult<Prisma.$ConversationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    events<T extends AgentRun$eventsArgs<ExtArgs> = {}>(args?: Subset<T, AgentRun$eventsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentRunEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -8867,9 +9093,14 @@ export namespace Prisma {
     readonly id: FieldRef<"AgentRun", 'String'>
     readonly conversationId: FieldRef<"AgentRun", 'String'>
     readonly status: FieldRef<"AgentRun", 'String'>
+    readonly phase: FieldRef<"AgentRun", 'String'>
     readonly provider: FieldRef<"AgentRun", 'String'>
     readonly model: FieldRef<"AgentRun", 'String'>
+    readonly iteration: FieldRef<"AgentRun", 'Int'>
+    readonly toolCount: FieldRef<"AgentRun", 'Int'>
+    readonly currentTool: FieldRef<"AgentRun", 'String'>
     readonly startedAt: FieldRef<"AgentRun", 'DateTime'>
+    readonly lastHeartbeatAt: FieldRef<"AgentRun", 'DateTime'>
     readonly completedAt: FieldRef<"AgentRun", 'DateTime'>
     readonly error: FieldRef<"AgentRun", 'String'>
   }
@@ -9273,6 +9504,30 @@ export namespace Prisma {
   }
 
   /**
+   * AgentRun.events
+   */
+  export type AgentRun$eventsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRunEvent
+     */
+    select?: AgentRunEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRunEvent
+     */
+    omit?: AgentRunEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRunEventInclude<ExtArgs> | null
+    where?: AgentRunEventWhereInput
+    orderBy?: AgentRunEventOrderByWithRelationInput | AgentRunEventOrderByWithRelationInput[]
+    cursor?: AgentRunEventWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AgentRunEventScalarFieldEnum | AgentRunEventScalarFieldEnum[]
+  }
+
+  /**
    * AgentRun without action
    */
   export type AgentRunDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -9288,6 +9543,1078 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: AgentRunInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AgentRunEvent
+   */
+
+  export type AggregateAgentRunEvent = {
+    _count: AgentRunEventCountAggregateOutputType | null
+    _min: AgentRunEventMinAggregateOutputType | null
+    _max: AgentRunEventMaxAggregateOutputType | null
+  }
+
+  export type AgentRunEventMinAggregateOutputType = {
+    id: string | null
+    runId: string | null
+    type: string | null
+    message: string | null
+    createdAt: Date | null
+  }
+
+  export type AgentRunEventMaxAggregateOutputType = {
+    id: string | null
+    runId: string | null
+    type: string | null
+    message: string | null
+    createdAt: Date | null
+  }
+
+  export type AgentRunEventCountAggregateOutputType = {
+    id: number
+    runId: number
+    type: number
+    message: number
+    metadata: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type AgentRunEventMinAggregateInputType = {
+    id?: true
+    runId?: true
+    type?: true
+    message?: true
+    createdAt?: true
+  }
+
+  export type AgentRunEventMaxAggregateInputType = {
+    id?: true
+    runId?: true
+    type?: true
+    message?: true
+    createdAt?: true
+  }
+
+  export type AgentRunEventCountAggregateInputType = {
+    id?: true
+    runId?: true
+    type?: true
+    message?: true
+    metadata?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type AgentRunEventAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AgentRunEvent to aggregate.
+     */
+    where?: AgentRunEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgentRunEvents to fetch.
+     */
+    orderBy?: AgentRunEventOrderByWithRelationInput | AgentRunEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AgentRunEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgentRunEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgentRunEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AgentRunEvents
+    **/
+    _count?: true | AgentRunEventCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AgentRunEventMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AgentRunEventMaxAggregateInputType
+  }
+
+  export type GetAgentRunEventAggregateType<T extends AgentRunEventAggregateArgs> = {
+        [P in keyof T & keyof AggregateAgentRunEvent]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAgentRunEvent[P]>
+      : GetScalarType<T[P], AggregateAgentRunEvent[P]>
+  }
+
+
+
+
+  export type AgentRunEventGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AgentRunEventWhereInput
+    orderBy?: AgentRunEventOrderByWithAggregationInput | AgentRunEventOrderByWithAggregationInput[]
+    by: AgentRunEventScalarFieldEnum[] | AgentRunEventScalarFieldEnum
+    having?: AgentRunEventScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AgentRunEventCountAggregateInputType | true
+    _min?: AgentRunEventMinAggregateInputType
+    _max?: AgentRunEventMaxAggregateInputType
+  }
+
+  export type AgentRunEventGroupByOutputType = {
+    id: string
+    runId: string
+    type: string
+    message: string | null
+    metadata: JsonValue | null
+    createdAt: Date
+    _count: AgentRunEventCountAggregateOutputType | null
+    _min: AgentRunEventMinAggregateOutputType | null
+    _max: AgentRunEventMaxAggregateOutputType | null
+  }
+
+  type GetAgentRunEventGroupByPayload<T extends AgentRunEventGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AgentRunEventGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AgentRunEventGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AgentRunEventGroupByOutputType[P]>
+            : GetScalarType<T[P], AgentRunEventGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AgentRunEventSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    runId?: boolean
+    type?: boolean
+    message?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    run?: boolean | AgentRunDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["agentRunEvent"]>
+
+  export type AgentRunEventSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    runId?: boolean
+    type?: boolean
+    message?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    run?: boolean | AgentRunDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["agentRunEvent"]>
+
+  export type AgentRunEventSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    runId?: boolean
+    type?: boolean
+    message?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    run?: boolean | AgentRunDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["agentRunEvent"]>
+
+  export type AgentRunEventSelectScalar = {
+    id?: boolean
+    runId?: boolean
+    type?: boolean
+    message?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+  }
+
+  export type AgentRunEventOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "runId" | "type" | "message" | "metadata" | "createdAt", ExtArgs["result"]["agentRunEvent"]>
+  export type AgentRunEventInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    run?: boolean | AgentRunDefaultArgs<ExtArgs>
+  }
+  export type AgentRunEventIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    run?: boolean | AgentRunDefaultArgs<ExtArgs>
+  }
+  export type AgentRunEventIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    run?: boolean | AgentRunDefaultArgs<ExtArgs>
+  }
+
+  export type $AgentRunEventPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AgentRunEvent"
+    objects: {
+      run: Prisma.$AgentRunPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      runId: string
+      type: string
+      message: string | null
+      metadata: Prisma.JsonValue | null
+      createdAt: Date
+    }, ExtArgs["result"]["agentRunEvent"]>
+    composites: {}
+  }
+
+  type AgentRunEventGetPayload<S extends boolean | null | undefined | AgentRunEventDefaultArgs> = $Result.GetResult<Prisma.$AgentRunEventPayload, S>
+
+  type AgentRunEventCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AgentRunEventFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AgentRunEventCountAggregateInputType | true
+    }
+
+  export interface AgentRunEventDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AgentRunEvent'], meta: { name: 'AgentRunEvent' } }
+    /**
+     * Find zero or one AgentRunEvent that matches the filter.
+     * @param {AgentRunEventFindUniqueArgs} args - Arguments to find a AgentRunEvent
+     * @example
+     * // Get one AgentRunEvent
+     * const agentRunEvent = await prisma.agentRunEvent.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AgentRunEventFindUniqueArgs>(args: SelectSubset<T, AgentRunEventFindUniqueArgs<ExtArgs>>): Prisma__AgentRunEventClient<$Result.GetResult<Prisma.$AgentRunEventPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AgentRunEvent that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AgentRunEventFindUniqueOrThrowArgs} args - Arguments to find a AgentRunEvent
+     * @example
+     * // Get one AgentRunEvent
+     * const agentRunEvent = await prisma.agentRunEvent.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AgentRunEventFindUniqueOrThrowArgs>(args: SelectSubset<T, AgentRunEventFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AgentRunEventClient<$Result.GetResult<Prisma.$AgentRunEventPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AgentRunEvent that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentRunEventFindFirstArgs} args - Arguments to find a AgentRunEvent
+     * @example
+     * // Get one AgentRunEvent
+     * const agentRunEvent = await prisma.agentRunEvent.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AgentRunEventFindFirstArgs>(args?: SelectSubset<T, AgentRunEventFindFirstArgs<ExtArgs>>): Prisma__AgentRunEventClient<$Result.GetResult<Prisma.$AgentRunEventPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AgentRunEvent that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentRunEventFindFirstOrThrowArgs} args - Arguments to find a AgentRunEvent
+     * @example
+     * // Get one AgentRunEvent
+     * const agentRunEvent = await prisma.agentRunEvent.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AgentRunEventFindFirstOrThrowArgs>(args?: SelectSubset<T, AgentRunEventFindFirstOrThrowArgs<ExtArgs>>): Prisma__AgentRunEventClient<$Result.GetResult<Prisma.$AgentRunEventPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AgentRunEvents that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentRunEventFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AgentRunEvents
+     * const agentRunEvents = await prisma.agentRunEvent.findMany()
+     * 
+     * // Get first 10 AgentRunEvents
+     * const agentRunEvents = await prisma.agentRunEvent.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const agentRunEventWithIdOnly = await prisma.agentRunEvent.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AgentRunEventFindManyArgs>(args?: SelectSubset<T, AgentRunEventFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentRunEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AgentRunEvent.
+     * @param {AgentRunEventCreateArgs} args - Arguments to create a AgentRunEvent.
+     * @example
+     * // Create one AgentRunEvent
+     * const AgentRunEvent = await prisma.agentRunEvent.create({
+     *   data: {
+     *     // ... data to create a AgentRunEvent
+     *   }
+     * })
+     * 
+     */
+    create<T extends AgentRunEventCreateArgs>(args: SelectSubset<T, AgentRunEventCreateArgs<ExtArgs>>): Prisma__AgentRunEventClient<$Result.GetResult<Prisma.$AgentRunEventPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AgentRunEvents.
+     * @param {AgentRunEventCreateManyArgs} args - Arguments to create many AgentRunEvents.
+     * @example
+     * // Create many AgentRunEvents
+     * const agentRunEvent = await prisma.agentRunEvent.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AgentRunEventCreateManyArgs>(args?: SelectSubset<T, AgentRunEventCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AgentRunEvents and returns the data saved in the database.
+     * @param {AgentRunEventCreateManyAndReturnArgs} args - Arguments to create many AgentRunEvents.
+     * @example
+     * // Create many AgentRunEvents
+     * const agentRunEvent = await prisma.agentRunEvent.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AgentRunEvents and only return the `id`
+     * const agentRunEventWithIdOnly = await prisma.agentRunEvent.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AgentRunEventCreateManyAndReturnArgs>(args?: SelectSubset<T, AgentRunEventCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentRunEventPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AgentRunEvent.
+     * @param {AgentRunEventDeleteArgs} args - Arguments to delete one AgentRunEvent.
+     * @example
+     * // Delete one AgentRunEvent
+     * const AgentRunEvent = await prisma.agentRunEvent.delete({
+     *   where: {
+     *     // ... filter to delete one AgentRunEvent
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AgentRunEventDeleteArgs>(args: SelectSubset<T, AgentRunEventDeleteArgs<ExtArgs>>): Prisma__AgentRunEventClient<$Result.GetResult<Prisma.$AgentRunEventPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AgentRunEvent.
+     * @param {AgentRunEventUpdateArgs} args - Arguments to update one AgentRunEvent.
+     * @example
+     * // Update one AgentRunEvent
+     * const agentRunEvent = await prisma.agentRunEvent.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AgentRunEventUpdateArgs>(args: SelectSubset<T, AgentRunEventUpdateArgs<ExtArgs>>): Prisma__AgentRunEventClient<$Result.GetResult<Prisma.$AgentRunEventPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AgentRunEvents.
+     * @param {AgentRunEventDeleteManyArgs} args - Arguments to filter AgentRunEvents to delete.
+     * @example
+     * // Delete a few AgentRunEvents
+     * const { count } = await prisma.agentRunEvent.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AgentRunEventDeleteManyArgs>(args?: SelectSubset<T, AgentRunEventDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AgentRunEvents.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentRunEventUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AgentRunEvents
+     * const agentRunEvent = await prisma.agentRunEvent.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AgentRunEventUpdateManyArgs>(args: SelectSubset<T, AgentRunEventUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AgentRunEvents and returns the data updated in the database.
+     * @param {AgentRunEventUpdateManyAndReturnArgs} args - Arguments to update many AgentRunEvents.
+     * @example
+     * // Update many AgentRunEvents
+     * const agentRunEvent = await prisma.agentRunEvent.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AgentRunEvents and only return the `id`
+     * const agentRunEventWithIdOnly = await prisma.agentRunEvent.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AgentRunEventUpdateManyAndReturnArgs>(args: SelectSubset<T, AgentRunEventUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentRunEventPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AgentRunEvent.
+     * @param {AgentRunEventUpsertArgs} args - Arguments to update or create a AgentRunEvent.
+     * @example
+     * // Update or create a AgentRunEvent
+     * const agentRunEvent = await prisma.agentRunEvent.upsert({
+     *   create: {
+     *     // ... data to create a AgentRunEvent
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AgentRunEvent we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AgentRunEventUpsertArgs>(args: SelectSubset<T, AgentRunEventUpsertArgs<ExtArgs>>): Prisma__AgentRunEventClient<$Result.GetResult<Prisma.$AgentRunEventPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AgentRunEvents.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentRunEventCountArgs} args - Arguments to filter AgentRunEvents to count.
+     * @example
+     * // Count the number of AgentRunEvents
+     * const count = await prisma.agentRunEvent.count({
+     *   where: {
+     *     // ... the filter for the AgentRunEvents we want to count
+     *   }
+     * })
+    **/
+    count<T extends AgentRunEventCountArgs>(
+      args?: Subset<T, AgentRunEventCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AgentRunEventCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AgentRunEvent.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentRunEventAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AgentRunEventAggregateArgs>(args: Subset<T, AgentRunEventAggregateArgs>): Prisma.PrismaPromise<GetAgentRunEventAggregateType<T>>
+
+    /**
+     * Group by AgentRunEvent.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentRunEventGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AgentRunEventGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AgentRunEventGroupByArgs['orderBy'] }
+        : { orderBy?: AgentRunEventGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AgentRunEventGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAgentRunEventGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AgentRunEvent model
+   */
+  readonly fields: AgentRunEventFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AgentRunEvent.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AgentRunEventClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    run<T extends AgentRunDefaultArgs<ExtArgs> = {}>(args?: Subset<T, AgentRunDefaultArgs<ExtArgs>>): Prisma__AgentRunClient<$Result.GetResult<Prisma.$AgentRunPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AgentRunEvent model
+   */
+  interface AgentRunEventFieldRefs {
+    readonly id: FieldRef<"AgentRunEvent", 'String'>
+    readonly runId: FieldRef<"AgentRunEvent", 'String'>
+    readonly type: FieldRef<"AgentRunEvent", 'String'>
+    readonly message: FieldRef<"AgentRunEvent", 'String'>
+    readonly metadata: FieldRef<"AgentRunEvent", 'Json'>
+    readonly createdAt: FieldRef<"AgentRunEvent", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AgentRunEvent findUnique
+   */
+  export type AgentRunEventFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRunEvent
+     */
+    select?: AgentRunEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRunEvent
+     */
+    omit?: AgentRunEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRunEventInclude<ExtArgs> | null
+    /**
+     * Filter, which AgentRunEvent to fetch.
+     */
+    where: AgentRunEventWhereUniqueInput
+  }
+
+  /**
+   * AgentRunEvent findUniqueOrThrow
+   */
+  export type AgentRunEventFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRunEvent
+     */
+    select?: AgentRunEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRunEvent
+     */
+    omit?: AgentRunEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRunEventInclude<ExtArgs> | null
+    /**
+     * Filter, which AgentRunEvent to fetch.
+     */
+    where: AgentRunEventWhereUniqueInput
+  }
+
+  /**
+   * AgentRunEvent findFirst
+   */
+  export type AgentRunEventFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRunEvent
+     */
+    select?: AgentRunEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRunEvent
+     */
+    omit?: AgentRunEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRunEventInclude<ExtArgs> | null
+    /**
+     * Filter, which AgentRunEvent to fetch.
+     */
+    where?: AgentRunEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgentRunEvents to fetch.
+     */
+    orderBy?: AgentRunEventOrderByWithRelationInput | AgentRunEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AgentRunEvents.
+     */
+    cursor?: AgentRunEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgentRunEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgentRunEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AgentRunEvents.
+     */
+    distinct?: AgentRunEventScalarFieldEnum | AgentRunEventScalarFieldEnum[]
+  }
+
+  /**
+   * AgentRunEvent findFirstOrThrow
+   */
+  export type AgentRunEventFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRunEvent
+     */
+    select?: AgentRunEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRunEvent
+     */
+    omit?: AgentRunEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRunEventInclude<ExtArgs> | null
+    /**
+     * Filter, which AgentRunEvent to fetch.
+     */
+    where?: AgentRunEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgentRunEvents to fetch.
+     */
+    orderBy?: AgentRunEventOrderByWithRelationInput | AgentRunEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AgentRunEvents.
+     */
+    cursor?: AgentRunEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgentRunEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgentRunEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AgentRunEvents.
+     */
+    distinct?: AgentRunEventScalarFieldEnum | AgentRunEventScalarFieldEnum[]
+  }
+
+  /**
+   * AgentRunEvent findMany
+   */
+  export type AgentRunEventFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRunEvent
+     */
+    select?: AgentRunEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRunEvent
+     */
+    omit?: AgentRunEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRunEventInclude<ExtArgs> | null
+    /**
+     * Filter, which AgentRunEvents to fetch.
+     */
+    where?: AgentRunEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgentRunEvents to fetch.
+     */
+    orderBy?: AgentRunEventOrderByWithRelationInput | AgentRunEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AgentRunEvents.
+     */
+    cursor?: AgentRunEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgentRunEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgentRunEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AgentRunEvents.
+     */
+    distinct?: AgentRunEventScalarFieldEnum | AgentRunEventScalarFieldEnum[]
+  }
+
+  /**
+   * AgentRunEvent create
+   */
+  export type AgentRunEventCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRunEvent
+     */
+    select?: AgentRunEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRunEvent
+     */
+    omit?: AgentRunEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRunEventInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AgentRunEvent.
+     */
+    data: XOR<AgentRunEventCreateInput, AgentRunEventUncheckedCreateInput>
+  }
+
+  /**
+   * AgentRunEvent createMany
+   */
+  export type AgentRunEventCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AgentRunEvents.
+     */
+    data: AgentRunEventCreateManyInput | AgentRunEventCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AgentRunEvent createManyAndReturn
+   */
+  export type AgentRunEventCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRunEvent
+     */
+    select?: AgentRunEventSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRunEvent
+     */
+    omit?: AgentRunEventOmit<ExtArgs> | null
+    /**
+     * The data used to create many AgentRunEvents.
+     */
+    data: AgentRunEventCreateManyInput | AgentRunEventCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRunEventIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AgentRunEvent update
+   */
+  export type AgentRunEventUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRunEvent
+     */
+    select?: AgentRunEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRunEvent
+     */
+    omit?: AgentRunEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRunEventInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AgentRunEvent.
+     */
+    data: XOR<AgentRunEventUpdateInput, AgentRunEventUncheckedUpdateInput>
+    /**
+     * Choose, which AgentRunEvent to update.
+     */
+    where: AgentRunEventWhereUniqueInput
+  }
+
+  /**
+   * AgentRunEvent updateMany
+   */
+  export type AgentRunEventUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AgentRunEvents.
+     */
+    data: XOR<AgentRunEventUpdateManyMutationInput, AgentRunEventUncheckedUpdateManyInput>
+    /**
+     * Filter which AgentRunEvents to update
+     */
+    where?: AgentRunEventWhereInput
+    /**
+     * Limit how many AgentRunEvents to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AgentRunEvent updateManyAndReturn
+   */
+  export type AgentRunEventUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRunEvent
+     */
+    select?: AgentRunEventSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRunEvent
+     */
+    omit?: AgentRunEventOmit<ExtArgs> | null
+    /**
+     * The data used to update AgentRunEvents.
+     */
+    data: XOR<AgentRunEventUpdateManyMutationInput, AgentRunEventUncheckedUpdateManyInput>
+    /**
+     * Filter which AgentRunEvents to update
+     */
+    where?: AgentRunEventWhereInput
+    /**
+     * Limit how many AgentRunEvents to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRunEventIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AgentRunEvent upsert
+   */
+  export type AgentRunEventUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRunEvent
+     */
+    select?: AgentRunEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRunEvent
+     */
+    omit?: AgentRunEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRunEventInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AgentRunEvent to update in case it exists.
+     */
+    where: AgentRunEventWhereUniqueInput
+    /**
+     * In case the AgentRunEvent found by the `where` argument doesn't exist, create a new AgentRunEvent with this data.
+     */
+    create: XOR<AgentRunEventCreateInput, AgentRunEventUncheckedCreateInput>
+    /**
+     * In case the AgentRunEvent was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AgentRunEventUpdateInput, AgentRunEventUncheckedUpdateInput>
+  }
+
+  /**
+   * AgentRunEvent delete
+   */
+  export type AgentRunEventDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRunEvent
+     */
+    select?: AgentRunEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRunEvent
+     */
+    omit?: AgentRunEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRunEventInclude<ExtArgs> | null
+    /**
+     * Filter which AgentRunEvent to delete.
+     */
+    where: AgentRunEventWhereUniqueInput
+  }
+
+  /**
+   * AgentRunEvent deleteMany
+   */
+  export type AgentRunEventDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AgentRunEvents to delete
+     */
+    where?: AgentRunEventWhereInput
+    /**
+     * Limit how many AgentRunEvents to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AgentRunEvent without action
+   */
+  export type AgentRunEventDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentRunEvent
+     */
+    select?: AgentRunEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentRunEvent
+     */
+    omit?: AgentRunEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AgentRunEventInclude<ExtArgs> | null
   }
 
 
@@ -9383,14 +10710,31 @@ export namespace Prisma {
     id: 'id',
     conversationId: 'conversationId',
     status: 'status',
+    phase: 'phase',
     provider: 'provider',
     model: 'model',
+    iteration: 'iteration',
+    toolCount: 'toolCount',
+    currentTool: 'currentTool',
     startedAt: 'startedAt',
+    lastHeartbeatAt: 'lastHeartbeatAt',
     completedAt: 'completedAt',
     error: 'error'
   };
 
   export type AgentRunScalarFieldEnum = (typeof AgentRunScalarFieldEnum)[keyof typeof AgentRunScalarFieldEnum]
+
+
+  export const AgentRunEventScalarFieldEnum: {
+    id: 'id',
+    runId: 'runId',
+    type: 'type',
+    message: 'message',
+    metadata: 'metadata',
+    createdAt: 'createdAt'
+  };
+
+  export type AgentRunEventScalarFieldEnum = (typeof AgentRunEventScalarFieldEnum)[keyof typeof AgentRunEventScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -9492,6 +10836,20 @@ export namespace Prisma {
    * Reference to a field of type 'Int[]'
    */
   export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float'
+   */
+  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float[]'
+   */
+  export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
   /**
    * Deep Input Types
@@ -9891,24 +11249,36 @@ export namespace Prisma {
     id?: StringFilter<"AgentRun"> | string
     conversationId?: StringFilter<"AgentRun"> | string
     status?: StringFilter<"AgentRun"> | string
+    phase?: StringFilter<"AgentRun"> | string
     provider?: StringNullableFilter<"AgentRun"> | string | null
     model?: StringNullableFilter<"AgentRun"> | string | null
+    iteration?: IntFilter<"AgentRun"> | number
+    toolCount?: IntFilter<"AgentRun"> | number
+    currentTool?: StringNullableFilter<"AgentRun"> | string | null
     startedAt?: DateTimeFilter<"AgentRun"> | Date | string
+    lastHeartbeatAt?: DateTimeFilter<"AgentRun"> | Date | string
     completedAt?: DateTimeNullableFilter<"AgentRun"> | Date | string | null
     error?: StringNullableFilter<"AgentRun"> | string | null
     conversation?: XOR<ConversationScalarRelationFilter, ConversationWhereInput>
+    events?: AgentRunEventListRelationFilter
   }
 
   export type AgentRunOrderByWithRelationInput = {
     id?: SortOrder
     conversationId?: SortOrder
     status?: SortOrder
+    phase?: SortOrder
     provider?: SortOrderInput | SortOrder
     model?: SortOrderInput | SortOrder
+    iteration?: SortOrder
+    toolCount?: SortOrder
+    currentTool?: SortOrderInput | SortOrder
     startedAt?: SortOrder
+    lastHeartbeatAt?: SortOrder
     completedAt?: SortOrderInput | SortOrder
     error?: SortOrderInput | SortOrder
     conversation?: ConversationOrderByWithRelationInput
+    events?: AgentRunEventOrderByRelationAggregateInput
   }
 
   export type AgentRunWhereUniqueInput = Prisma.AtLeast<{
@@ -9918,26 +11288,39 @@ export namespace Prisma {
     NOT?: AgentRunWhereInput | AgentRunWhereInput[]
     conversationId?: StringFilter<"AgentRun"> | string
     status?: StringFilter<"AgentRun"> | string
+    phase?: StringFilter<"AgentRun"> | string
     provider?: StringNullableFilter<"AgentRun"> | string | null
     model?: StringNullableFilter<"AgentRun"> | string | null
+    iteration?: IntFilter<"AgentRun"> | number
+    toolCount?: IntFilter<"AgentRun"> | number
+    currentTool?: StringNullableFilter<"AgentRun"> | string | null
     startedAt?: DateTimeFilter<"AgentRun"> | Date | string
+    lastHeartbeatAt?: DateTimeFilter<"AgentRun"> | Date | string
     completedAt?: DateTimeNullableFilter<"AgentRun"> | Date | string | null
     error?: StringNullableFilter<"AgentRun"> | string | null
     conversation?: XOR<ConversationScalarRelationFilter, ConversationWhereInput>
+    events?: AgentRunEventListRelationFilter
   }, "id">
 
   export type AgentRunOrderByWithAggregationInput = {
     id?: SortOrder
     conversationId?: SortOrder
     status?: SortOrder
+    phase?: SortOrder
     provider?: SortOrderInput | SortOrder
     model?: SortOrderInput | SortOrder
+    iteration?: SortOrder
+    toolCount?: SortOrder
+    currentTool?: SortOrderInput | SortOrder
     startedAt?: SortOrder
+    lastHeartbeatAt?: SortOrder
     completedAt?: SortOrderInput | SortOrder
     error?: SortOrderInput | SortOrder
     _count?: AgentRunCountOrderByAggregateInput
+    _avg?: AgentRunAvgOrderByAggregateInput
     _max?: AgentRunMaxOrderByAggregateInput
     _min?: AgentRunMinOrderByAggregateInput
+    _sum?: AgentRunSumOrderByAggregateInput
   }
 
   export type AgentRunScalarWhereWithAggregatesInput = {
@@ -9947,11 +11330,76 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"AgentRun"> | string
     conversationId?: StringWithAggregatesFilter<"AgentRun"> | string
     status?: StringWithAggregatesFilter<"AgentRun"> | string
+    phase?: StringWithAggregatesFilter<"AgentRun"> | string
     provider?: StringNullableWithAggregatesFilter<"AgentRun"> | string | null
     model?: StringNullableWithAggregatesFilter<"AgentRun"> | string | null
+    iteration?: IntWithAggregatesFilter<"AgentRun"> | number
+    toolCount?: IntWithAggregatesFilter<"AgentRun"> | number
+    currentTool?: StringNullableWithAggregatesFilter<"AgentRun"> | string | null
     startedAt?: DateTimeWithAggregatesFilter<"AgentRun"> | Date | string
+    lastHeartbeatAt?: DateTimeWithAggregatesFilter<"AgentRun"> | Date | string
     completedAt?: DateTimeNullableWithAggregatesFilter<"AgentRun"> | Date | string | null
     error?: StringNullableWithAggregatesFilter<"AgentRun"> | string | null
+  }
+
+  export type AgentRunEventWhereInput = {
+    AND?: AgentRunEventWhereInput | AgentRunEventWhereInput[]
+    OR?: AgentRunEventWhereInput[]
+    NOT?: AgentRunEventWhereInput | AgentRunEventWhereInput[]
+    id?: StringFilter<"AgentRunEvent"> | string
+    runId?: StringFilter<"AgentRunEvent"> | string
+    type?: StringFilter<"AgentRunEvent"> | string
+    message?: StringNullableFilter<"AgentRunEvent"> | string | null
+    metadata?: JsonNullableFilter<"AgentRunEvent">
+    createdAt?: DateTimeFilter<"AgentRunEvent"> | Date | string
+    run?: XOR<AgentRunScalarRelationFilter, AgentRunWhereInput>
+  }
+
+  export type AgentRunEventOrderByWithRelationInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    type?: SortOrder
+    message?: SortOrderInput | SortOrder
+    metadata?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    run?: AgentRunOrderByWithRelationInput
+  }
+
+  export type AgentRunEventWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: AgentRunEventWhereInput | AgentRunEventWhereInput[]
+    OR?: AgentRunEventWhereInput[]
+    NOT?: AgentRunEventWhereInput | AgentRunEventWhereInput[]
+    runId?: StringFilter<"AgentRunEvent"> | string
+    type?: StringFilter<"AgentRunEvent"> | string
+    message?: StringNullableFilter<"AgentRunEvent"> | string | null
+    metadata?: JsonNullableFilter<"AgentRunEvent">
+    createdAt?: DateTimeFilter<"AgentRunEvent"> | Date | string
+    run?: XOR<AgentRunScalarRelationFilter, AgentRunWhereInput>
+  }, "id">
+
+  export type AgentRunEventOrderByWithAggregationInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    type?: SortOrder
+    message?: SortOrderInput | SortOrder
+    metadata?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: AgentRunEventCountOrderByAggregateInput
+    _max?: AgentRunEventMaxOrderByAggregateInput
+    _min?: AgentRunEventMinOrderByAggregateInput
+  }
+
+  export type AgentRunEventScalarWhereWithAggregatesInput = {
+    AND?: AgentRunEventScalarWhereWithAggregatesInput | AgentRunEventScalarWhereWithAggregatesInput[]
+    OR?: AgentRunEventScalarWhereWithAggregatesInput[]
+    NOT?: AgentRunEventScalarWhereWithAggregatesInput | AgentRunEventScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"AgentRunEvent"> | string
+    runId?: StringWithAggregatesFilter<"AgentRunEvent"> | string
+    type?: StringWithAggregatesFilter<"AgentRunEvent"> | string
+    message?: StringNullableWithAggregatesFilter<"AgentRunEvent"> | string | null
+    metadata?: JsonNullableWithAggregatesFilter<"AgentRunEvent">
+    createdAt?: DateTimeWithAggregatesFilter<"AgentRunEvent"> | Date | string
   }
 
   export type UserCreateInput = {
@@ -10368,54 +11816,83 @@ export namespace Prisma {
   export type AgentRunCreateInput = {
     id?: string
     status: string
+    phase?: string
     provider?: string | null
     model?: string | null
+    iteration?: number
+    toolCount?: number
+    currentTool?: string | null
     startedAt?: Date | string
+    lastHeartbeatAt?: Date | string
     completedAt?: Date | string | null
     error?: string | null
     conversation: ConversationCreateNestedOneWithoutAgentRunsInput
+    events?: AgentRunEventCreateNestedManyWithoutRunInput
   }
 
   export type AgentRunUncheckedCreateInput = {
     id?: string
     conversationId: string
     status: string
+    phase?: string
     provider?: string | null
     model?: string | null
+    iteration?: number
+    toolCount?: number
+    currentTool?: string | null
     startedAt?: Date | string
+    lastHeartbeatAt?: Date | string
     completedAt?: Date | string | null
     error?: string | null
+    events?: AgentRunEventUncheckedCreateNestedManyWithoutRunInput
   }
 
   export type AgentRunUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    phase?: StringFieldUpdateOperationsInput | string
     provider?: NullableStringFieldUpdateOperationsInput | string | null
     model?: NullableStringFieldUpdateOperationsInput | string | null
+    iteration?: IntFieldUpdateOperationsInput | number
+    toolCount?: IntFieldUpdateOperationsInput | number
+    currentTool?: NullableStringFieldUpdateOperationsInput | string | null
     startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastHeartbeatAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     error?: NullableStringFieldUpdateOperationsInput | string | null
     conversation?: ConversationUpdateOneRequiredWithoutAgentRunsNestedInput
+    events?: AgentRunEventUpdateManyWithoutRunNestedInput
   }
 
   export type AgentRunUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     conversationId?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    phase?: StringFieldUpdateOperationsInput | string
     provider?: NullableStringFieldUpdateOperationsInput | string | null
     model?: NullableStringFieldUpdateOperationsInput | string | null
+    iteration?: IntFieldUpdateOperationsInput | number
+    toolCount?: IntFieldUpdateOperationsInput | number
+    currentTool?: NullableStringFieldUpdateOperationsInput | string | null
     startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastHeartbeatAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     error?: NullableStringFieldUpdateOperationsInput | string | null
+    events?: AgentRunEventUncheckedUpdateManyWithoutRunNestedInput
   }
 
   export type AgentRunCreateManyInput = {
     id?: string
     conversationId: string
     status: string
+    phase?: string
     provider?: string | null
     model?: string | null
+    iteration?: number
+    toolCount?: number
+    currentTool?: string | null
     startedAt?: Date | string
+    lastHeartbeatAt?: Date | string
     completedAt?: Date | string | null
     error?: string | null
   }
@@ -10423,9 +11900,14 @@ export namespace Prisma {
   export type AgentRunUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    phase?: StringFieldUpdateOperationsInput | string
     provider?: NullableStringFieldUpdateOperationsInput | string | null
     model?: NullableStringFieldUpdateOperationsInput | string | null
+    iteration?: IntFieldUpdateOperationsInput | number
+    toolCount?: IntFieldUpdateOperationsInput | number
+    currentTool?: NullableStringFieldUpdateOperationsInput | string | null
     startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastHeartbeatAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     error?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -10434,11 +11916,78 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     conversationId?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    phase?: StringFieldUpdateOperationsInput | string
     provider?: NullableStringFieldUpdateOperationsInput | string | null
     model?: NullableStringFieldUpdateOperationsInput | string | null
+    iteration?: IntFieldUpdateOperationsInput | number
+    toolCount?: IntFieldUpdateOperationsInput | number
+    currentTool?: NullableStringFieldUpdateOperationsInput | string | null
     startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastHeartbeatAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     error?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type AgentRunEventCreateInput = {
+    id?: string
+    type: string
+    message?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    run: AgentRunCreateNestedOneWithoutEventsInput
+  }
+
+  export type AgentRunEventUncheckedCreateInput = {
+    id?: string
+    runId: string
+    type: string
+    message?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type AgentRunEventUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    message?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    run?: AgentRunUpdateOneRequiredWithoutEventsNestedInput
+  }
+
+  export type AgentRunEventUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    message?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentRunEventCreateManyInput = {
+    id?: string
+    runId: string
+    type: string
+    message?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type AgentRunEventUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    message?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentRunEventUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    runId?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    message?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -10855,24 +12404,60 @@ export namespace Prisma {
     _max?: NestedJsonNullableFilter<$PrismaModel>
   }
 
+  export type IntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
+
+  export type AgentRunEventListRelationFilter = {
+    every?: AgentRunEventWhereInput
+    some?: AgentRunEventWhereInput
+    none?: AgentRunEventWhereInput
+  }
+
+  export type AgentRunEventOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type AgentRunCountOrderByAggregateInput = {
     id?: SortOrder
     conversationId?: SortOrder
     status?: SortOrder
+    phase?: SortOrder
     provider?: SortOrder
     model?: SortOrder
+    iteration?: SortOrder
+    toolCount?: SortOrder
+    currentTool?: SortOrder
     startedAt?: SortOrder
+    lastHeartbeatAt?: SortOrder
     completedAt?: SortOrder
     error?: SortOrder
+  }
+
+  export type AgentRunAvgOrderByAggregateInput = {
+    iteration?: SortOrder
+    toolCount?: SortOrder
   }
 
   export type AgentRunMaxOrderByAggregateInput = {
     id?: SortOrder
     conversationId?: SortOrder
     status?: SortOrder
+    phase?: SortOrder
     provider?: SortOrder
     model?: SortOrder
+    iteration?: SortOrder
+    toolCount?: SortOrder
+    currentTool?: SortOrder
     startedAt?: SortOrder
+    lastHeartbeatAt?: SortOrder
     completedAt?: SortOrder
     error?: SortOrder
   }
@@ -10881,11 +12466,67 @@ export namespace Prisma {
     id?: SortOrder
     conversationId?: SortOrder
     status?: SortOrder
+    phase?: SortOrder
     provider?: SortOrder
     model?: SortOrder
+    iteration?: SortOrder
+    toolCount?: SortOrder
+    currentTool?: SortOrder
     startedAt?: SortOrder
+    lastHeartbeatAt?: SortOrder
     completedAt?: SortOrder
     error?: SortOrder
+  }
+
+  export type AgentRunSumOrderByAggregateInput = {
+    iteration?: SortOrder
+    toolCount?: SortOrder
+  }
+
+  export type IntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type AgentRunScalarRelationFilter = {
+    is?: AgentRunWhereInput
+    isNot?: AgentRunWhereInput
+  }
+
+  export type AgentRunEventCountOrderByAggregateInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    type?: SortOrder
+    message?: SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AgentRunEventMaxOrderByAggregateInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    type?: SortOrder
+    message?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AgentRunEventMinOrderByAggregateInput = {
+    id?: SortOrder
+    runId?: SortOrder
+    type?: SortOrder
+    message?: SortOrder
+    createdAt?: SortOrder
   }
 
   export type SessionCreateNestedManyWithoutUserInput = {
@@ -11232,12 +12873,76 @@ export namespace Prisma {
     connect?: ConversationWhereUniqueInput
   }
 
+  export type AgentRunEventCreateNestedManyWithoutRunInput = {
+    create?: XOR<AgentRunEventCreateWithoutRunInput, AgentRunEventUncheckedCreateWithoutRunInput> | AgentRunEventCreateWithoutRunInput[] | AgentRunEventUncheckedCreateWithoutRunInput[]
+    connectOrCreate?: AgentRunEventCreateOrConnectWithoutRunInput | AgentRunEventCreateOrConnectWithoutRunInput[]
+    createMany?: AgentRunEventCreateManyRunInputEnvelope
+    connect?: AgentRunEventWhereUniqueInput | AgentRunEventWhereUniqueInput[]
+  }
+
+  export type AgentRunEventUncheckedCreateNestedManyWithoutRunInput = {
+    create?: XOR<AgentRunEventCreateWithoutRunInput, AgentRunEventUncheckedCreateWithoutRunInput> | AgentRunEventCreateWithoutRunInput[] | AgentRunEventUncheckedCreateWithoutRunInput[]
+    connectOrCreate?: AgentRunEventCreateOrConnectWithoutRunInput | AgentRunEventCreateOrConnectWithoutRunInput[]
+    createMany?: AgentRunEventCreateManyRunInputEnvelope
+    connect?: AgentRunEventWhereUniqueInput | AgentRunEventWhereUniqueInput[]
+  }
+
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
   export type ConversationUpdateOneRequiredWithoutAgentRunsNestedInput = {
     create?: XOR<ConversationCreateWithoutAgentRunsInput, ConversationUncheckedCreateWithoutAgentRunsInput>
     connectOrCreate?: ConversationCreateOrConnectWithoutAgentRunsInput
     upsert?: ConversationUpsertWithoutAgentRunsInput
     connect?: ConversationWhereUniqueInput
     update?: XOR<XOR<ConversationUpdateToOneWithWhereWithoutAgentRunsInput, ConversationUpdateWithoutAgentRunsInput>, ConversationUncheckedUpdateWithoutAgentRunsInput>
+  }
+
+  export type AgentRunEventUpdateManyWithoutRunNestedInput = {
+    create?: XOR<AgentRunEventCreateWithoutRunInput, AgentRunEventUncheckedCreateWithoutRunInput> | AgentRunEventCreateWithoutRunInput[] | AgentRunEventUncheckedCreateWithoutRunInput[]
+    connectOrCreate?: AgentRunEventCreateOrConnectWithoutRunInput | AgentRunEventCreateOrConnectWithoutRunInput[]
+    upsert?: AgentRunEventUpsertWithWhereUniqueWithoutRunInput | AgentRunEventUpsertWithWhereUniqueWithoutRunInput[]
+    createMany?: AgentRunEventCreateManyRunInputEnvelope
+    set?: AgentRunEventWhereUniqueInput | AgentRunEventWhereUniqueInput[]
+    disconnect?: AgentRunEventWhereUniqueInput | AgentRunEventWhereUniqueInput[]
+    delete?: AgentRunEventWhereUniqueInput | AgentRunEventWhereUniqueInput[]
+    connect?: AgentRunEventWhereUniqueInput | AgentRunEventWhereUniqueInput[]
+    update?: AgentRunEventUpdateWithWhereUniqueWithoutRunInput | AgentRunEventUpdateWithWhereUniqueWithoutRunInput[]
+    updateMany?: AgentRunEventUpdateManyWithWhereWithoutRunInput | AgentRunEventUpdateManyWithWhereWithoutRunInput[]
+    deleteMany?: AgentRunEventScalarWhereInput | AgentRunEventScalarWhereInput[]
+  }
+
+  export type AgentRunEventUncheckedUpdateManyWithoutRunNestedInput = {
+    create?: XOR<AgentRunEventCreateWithoutRunInput, AgentRunEventUncheckedCreateWithoutRunInput> | AgentRunEventCreateWithoutRunInput[] | AgentRunEventUncheckedCreateWithoutRunInput[]
+    connectOrCreate?: AgentRunEventCreateOrConnectWithoutRunInput | AgentRunEventCreateOrConnectWithoutRunInput[]
+    upsert?: AgentRunEventUpsertWithWhereUniqueWithoutRunInput | AgentRunEventUpsertWithWhereUniqueWithoutRunInput[]
+    createMany?: AgentRunEventCreateManyRunInputEnvelope
+    set?: AgentRunEventWhereUniqueInput | AgentRunEventWhereUniqueInput[]
+    disconnect?: AgentRunEventWhereUniqueInput | AgentRunEventWhereUniqueInput[]
+    delete?: AgentRunEventWhereUniqueInput | AgentRunEventWhereUniqueInput[]
+    connect?: AgentRunEventWhereUniqueInput | AgentRunEventWhereUniqueInput[]
+    update?: AgentRunEventUpdateWithWhereUniqueWithoutRunInput | AgentRunEventUpdateWithWhereUniqueWithoutRunInput[]
+    updateMany?: AgentRunEventUpdateManyWithWhereWithoutRunInput | AgentRunEventUpdateManyWithWhereWithoutRunInput[]
+    deleteMany?: AgentRunEventScalarWhereInput | AgentRunEventScalarWhereInput[]
+  }
+
+  export type AgentRunCreateNestedOneWithoutEventsInput = {
+    create?: XOR<AgentRunCreateWithoutEventsInput, AgentRunUncheckedCreateWithoutEventsInput>
+    connectOrCreate?: AgentRunCreateOrConnectWithoutEventsInput
+    connect?: AgentRunWhereUniqueInput
+  }
+
+  export type AgentRunUpdateOneRequiredWithoutEventsNestedInput = {
+    create?: XOR<AgentRunCreateWithoutEventsInput, AgentRunUncheckedCreateWithoutEventsInput>
+    connectOrCreate?: AgentRunCreateOrConnectWithoutEventsInput
+    upsert?: AgentRunUpsertWithoutEventsInput
+    connect?: AgentRunWhereUniqueInput
+    update?: XOR<XOR<AgentRunUpdateToOneWithWhereWithoutEventsInput, AgentRunUpdateWithoutEventsInput>, AgentRunUncheckedUpdateWithoutEventsInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -11395,6 +13100,33 @@ export namespace Prisma {
     gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type NestedFloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
   }
 
   export type SessionCreateWithoutUserInput = {
@@ -11846,21 +13578,33 @@ export namespace Prisma {
   export type AgentRunCreateWithoutConversationInput = {
     id?: string
     status: string
+    phase?: string
     provider?: string | null
     model?: string | null
+    iteration?: number
+    toolCount?: number
+    currentTool?: string | null
     startedAt?: Date | string
+    lastHeartbeatAt?: Date | string
     completedAt?: Date | string | null
     error?: string | null
+    events?: AgentRunEventCreateNestedManyWithoutRunInput
   }
 
   export type AgentRunUncheckedCreateWithoutConversationInput = {
     id?: string
     status: string
+    phase?: string
     provider?: string | null
     model?: string | null
+    iteration?: number
+    toolCount?: number
+    currentTool?: string | null
     startedAt?: Date | string
+    lastHeartbeatAt?: Date | string
     completedAt?: Date | string | null
     error?: string | null
+    events?: AgentRunEventUncheckedCreateNestedManyWithoutRunInput
   }
 
   export type AgentRunCreateOrConnectWithoutConversationInput = {
@@ -11958,9 +13702,14 @@ export namespace Prisma {
     id?: StringFilter<"AgentRun"> | string
     conversationId?: StringFilter<"AgentRun"> | string
     status?: StringFilter<"AgentRun"> | string
+    phase?: StringFilter<"AgentRun"> | string
     provider?: StringNullableFilter<"AgentRun"> | string | null
     model?: StringNullableFilter<"AgentRun"> | string | null
+    iteration?: IntFilter<"AgentRun"> | number
+    toolCount?: IntFilter<"AgentRun"> | number
+    currentTool?: StringNullableFilter<"AgentRun"> | string | null
     startedAt?: DateTimeFilter<"AgentRun"> | Date | string
+    lastHeartbeatAt?: DateTimeFilter<"AgentRun"> | Date | string
     completedAt?: DateTimeNullableFilter<"AgentRun"> | Date | string | null
     error?: StringNullableFilter<"AgentRun"> | string | null
   }
@@ -12040,6 +13789,32 @@ export namespace Prisma {
     create: XOR<ConversationCreateWithoutAgentRunsInput, ConversationUncheckedCreateWithoutAgentRunsInput>
   }
 
+  export type AgentRunEventCreateWithoutRunInput = {
+    id?: string
+    type: string
+    message?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type AgentRunEventUncheckedCreateWithoutRunInput = {
+    id?: string
+    type: string
+    message?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type AgentRunEventCreateOrConnectWithoutRunInput = {
+    where: AgentRunEventWhereUniqueInput
+    create: XOR<AgentRunEventCreateWithoutRunInput, AgentRunEventUncheckedCreateWithoutRunInput>
+  }
+
+  export type AgentRunEventCreateManyRunInputEnvelope = {
+    data: AgentRunEventCreateManyRunInput | AgentRunEventCreateManyRunInput[]
+    skipDuplicates?: boolean
+  }
+
   export type ConversationUpsertWithoutAgentRunsInput = {
     update: XOR<ConversationUpdateWithoutAgentRunsInput, ConversationUncheckedUpdateWithoutAgentRunsInput>
     create: XOR<ConversationCreateWithoutAgentRunsInput, ConversationUncheckedCreateWithoutAgentRunsInput>
@@ -12067,6 +13842,114 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     messages?: MessageUncheckedUpdateManyWithoutConversationNestedInput
+  }
+
+  export type AgentRunEventUpsertWithWhereUniqueWithoutRunInput = {
+    where: AgentRunEventWhereUniqueInput
+    update: XOR<AgentRunEventUpdateWithoutRunInput, AgentRunEventUncheckedUpdateWithoutRunInput>
+    create: XOR<AgentRunEventCreateWithoutRunInput, AgentRunEventUncheckedCreateWithoutRunInput>
+  }
+
+  export type AgentRunEventUpdateWithWhereUniqueWithoutRunInput = {
+    where: AgentRunEventWhereUniqueInput
+    data: XOR<AgentRunEventUpdateWithoutRunInput, AgentRunEventUncheckedUpdateWithoutRunInput>
+  }
+
+  export type AgentRunEventUpdateManyWithWhereWithoutRunInput = {
+    where: AgentRunEventScalarWhereInput
+    data: XOR<AgentRunEventUpdateManyMutationInput, AgentRunEventUncheckedUpdateManyWithoutRunInput>
+  }
+
+  export type AgentRunEventScalarWhereInput = {
+    AND?: AgentRunEventScalarWhereInput | AgentRunEventScalarWhereInput[]
+    OR?: AgentRunEventScalarWhereInput[]
+    NOT?: AgentRunEventScalarWhereInput | AgentRunEventScalarWhereInput[]
+    id?: StringFilter<"AgentRunEvent"> | string
+    runId?: StringFilter<"AgentRunEvent"> | string
+    type?: StringFilter<"AgentRunEvent"> | string
+    message?: StringNullableFilter<"AgentRunEvent"> | string | null
+    metadata?: JsonNullableFilter<"AgentRunEvent">
+    createdAt?: DateTimeFilter<"AgentRunEvent"> | Date | string
+  }
+
+  export type AgentRunCreateWithoutEventsInput = {
+    id?: string
+    status: string
+    phase?: string
+    provider?: string | null
+    model?: string | null
+    iteration?: number
+    toolCount?: number
+    currentTool?: string | null
+    startedAt?: Date | string
+    lastHeartbeatAt?: Date | string
+    completedAt?: Date | string | null
+    error?: string | null
+    conversation: ConversationCreateNestedOneWithoutAgentRunsInput
+  }
+
+  export type AgentRunUncheckedCreateWithoutEventsInput = {
+    id?: string
+    conversationId: string
+    status: string
+    phase?: string
+    provider?: string | null
+    model?: string | null
+    iteration?: number
+    toolCount?: number
+    currentTool?: string | null
+    startedAt?: Date | string
+    lastHeartbeatAt?: Date | string
+    completedAt?: Date | string | null
+    error?: string | null
+  }
+
+  export type AgentRunCreateOrConnectWithoutEventsInput = {
+    where: AgentRunWhereUniqueInput
+    create: XOR<AgentRunCreateWithoutEventsInput, AgentRunUncheckedCreateWithoutEventsInput>
+  }
+
+  export type AgentRunUpsertWithoutEventsInput = {
+    update: XOR<AgentRunUpdateWithoutEventsInput, AgentRunUncheckedUpdateWithoutEventsInput>
+    create: XOR<AgentRunCreateWithoutEventsInput, AgentRunUncheckedCreateWithoutEventsInput>
+    where?: AgentRunWhereInput
+  }
+
+  export type AgentRunUpdateToOneWithWhereWithoutEventsInput = {
+    where?: AgentRunWhereInput
+    data: XOR<AgentRunUpdateWithoutEventsInput, AgentRunUncheckedUpdateWithoutEventsInput>
+  }
+
+  export type AgentRunUpdateWithoutEventsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    phase?: StringFieldUpdateOperationsInput | string
+    provider?: NullableStringFieldUpdateOperationsInput | string | null
+    model?: NullableStringFieldUpdateOperationsInput | string | null
+    iteration?: IntFieldUpdateOperationsInput | number
+    toolCount?: IntFieldUpdateOperationsInput | number
+    currentTool?: NullableStringFieldUpdateOperationsInput | string | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastHeartbeatAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    error?: NullableStringFieldUpdateOperationsInput | string | null
+    conversation?: ConversationUpdateOneRequiredWithoutAgentRunsNestedInput
+  }
+
+  export type AgentRunUncheckedUpdateWithoutEventsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    conversationId?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    phase?: StringFieldUpdateOperationsInput | string
+    provider?: NullableStringFieldUpdateOperationsInput | string | null
+    model?: NullableStringFieldUpdateOperationsInput | string | null
+    iteration?: IntFieldUpdateOperationsInput | number
+    toolCount?: IntFieldUpdateOperationsInput | number
+    currentTool?: NullableStringFieldUpdateOperationsInput | string | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastHeartbeatAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    error?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type SessionCreateManyUserInput = {
@@ -12215,9 +14098,14 @@ export namespace Prisma {
   export type AgentRunCreateManyConversationInput = {
     id?: string
     status: string
+    phase?: string
     provider?: string | null
     model?: string | null
+    iteration?: number
+    toolCount?: number
+    currentTool?: string | null
     startedAt?: Date | string
+    lastHeartbeatAt?: Date | string
     completedAt?: Date | string | null
     error?: string | null
   }
@@ -12258,31 +14146,80 @@ export namespace Prisma {
   export type AgentRunUpdateWithoutConversationInput = {
     id?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    phase?: StringFieldUpdateOperationsInput | string
     provider?: NullableStringFieldUpdateOperationsInput | string | null
     model?: NullableStringFieldUpdateOperationsInput | string | null
+    iteration?: IntFieldUpdateOperationsInput | number
+    toolCount?: IntFieldUpdateOperationsInput | number
+    currentTool?: NullableStringFieldUpdateOperationsInput | string | null
     startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastHeartbeatAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     error?: NullableStringFieldUpdateOperationsInput | string | null
+    events?: AgentRunEventUpdateManyWithoutRunNestedInput
   }
 
   export type AgentRunUncheckedUpdateWithoutConversationInput = {
     id?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    phase?: StringFieldUpdateOperationsInput | string
     provider?: NullableStringFieldUpdateOperationsInput | string | null
     model?: NullableStringFieldUpdateOperationsInput | string | null
+    iteration?: IntFieldUpdateOperationsInput | number
+    toolCount?: IntFieldUpdateOperationsInput | number
+    currentTool?: NullableStringFieldUpdateOperationsInput | string | null
     startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastHeartbeatAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     error?: NullableStringFieldUpdateOperationsInput | string | null
+    events?: AgentRunEventUncheckedUpdateManyWithoutRunNestedInput
   }
 
   export type AgentRunUncheckedUpdateManyWithoutConversationInput = {
     id?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    phase?: StringFieldUpdateOperationsInput | string
     provider?: NullableStringFieldUpdateOperationsInput | string | null
     model?: NullableStringFieldUpdateOperationsInput | string | null
+    iteration?: IntFieldUpdateOperationsInput | number
+    toolCount?: IntFieldUpdateOperationsInput | number
+    currentTool?: NullableStringFieldUpdateOperationsInput | string | null
     startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastHeartbeatAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     error?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type AgentRunEventCreateManyRunInput = {
+    id?: string
+    type: string
+    message?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type AgentRunEventUpdateWithoutRunInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    message?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentRunEventUncheckedUpdateWithoutRunInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    message?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentRunEventUncheckedUpdateManyWithoutRunInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    message?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 
