@@ -3,99 +3,113 @@ const ALLOWED_COMMANDS = new Set([
     "npm run build",
     "npm run lint",
     "git status",
-    "node --test"
+    "node --test",
+
+    // TypeScript
+    "npm run build",
+
+    // Java
+    "javac <project-java-files>",
+
+    // C
+    "cc <project-source-files>",
+
+    // C++
+    "c++ <project-source-files>",
+
+    // C#
+    "dotnet build",
+    "dotnet run",
+
+    // Go
+    "go build ./...",
+    
+    // Rust
+    "cargo build",
+    "cargo run",
+
+    // Kotlin
+    "gradle build",
+    "gradle run",
+
+    // Swift
+    "swift build",
+    "swift run"
 ]);
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 const MAX_TIMEOUT_MS = 300_000;
 const MAX_OUTPUT_BYTES = 1_000_000;
 
-function extractNodeFilePath(command) {
+/*
+ * Commands that execute a project-relative source file.
+ *
+ * These are intentionally handled separately from the fixed
+ * command allowlist because the file path is dynamic.
+ */
+const DYNAMIC_COMMANDS = [
+    {
+        runtime: "node",
+        extensions: [
+            ".js",
+            ".mjs",
+            ".cjs",
+            ".jsx",
+            ".ts",
+            ".mts",
+            ".cts",
+            ".tsx"
+        ]
+    },
+    {
+        runtime: "python",
+        extensions: [".py"]
+    },
+    {
+        runtime: "java",
+        extensions: [".java"]
+    },
+    {
+        runtime: "go",
+        extensions: [".go"]
+    },
+    {
+        runtime: "php",
+        extensions: [".php"]
+    },
+    {
+        runtime: "ruby",
+        extensions: [".rb"]
+    }
+];
+
+/*
+ * Extract the executable and file path from commands such as:
+ *
+ * node src/index.js
+ * python main.py
+ * java Main.java
+ * go run main.go
+ * php index.php
+ * ruby main.rb
+ */
+function extractCommandParts(command) {
     const match = command.match(
-        /^node\s+(?:"([^"]+)"|'([^']+)'|([^\s]+))$/
+        /^(node|python|java|php|ruby|go\s+run)\s+(?:"([^"]+)"|'([^']+)'|([^\s]+))$/
     );
 
     if (!match) {
         return null;
     }
 
-    return (
-        match[1] ??
-        match[2] ??
-        match[3] ??
-        null
-    );
-}
-
-function isSafeNodeCommand(command) {
-    if (!command.startsWith("node ")) {
-        return false;
-    }
-
-    const filePath =
-        extractNodeFilePath(command);
-
-    if (!filePath) {
-        return false;
-    }
-
-    /*
-     * Only allow JavaScript source files
-     * that are relative to the sandbox
-     * project workspace.
-     */
-    const supportedExtensions = [
-        ".js",
-        ".mjs",
-        ".cjs"
-    ];
-
-    if (
-        !supportedExtensions.some(
-            (extension) =>
-                filePath.endsWith(extension)
-        )
-    ) {
-        return false;
-    }
-
-    /*
-     * Never allow shell operators,
-     * command chaining, redirection,
-     * or shell substitution.
-     */
-    if (
-        filePath.startsWith("-") ||
-        filePath.includes("&&") ||
-        filePath.includes("||") ||
-        filePath.includes(";") ||
-        filePath.includes("|") ||
-        filePath.includes(">") ||
-        filePath.includes("<") ||
-        filePath.includes("$(") ||
-        filePath.includes("`")
-    ) {
-        return false;
-    }
-
-    /*
-     * Never allow absolute paths.
-     */
-    if (pathIsAbsolute(filePath)) {
-        return false;
-    }
-
-    /*
-     * Never allow directory traversal.
-     */
-    const segments =
-        filePath.split(/[\\/]+/);
-
-    if (segments.includes("..")) {
-        return false;
-    }
-
-    return true;
+    return {
+        runtime: match[1],
+        filePath:
+            match[2] ??
+            match[3] ??
+            match[4] ??
+            null
+    };
 }
 
 function pathIsAbsolute(filePath) {
@@ -106,6 +120,147 @@ function pathIsAbsolute(filePath) {
     );
 }
 
+function containsUnsafeShellSyntax(value) {
+    return (
+        value.includes("&&") ||
+        value.includes("||") ||
+        value.includes(";") ||
+        value.includes("|") ||
+        value.includes(">") ||
+        value.includes("<") ||
+        value.includes("$(") ||
+        value.includes("`")
+    );
+}
+
+function isSafeProjectRelativePath(filePath) {
+    if (!filePath) {
+        return false;
+    }
+
+    if (filePath.startsWith("-")) {
+        return false;
+    }
+
+    if (containsUnsafeShellSyntax(filePath)) {
+        return false;
+    }
+
+    if (pathIsAbsolute(filePath)) {
+        return false;
+    }
+
+    const segments = filePath.split(/[\\/]+/);
+
+    if (segments.includes("..")) {
+        return false;
+    }
+
+    return true;
+}
+
+function isAllowedDynamicCommand(command) {
+    const parts = extractCommandParts(command);
+
+    if (!parts || !parts.filePath) {
+        return false;
+    }
+
+    if (!isSafeProjectRelativePath(parts.filePath)) {
+        return false;
+    }
+
+    let runtime = parts.runtime;
+
+    if (runtime === "go run") {
+        runtime = "go";
+    }
+
+    const strategy = DYNAMIC_COMMANDS.find(
+        (entry) => entry.runtime === runtime
+    );
+
+    if (!strategy) {
+        return false;
+    }
+
+    return strategy.extensions.some(
+        (extension) =>
+            parts.filePath.endsWith(extension)
+    );
+}
+
+/*
+ * Commands generated by the C / C++ execution strategies
+ * compile project source files into a local executable.
+ *
+ * The actual project-file expansion is performed by the
+ * execution layer before execution.
+ */
+function isAllowedNativeBuildCommand(command) {
+    if (
+        command === "cc <project-source-files>" ||
+        command === "c++ <project-source-files>"
+    ) {
+        return true;
+    }
+
+    return false;
+}
+
+/*
+ * Java compilation uses a project-file placeholder which is
+ * resolved by the execution layer.
+ */
+function isAllowedJavaBuildCommand(command) {
+    return command === "javac <project-java-files>";
+}
+
+/*
+ * Native executable execution.
+ *
+ * Examples:
+ *
+ * ./main
+ * ./build/app
+ *
+ * Only relative paths are accepted.
+ */
+function isSafeNativeRunCommand(command) {
+    const match = command.match(
+        /^\.\/(?:"([^"]+)"|'([^']+)'|([^\s]+))$/
+    );
+
+    if (!match) {
+        return false;
+    }
+
+    const filePath =
+        match[1] ??
+        match[2] ??
+        match[3] ??
+        null;
+
+    if (!filePath) {
+        return false;
+    }
+
+    if (!isSafeProjectRelativePath(filePath)) {
+        return false;
+    }
+
+    return true;
+}
+
+/*
+ * Validates every command before it reaches the execution backend.
+ *
+ * Important:
+ * This does NOT allow arbitrary shell commands.
+ *
+ * Only commands explicitly understood by ForgeAI's execution
+ * strategies are accepted.
+ */
 export function validateSandboxCommand(command) {
     if (typeof command !== "string") {
         const error = new Error(
@@ -132,19 +287,51 @@ export function validateSandboxCommand(command) {
         throw error;
     }
 
+    /*
+     * Reject shell control syntax at the command level.
+     */
+    if (containsUnsafeShellSyntax(normalizedCommand)) {
+        const error = new Error(
+            `Unsafe shell syntax is not allowed: ${normalizedCommand}`
+        );
+
+        error.code =
+            "UNSAFE_SANDBOX_COMMAND";
+
+        throw error;
+    }
+
     const isExplicitlyAllowed =
         ALLOWED_COMMANDS.has(
             normalizedCommand
         );
 
-    const isAllowedNodeCommand =
-        isSafeNodeCommand(
+    const isAllowedDynamic =
+        isAllowedDynamicCommand(
+            normalizedCommand
+        );
+
+    const isAllowedNativeRun =
+        isSafeNativeRunCommand(
+            normalizedCommand
+        );
+
+    const isAllowedNativeBuild =
+        isAllowedNativeBuildCommand(
+            normalizedCommand
+        );
+
+    const isAllowedJavaBuild =
+        isAllowedJavaBuildCommand(
             normalizedCommand
         );
 
     if (
         !isExplicitlyAllowed &&
-        !isAllowedNodeCommand
+        !isAllowedDynamic &&
+        !isAllowedNativeRun &&
+        !isAllowedNativeBuild &&
+        !isAllowedJavaBuild
     ) {
         const error = new Error(
             `Command is not allowed in the sandbox: ${normalizedCommand}`
@@ -211,8 +398,33 @@ export function getSandboxLimits({
 export function getAllowedSandboxCommands() {
     return [
         ...ALLOWED_COMMANDS,
+
+        // JavaScript / TypeScript
         "node <project-relative-file>.js",
         "node <project-relative-file>.mjs",
-        "node <project-relative-file>.cjs"
+        "node <project-relative-file>.cjs",
+        "node <project-relative-file>.jsx",
+        "node <project-relative-file>.ts",
+        "node <project-relative-file>.mts",
+        "node <project-relative-file>.cts",
+        "node <project-relative-file>.tsx",
+
+        // Python
+        "python <project-relative-file>.py",
+
+        // Java
+        "java <project-relative-file>.java",
+
+        // Go
+        "go run <project-relative-file>.go",
+
+        // PHP
+        "php <project-relative-file>.php",
+
+        // Ruby
+        "ruby <project-relative-file>.rb",
+
+        // Native languages
+        "./<project-relative-executable>"
     ];
 }
