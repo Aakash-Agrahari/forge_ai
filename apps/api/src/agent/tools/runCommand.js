@@ -15,6 +15,14 @@ export const runCommandTool = createTool({
                 type: "string",
                 description:
                     "The project command to execute, such as npm test or node src/index.js."
+            },
+
+            timeoutMs: {
+                type: "integer",
+                minimum: 1000,
+                maximum: 300000,
+                description:
+                    "Optional command timeout in milliseconds. Maximum 300000 (5 minutes)."
             }
         },
 
