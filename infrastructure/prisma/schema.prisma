@@ -128,3 +128,20 @@ model AgentRun {
   @@index([startedAt])
   @@index([lastHeartbeatAt])
 }
+
+model AgentRunEvent {
+  id        String   @id @default(cuid())
+  runId     String
+
+  type      String
+  message   String?
+  metadata  Json?
+
+  createdAt DateTime @default(now())
+
+  run AgentRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([createdAt])
+  @@index([type])
+}
