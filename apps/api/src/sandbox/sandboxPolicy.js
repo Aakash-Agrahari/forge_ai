@@ -7,7 +7,7 @@ const ALLOWED_COMMANDS = new Set([
 ]);
 
 const DEFAULT_TIMEOUT_MS = 30_000;
-const MAX_TIMEOUT_MS = 60_000;
+const MAX_TIMEOUT_MS = 300_000;
 const MAX_OUTPUT_BYTES = 1_000_000;
 
 function extractNodeFilePath(command) {
