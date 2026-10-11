@@ -6,8 +6,8 @@ export const executeCodeTool = createTool({
     name: "execute_code",
 
     description:
-        "Execute a project source file using ForgeAI's language-aware execution system. The execution system automatically detects the programming language and selects the appropriate runtime, build process, and sandbox execution strategy.",
-
+        "Primary tool for running or verifying project code. Supports multiple programming languages through ForgeAI's language-aware execution system. Use this tool whenever the user asks to run, execute, build, or verify a source file. Do not use run_javascript_test unless the user explicitly requests a JavaScript function test with a function name, arguments, and expected return value.",
+        
     inputSchema: {
         type: "object",
 
