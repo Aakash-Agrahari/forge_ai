@@ -145,6 +145,36 @@ function hasSuccessfulVerification(
         const toolName =
             result.toolName;
 
+        /*
+         * ============================================================
+         * LANGUAGE-AWARE CODE EXECUTION
+         * ============================================================
+         *
+         * execute_code is the primary execution/verification tool
+         * for ForgeAI's multi-language execution system.
+         *
+         * It supports languages such as:
+         * JavaScript, TypeScript, Python, Java, C, C++, C#,
+         * Go, Rust, Kotlin, Swift, PHP, Ruby, etc.
+         */
+        if (
+            toolName === "execute_code"
+        ) {
+            return (
+                result.success === true &&
+                (
+                    result.exitCode === undefined ||
+                    result.exitCode === 0
+                )
+            );
+        }
+
+        /*
+         * ============================================================
+         * LEGACY / SPECIALIZED EXECUTION TOOLS
+         * ============================================================
+         */
+
         if (
             toolName === "run_command" ||
             toolName === "execute_javascript" ||
