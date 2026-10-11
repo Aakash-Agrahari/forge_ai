@@ -234,16 +234,21 @@ function hasObservedExecutionFailure(
         }
 
         /*
-         * execute_javascript reports
+         * execute-code and execute_javascript reports
          * runtime/execution failures.
          */
         if (
+            toolName ===
+            "execute_code" ||
             toolName ===
             "execute_javascript"
         ) {
             return (
                 result.success === false ||
-                result.exitCode !== 0 ||
+                (
+                    result.exitCode !== undefined &&
+                    result.exitCode !== 0
+                ) ||
                 result.timeOut === true
             );
         }
