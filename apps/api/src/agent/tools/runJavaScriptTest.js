@@ -18,7 +18,7 @@ export const runJavaScriptTestTool =
         name: "run_javascript_test",
 
         description:
-            "Run a behavioral JavaScript test against a project function and return structured test execution results.",
+            "Specialized JavaScript function testing tool only. Use this only when the user explicitly asks to test a JavaScript function with a specific function name, arguments, and expected return value. Do NOT use this tool for general code execution, Python, Java, C, C++, C#, Go, Rust, Kotlin, Swift, PHP, Ruby, TypeScript, or other language execution.",
 
         inputSchema: {
             type: "object",
