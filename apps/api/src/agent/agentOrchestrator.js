@@ -586,6 +586,10 @@ export async function runAgent({
     let heartbeatTimer = null;
     let cancellationObserved = false;
 
+    let intentionalFailurePrepared = false;
+    let failureObserved = false;
+    let repairPerformed = false;
+
     const taskRequirements =
         getTaskRequirements(
             messages
@@ -1306,6 +1310,92 @@ export async function runAgent({
 
                     continue;
                 }
+
+                /*
+                * ============================================================
+                * FAILURE / REPAIR WORKFLOW GUARD
+                * ============================================================
+                */
+
+                if (taskRequirements.requiresFailureAndRepair) {
+                    const toolName = validatedToolCall.name;
+
+                    /*
+                    * After an intentional source modification, the next
+                    * meaningful action must be execution/verification.
+                    */
+                    if (
+                        intentionalFailurePrepared &&
+                        !failureObserved &&
+                        !repairPerformed &&
+                        toolName !== "execute_code" &&
+                        toolName !== "execute_javascript" &&
+                        toolName !== "run_javascript_test"
+                    ) {
+                        const workflowMessage = [
+                            "FAILURE-AND-REPAIR WORKFLOW VIOLATION.",
+                            "",
+                            "An intentional failure has already been prepared.",
+                            "The next action MUST be the requested execution or verification tool.",
+                            "",
+                            "Do NOT modify the source again.",
+                            "Do NOT introduce another bug.",
+                            "Do NOT perform unrelated actions.",
+                            "",
+                            "Execute the target code now and inspect the actual result."
+                        ].join("\n");
+
+                        addMessage(state, {
+                            role: "system",
+                            content: workflowMessage
+                        });
+
+                        console.warn(
+                            "[ForgeAI Agent] Blocked action before required execution:",
+                            toolName
+                        );
+
+                        continue;
+                    }
+
+                    /*
+                    * After a real execution failure, the model may inspect
+                    * or repair, but it must not intentionally break the file
+                    * again.
+                    */
+                    if (
+                        failureObserved &&
+                        !repairPerformed &&
+                        toolName === "execute_code"
+                    ) {
+                        /*
+                        * Allow re-execution only after a repair has occurred.
+                        */
+                        const workflowMessage = [
+                            "FAILURE-AND-REPAIR WORKFLOW VIOLATION.",
+                            "",
+                            "Execution has already failed and the failure evidence",
+                            "has been observed.",
+                            "",
+                            "Repair the source code based on the actual execution",
+                            "error before executing again.",
+                            "",
+                            "Do NOT repeat execution without a source repair."
+                        ].join("\n");
+
+                        addMessage(state, {
+                            role: "system",
+                            content: workflowMessage
+                        });
+
+                        console.warn(
+                            "[ForgeAI Agent] Blocked execution before repair."
+                        );
+
+                        continue;
+                    }
+                }
+
 
                 /*
                  * =================================================
