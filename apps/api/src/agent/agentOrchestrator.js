@@ -1525,19 +1525,52 @@ export async function runAgent({
 
                 if (
                     validatedToolCall.name ===
-                    "execute_javascript"
+                        "execute_code" ||
+                    validatedToolCall.name ===
+                        "execute_javascript"
                 ) {
                     recordExecutionResult(
                         state,
                         toolResult
                     );
 
-                    const executionStatus =
-                        toolResult?.success &&
-                        toolResult?.exitCode === 0 &&
+                    const failureType =
+                        toolResult?.failureType ??
+                        toolResult?.execution?.failureType ??
+                        toolResult?.build?.failureType ??
+                        null;
+
+                    let executionStatus;
+
+                    if (
+                        toolResult?.success === true &&
+                        (
+                            toolResult?.exitCode ===
+                                undefined ||
+                            toolResult?.exitCode ===
+                                null ||
+                            toolResult?.exitCode === 0
+                        ) &&
                         !toolResult?.timeOut
-                            ? "JavaScript execution succeeded. The program ran successfully."
-                            : "JavaScript execution failed. Inspect stdout and stderr, determine the cause, repair the relevant file, and execute it again.";
+                    ) {
+                        executionStatus =
+                            "Code execution succeeded. Actual execution evidence confirms the program ran successfully.";
+                    } else if (
+                        failureType ===
+                        "RUNTIME_UNAVAILABLE"
+                    ) {
+                        executionStatus =
+                            "Execution infrastructure failure: the required runtime is unavailable. Do NOT modify the application source, create launcher scripts, create replacement executables, switch languages, or repeat the same execution command. Treat this as an infrastructure/runtime availability problem.";
+                    } else if (
+                        failureType ===
+                        "SANDBOX_FAILURE"
+                    ) {
+                        executionStatus =
+                            "Sandbox infrastructure failure. Do NOT modify the application source or invent workaround commands. Treat this as an execution-environment problem.";
+                    } else {
+                        executionStatus =
+                            "Code execution failed. Inspect the actual execution result and determine whether the failure is caused by the application source, compilation, runtime behavior, timeout, or execution infrastructure before taking corrective action.";
+                    }
 
                     addMessage(
                         state,
