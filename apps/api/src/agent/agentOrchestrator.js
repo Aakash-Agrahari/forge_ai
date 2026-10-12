@@ -658,8 +658,14 @@ export async function runAgent({
             "",
             "PHASE 5 - VERIFY",
             "Immediately execute the requested execution or verification tool again after the repair.",
+
+            "Do NOT read the repaired source file again before execution.",
+            "Do NOT perform an additional inspection step between repair and verification.",
+            "The repair operation itself is sufficient to establish the new source state.",
+
             "Do not claim success from source inspection.",
             "Do not claim success from a successful file-edit operation.",
+            "Only execution or verification evidence can establish success.",
             "",
             "PHASE 6 - COMPLETE",
             "Only complete the task after the required execution or verification succeeds.",
