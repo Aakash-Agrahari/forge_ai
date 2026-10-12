@@ -1710,10 +1710,30 @@ export async function runAgent({
                             ? "JavaScript structural verification passed. This confirms the expected structure was found, but it does not prove runtime behavior."
                             : "JavaScript structural verification failed. Inspect the verification result, repair the relevant file, and run verification again.";
                 } else {
-                    toolStatus =
-                        toolResult?.success
-                            ? `Tool "${validatedToolCall.name}" completed successfully. Use this result as evidence. Do not repeat the same tool call unless the project state has changed or additional information is required.`
-                            : `Tool "${validatedToolCall.name}" failed. Inspect the returned error, determine the cause, and take a different corrective action if possible.`;
+                    const failureType =
+                        toolResult?.failureType ??
+                        toolResult?.execution?.failureType ??
+                        toolResult?.build?.failureType ??
+                        null;
+
+                    if (
+                        failureType ===
+                        "RUNTIME_UNAVAILABLE"
+                    ) {
+                        toolStatus =
+                            `Tool "${validatedToolCall.name}" failed because the required runtime is unavailable. Do not modify application source code, create launcher scripts, create replacement executables, switch languages, or repeat the same failed execution command.`;
+                    } else if (
+                        failureType ===
+                        "SANDBOX_FAILURE"
+                    ) {
+                        toolStatus =
+                            `Tool "${validatedToolCall.name}" failed because of a sandbox or execution-environment problem. Do not modify application source code or invent workaround commands.`;
+                    } else {
+                        toolStatus =
+                            toolResult?.success
+                                ? `Tool "${validatedToolCall.name}" completed successfully. Use this result as evidence. Do not repeat the same tool call unless the project state has changed or additional information is required.`
+                                : `Tool "${validatedToolCall.name}" failed. Inspect the returned execution evidence, determine whether the failure is in the source code or infrastructure, and take corrective action only when the evidence supports it.`;
+                    }
                 }
 
                 addMessage(
