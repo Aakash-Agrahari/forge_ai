@@ -2,7 +2,12 @@ const EXECUTION_STRATEGIES = {
     javascript: {
         language: "javascript",
         runtime: "node",
-        sourceExtensions: [".js", ".mjs", ".cjs", ".jsx"],
+        sourceExtensions: [
+            ".js",
+            ".mjs",
+            ".cjs",
+            ".jsx"
+        ],
 
         build: null,
 
@@ -14,7 +19,12 @@ const EXECUTION_STRATEGIES = {
     typescript: {
         language: "typescript",
         runtime: "node",
-        sourceExtensions: [".ts", ".mts", ".cts", ".tsx"],
+        sourceExtensions: [
+            ".ts",
+            ".mts",
+            ".cts",
+            ".tsx"
+        ],
 
         build: {
             command: "npm run build"
@@ -27,20 +37,24 @@ const EXECUTION_STRATEGIES = {
 
     python: {
         language: "python",
-        runtime: "python",
-        sourceExtensions: [".py"],
+        runtime: "python3",
+        sourceExtensions: [
+            ".py"
+        ],
 
         build: null,
 
         run: ({ filePath }) => ({
-            command: `python ${filePath}`
+            command: `python3 ${filePath}`
         })
     },
 
     java: {
         language: "java",
         runtime: "jvm",
-        sourceExtensions: [".java"],
+        sourceExtensions: [
+            ".java"
+        ],
 
         build: {
             command: "javac <project-java-files>"
@@ -54,7 +68,10 @@ const EXECUTION_STRATEGIES = {
     c: {
         language: "c",
         runtime: "native",
-        sourceExtensions: [".c", ".h"],
+        sourceExtensions: [
+            ".c",
+            ".h"
+        ],
 
         build: {
             command: "cc <project-source-files>"
@@ -68,7 +85,12 @@ const EXECUTION_STRATEGIES = {
     cpp: {
         language: "cpp",
         runtime: "native",
-        sourceExtensions: [".cpp", ".cc", ".cxx", ".hpp"],
+        sourceExtensions: [
+            ".cpp",
+            ".cc",
+            ".cxx",
+            ".hpp"
+        ],
 
         build: {
             command: "c++ <project-source-files>"
@@ -82,7 +104,9 @@ const EXECUTION_STRATEGIES = {
     csharp: {
         language: "csharp",
         runtime: "dotnet",
-        sourceExtensions: [".cs"],
+        sourceExtensions: [
+            ".cs"
+        ],
 
         build: {
             command: "dotnet build"
@@ -96,7 +120,9 @@ const EXECUTION_STRATEGIES = {
     go: {
         language: "go",
         runtime: "go",
-        sourceExtensions: [".go"],
+        sourceExtensions: [
+            ".go"
+        ],
 
         build: {
             command: "go build ./..."
@@ -110,7 +136,9 @@ const EXECUTION_STRATEGIES = {
     rust: {
         language: "rust",
         runtime: "rust",
-        sourceExtensions: [".rs"],
+        sourceExtensions: [
+            ".rs"
+        ],
 
         build: {
             command: "cargo build"
@@ -124,7 +152,10 @@ const EXECUTION_STRATEGIES = {
     kotlin: {
         language: "kotlin",
         runtime: "jvm",
-        sourceExtensions: [".kt", ".kts"],
+        sourceExtensions: [
+            ".kt",
+            ".kts"
+        ],
 
         build: {
             command: "gradle build"
@@ -138,7 +169,9 @@ const EXECUTION_STRATEGIES = {
     swift: {
         language: "swift",
         runtime: "swift",
-        sourceExtensions: [".swift"],
+        sourceExtensions: [
+            ".swift"
+        ],
 
         build: {
             command: "swift build"
@@ -152,7 +185,9 @@ const EXECUTION_STRATEGIES = {
     php: {
         language: "php",
         runtime: "php",
-        sourceExtensions: [".php"],
+        sourceExtensions: [
+            ".php"
+        ],
 
         build: null,
 
@@ -164,7 +199,9 @@ const EXECUTION_STRATEGIES = {
     ruby: {
         language: "ruby",
         runtime: "ruby",
-        sourceExtensions: [".rb"],
+        sourceExtensions: [
+            ".rb"
+        ],
 
         build: null,
 
@@ -187,14 +224,17 @@ export function getExecutionStrategy(language) {
         normalizeLanguage(language);
 
     const strategy =
-        EXECUTION_STRATEGIES[normalizedLanguage];
+        EXECUTION_STRATEGIES[
+            normalizedLanguage
+        ];
 
     if (!strategy) {
         const error = new Error(
             `Unsupported execution language: ${language}`
         );
 
-        error.code = "UNSUPPORTED_EXECUTION_LANGUAGE";
+        error.code =
+            "UNSUPPORTED_EXECUTION_LANGUAGE";
 
         throw error;
     }
@@ -207,7 +247,9 @@ export function hasExecutionStrategy(language) {
         normalizeLanguage(language);
 
     return Boolean(
-        EXECUTION_STRATEGIES[normalizedLanguage]
+        EXECUTION_STRATEGIES[
+            normalizedLanguage
+        ]
     );
 }
 
@@ -226,7 +268,8 @@ export function createRunCommand({
             "File path is required"
         );
 
-        error.code = "FILE_PATH_REQUIRED";
+        error.code =
+            "FILE_PATH_REQUIRED";
 
         throw error;
     }
@@ -242,7 +285,8 @@ export function createRunCommand({
 
     if (strategy.run?.command) {
         return {
-            command: strategy.run.command
+            command:
+                strategy.run.command
         };
     }
 
@@ -250,7 +294,8 @@ export function createRunCommand({
         `No run strategy defined for ${language}`
     );
 
-    error.code = "RUN_STRATEGY_NOT_DEFINED";
+    error.code =
+        "RUN_STRATEGY_NOT_DEFINED";
 
     throw error;
 }
