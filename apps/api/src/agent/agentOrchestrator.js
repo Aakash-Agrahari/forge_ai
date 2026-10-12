@@ -667,6 +667,17 @@ export async function runAgent({
             "Do not claim success from a successful file-edit operation.",
             "Only execution or verification evidence can establish success.",
             "",
+            "POST-REPAIR EXECUTION RULE:",
+            "Once a source repair has been successfully applied after an observed execution failure, the next meaningful action MUST be execution or verification.",
+
+            "Do not:",
+            "- read the repaired file again",
+            "- inspect unrelated files",
+            "- modify unrelated code",
+            "- explain the repair before executing",
+            "- perform exploratory actions",
+
+            "Execute the repaired code immediately.",
             "PHASE 6 - COMPLETE",
             "Only complete the task after the required execution or verification succeeds.",
             "Once the required verification succeeds, STOP immediately.",
