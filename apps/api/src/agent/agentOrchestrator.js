@@ -149,14 +149,8 @@ function hasSuccessfulVerification(
          * ============================================================
          * LANGUAGE-AWARE CODE EXECUTION
          * ============================================================
-         *
-         * execute_code is the primary execution/verification tool
-         * for ForgeAI's multi-language execution system.
-         *
-         * It supports languages such as:
-         * JavaScript, TypeScript, Python, Java, C, C++, C#,
-         * Go, Rust, Kotlin, Swift, PHP, Ruby, etc.
          */
+
         if (
             toolName === "execute_code"
         ) {
@@ -209,61 +203,58 @@ function hasSuccessfulVerification(
     });
 }
 
+function isInfrastructureFailureResult(result) {
+    const failureType =
+        result?.failureType ??
+        result?.execution?.failureType ??
+        result?.build?.failureType ??
+        result?.failureCode ??
+        result?.error?.code ??
+        null;
+
+    return (
+        failureType === "RUNTIME_UNAVAILABLE" ||
+        failureType === "SANDBOX_FAILURE"
+    );
+}
+
 function hasObservedExecutionFailure(
     toolResults
 ) {
     return toolResults.some((result) => {
-        if (!result) {
+        if (!result || isInfrastructureFailureResult(result)) {
             return false;
         }
 
-        const toolName =
-            result.toolName;
+        const toolName = result.toolName;
 
-        /*
-         * run_javascript_test has an
-         * explicit passed field.
-         */
-        if (
-            toolName ===
-            "run_javascript_test"
-        ) {
-            return (
-                result.passed === false
-            );
+        if (toolName === "run_javascript_test") {
+            return result.passed === false;
         }
 
-        /*
-         * execute-code and execute_javascript reports
-         * runtime/execution failures.
-         */
         if (
-            toolName ===
-            "execute_code" ||
-            toolName ===
-            "execute_javascript"
+            toolName === "execute_code" ||
+            toolName === "execute_javascript"
         ) {
             return (
                 result.success === false ||
                 (
                     result.exitCode !== undefined &&
+                    result.exitCode !== null &&
                     result.exitCode !== 0
                 ) ||
                 result.timeOut === true
             );
         }
 
-        /*
-         * run_command normally exposes
-         * success and exitCode.
-         */
-        if (
-            toolName ===
-            "run_command"
-        ) {
+        if (toolName === "run_command") {
             return (
                 result.success === false ||
-                result.exitCode !== 0 ||
+                (
+                    result.exitCode !== undefined &&
+                    result.exitCode !== null &&
+                    result.exitCode !== 0
+                ) ||
                 result.timeOut === true
             );
         }
@@ -304,32 +295,18 @@ function hasSuccessfulVerificationAfterFailure(
  * ============================================================
  * DETERMINISTIC COMPLETION GUARD
  * ============================================================
- *
- * Once the user's required verification
- * is actually proven, the orchestrator stops.
- *
- * This prevents unnecessary follow-up calls
- * after a successful verification.
- * ============================================================
  */
 
 function isCompletionReady(
     taskRequirements,
     toolResults
 ) {
-    /*
-     * Tasks without explicit verification
-     * requirements do not use this guard.
-     */
     if (
         !taskRequirements.requiresVerification
     ) {
         return false;
     }
 
-    /*
-     * We need actual successful evidence.
-     */
     if (
         !hasSuccessfulVerification(
             toolResults
@@ -338,11 +315,6 @@ function isCompletionReady(
         return false;
     }
 
-    /*
-     * If the user requested a bug ->
-     * failure -> repair -> verification flow,
-     * we require both failure and later success.
-     */
     if (
         taskRequirements.requiresFailureAndRepair
     ) {
@@ -579,14 +551,13 @@ export async function runAgent({
     const toolResults = [];
 
     let earlyCompletionRetries = 0;
-
     let repeatedToolRecoveries = 0;
-
     let hasPerformedWork = false;
     let heartbeatTimer = null;
     let cancellationObserved = false;
 
     let intentionalFailurePrepared = false;
+    let sourcePreparationEditPerformed = false;
     let failureObserved = false;
     let repairPerformed = false;
 
@@ -594,6 +565,11 @@ export async function runAgent({
         getTaskRequirements(
             messages
         );
+
+    let failureRepairPhase =
+        taskRequirements.requiresFailureAndRepair
+            ? "PREPARE"
+            : "NONE";
 
     /*
      * ============================================================
@@ -636,6 +612,8 @@ export async function runAgent({
             "PHASE 1 - PREPARE",
             "Create or modify the requested source file.",
             "If the user explicitly asks for an intentional bug, introduce exactly ONE intentional bug that is sufficient to cause the requested first execution to fail.",
+            "After the intentional-bug source edit, your assistant message MUST contain the exact marker: INTENTIONAL_FAILURE_PREPARED",
+            "The marker is a workflow signal only; do not put it inside source code.",
             "Do NOT introduce multiple bugs.",
             "Do NOT repeatedly modify the implementation trying to guarantee a failure.",
             "Do NOT change from one bug to another before executing.",
@@ -658,25 +636,22 @@ export async function runAgent({
             "",
             "PHASE 5 - VERIFY",
             "Immediately execute the requested execution or verification tool again after the repair.",
-
             "Do NOT read the repaired source file again before execution.",
             "Do NOT perform an additional inspection step between repair and verification.",
             "The repair operation itself is sufficient to establish the new source state.",
-
             "Do not claim success from source inspection.",
             "Do not claim success from a successful file-edit operation.",
             "Only execution or verification evidence can establish success.",
             "",
             "POST-REPAIR EXECUTION RULE:",
             "Once a source repair has been successfully applied after an observed execution failure, the next meaningful action MUST be execution or verification.",
-
             "Do not:",
             "- read the repaired file again",
             "- inspect unrelated files",
             "- modify unrelated code",
             "- explain the repair before executing",
             "- perform exploratory actions",
-
+            "",
             "Execute the repaired code immediately.",
             "PHASE 6 - COMPLETE",
             "Only complete the task after the required execution or verification succeeds.",
@@ -1022,16 +997,6 @@ export async function runAgent({
                         toolResults
                     );
 
-                /*
-                 * =================================================
-                 * REQUIRED VERIFICATION — FAIL CLOSED
-                 * =================================================
-                 *
-                 * Never allow the model to claim completion
-                 * when the user explicitly requested testing,
-                 * execution, or verification.
-                 */
-
                 if (
                     taskRequirements.requiresVerification &&
                     !verificationPassed
@@ -1297,13 +1262,10 @@ export async function runAgent({
                             "",
                             "Inspect the current project state and continue from the result of the previous operation.",
                             "",
-                            "If you just created or modified a file:",
-                            "1. Read the file using read_file.",
-                            "2. Inspect the actual contents.",
-                            "3. Run the appropriate execution or verification tool.",
-                            "4. Inspect the actual error or result.",
-                            "5. Repair the implementation only if the evidence requires a repair.",
-                            "6. Run the verification again.",
+                            "If this is a failure-and-repair task and the intentional failure has already been prepared, execute it immediately.",
+                            "If a source-level execution failure has already been observed, repair the source from the actual error and then execute immediately.",
+                            "Do NOT read the repaired file again before verification.",
+                            "Otherwise inspect the current file state only when necessary, then execute or verify using the requested tool.",
                             "",
                             "For a JavaScript task requiring behavioral verification, use run_javascript_test.",
                             "Do not claim completion from write_file success or source inspection alone.",
@@ -1320,99 +1282,141 @@ export async function runAgent({
                         }
                     );
 
-                    /*
-                     * Do not execute the duplicate.
-                     * Give the model another iteration.
-                     */
-
                     continue;
                 }
 
                 /*
-                * ============================================================
-                * FAILURE / REPAIR WORKFLOW GUARD
-                * ============================================================
-                */
+                 * ============================================================
+                 * FAILURE / REPAIR WORKFLOW GUARD
+                 * ============================================================
+                 */
 
                 if (taskRequirements.requiresFailureAndRepair) {
-                    const toolName = validatedToolCall.name;
+                    const toolName =
+                        validatedToolCall.name;
 
-                    /*
-                    * After an intentional source modification, the next
-                    * meaningful action must be execution/verification.
-                    */
+                    const isExecutionTool =
+                        toolName === "execute_code" ||
+                        toolName === "execute_javascript" ||
+                        toolName === "run_javascript_test";
+
+                    const isSourceEditTool =
+                        toolName === "write_file" ||
+                        toolName === "edit_file" ||
+                        toolName === "replace_in_file";
+
                     if (
-                        intentionalFailurePrepared &&
-                        !failureObserved &&
-                        !repairPerformed &&
-                        toolName !== "execute_code" &&
-                        toolName !== "execute_javascript" &&
-                        toolName !== "run_javascript_test"
+                        failureRepairPhase === "PREPARE" &&
+                        sourcePreparationEditPerformed &&
+                        isSourceEditTool
                     ) {
-                        const workflowMessage = [
-                            "FAILURE-AND-REPAIR WORKFLOW VIOLATION.",
-                            "",
-                            "An intentional failure has already been prepared.",
-                            "The next action MUST be the requested execution or verification tool.",
-                            "",
-                            "Do NOT modify the source again.",
-                            "Do NOT introduce another bug.",
-                            "Do NOT perform unrelated actions.",
-                            "",
-                            "Execute the target code now and inspect the actual result."
-                        ].join("\n");
-
                         addMessage(state, {
                             role: "system",
-                            content: workflowMessage
+                            content: [
+                                "FAILURE-AND-REPAIR WORKFLOW VIOLATION.",
+                                "",
+                                "The requested source has already been prepared once.",
+                                "Do NOT modify the source again before the first execution.",
+                                "",
+                                "Your assistant message must contain the exact marker:",
+                                "INTENTIONAL_FAILURE_PREPARED",
+                                "",
+                                "Then call the requested execution tool immediately."
+                            ].join("\n")
                         });
-
-                        console.warn(
-                            "[ForgeAI Agent] Blocked action before required execution:",
-                            toolName
-                        );
-
                         continue;
                     }
 
-                    /*
-                    * After a real execution failure, the model may inspect
-                    * or repair, but it must not intentionally break the file
-                    * again.
-                    */
                     if (
-                        failureObserved &&
-                        !repairPerformed &&
-                        toolName === "execute_code"
+                        failureRepairPhase === "PREPARE" &&
+                        isExecutionTool
                     ) {
-                        /*
-                        * Allow re-execution only after a repair has occurred.
-                        */
-                        const workflowMessage = [
-                            "FAILURE-AND-REPAIR WORKFLOW VIOLATION.",
-                            "",
-                            "Execution has already failed and the failure evidence",
-                            "has been observed.",
-                            "",
-                            "Repair the source code based on the actual execution",
-                            "error before executing again.",
-                            "",
-                            "Do NOT repeat execution without a source repair."
-                        ].join("\n");
-
                         addMessage(state, {
                             role: "system",
-                            content: workflowMessage
+                            content: [
+                                "FAILURE-AND-REPAIR WORKFLOW VIOLATION.",
+                                "",
+                                "The task requires an intentional failure before the first execution.",
+                                "First modify the requested source exactly once to introduce ONE intentional bug.",
+                                "Then include the exact marker INTENTIONAL_FAILURE_PREPARED in your assistant message and execute immediately.",
+                                "Do not introduce multiple bugs."
+                            ].join("\n")
                         });
+                        continue;
+                    }
 
-                        console.warn(
-                            "[ForgeAI Agent] Blocked execution before repair."
-                        );
+                    if (
+                        failureRepairPhase === "EXECUTE" &&
+                        !isExecutionTool
+                    ) {
+                        addMessage(state, {
+                            role: "system",
+                            content: [
+                                "FAILURE-AND-REPAIR WORKFLOW VIOLATION.",
+                                "",
+                                "The intentional failure has been prepared.",
+                                "The next action MUST be execution.",
+                                "Do NOT modify the source again.",
+                                "Do NOT read the file again.",
+                                "Execute the target code now."
+                            ].join("\n")
+                        });
+                        continue;
+                    }
 
+                    if (
+                        failureRepairPhase === "REPAIR" &&
+                        isExecutionTool
+                    ) {
+                        addMessage(state, {
+                            role: "system",
+                            content: [
+                                "FAILURE-AND-REPAIR WORKFLOW VIOLATION.",
+                                "",
+                                "Execution has already failed with a source-level failure.",
+                                "Repair the source code using the actual failure evidence before executing again.",
+                                "Do NOT execute again before the repair."
+                            ].join("\n")
+                        });
+                        continue;
+                    }
+
+                    if (
+                        failureRepairPhase === "REPAIR" &&
+                        !isSourceEditTool &&
+                        !isExecutionTool
+                    ) {
+                        addMessage(state, {
+                            role: "system",
+                            content: [
+                                "FAILURE-AND-REPAIR WORKFLOW VIOLATION.",
+                                "",
+                                "A source-level execution failure has been observed.",
+                                "Repair the source code based on the actual error.",
+                                "Do NOT perform unrelated actions."
+                            ].join("\n")
+                        });
+                        continue;
+                    }
+
+                    if (
+                        failureRepairPhase === "VERIFY" &&
+                        !isExecutionTool
+                    ) {
+                        addMessage(state, {
+                            role: "system",
+                            content: [
+                                "POST-REPAIR VERIFICATION REQUIRED.",
+                                "",
+                                "The source repair has been applied successfully.",
+                                "The next meaningful action MUST be execution or verification.",
+                                "Do NOT read the repaired file again.",
+                                "Do NOT perform unrelated actions."
+                            ].join("\n")
+                        });
                         continue;
                     }
                 }
-
 
                 /*
                  * =================================================
@@ -1750,6 +1754,126 @@ export async function runAgent({
                     ...toolResult
                 });
 
+                /*
+                 * ============================================================
+                 * FAILURE / REPAIR WORKFLOW STATE TRACKING
+                 * ============================================================
+                 */
+
+                if (
+                    taskRequirements.requiresFailureAndRepair
+                ) {
+                    const toolName =
+                        validatedToolCall.name;
+
+                    const isSourceEditTool =
+                        toolName === "write_file" ||
+                        toolName === "edit_file" ||
+                        toolName === "replace_in_file";
+
+                    const isExecutionTool =
+                        toolName === "execute_code" ||
+                        toolName === "execute_javascript" ||
+                        toolName === "run_javascript_test";
+
+                    if (
+                        isSourceEditTool &&
+                        toolResult?.success === true &&
+                        failureRepairPhase === "PREPARE"
+                    ) {
+                        sourcePreparationEditPerformed = true;
+
+                        const markerPresent =
+                            typeof result.content === "string" &&
+                            result.content.includes(
+                                "INTENTIONAL_FAILURE_PREPARED"
+                            );
+
+                        if (markerPresent) {
+                            intentionalFailurePrepared = true;
+                            failureRepairPhase = "EXECUTE";
+                        }
+
+                        console.log(
+                            "[ForgeAI Agent] Failure-and-repair: preparation edit completed.",
+                            { markerPresent }
+                        );
+                    }
+
+                    if (isExecutionTool) {
+                        const executionFailed =
+                            toolName === "run_javascript_test"
+                                ? toolResult?.passed === false
+                                : (
+                                    toolResult?.success === false ||
+                                    (
+                                        toolResult?.exitCode !== undefined &&
+                                        toolResult?.exitCode !== null &&
+                                        toolResult?.exitCode !== 0
+                                    ) ||
+                                    toolResult?.timeOut === true
+                                );
+
+                        const infrastructureFailure =
+                            isInfrastructureFailureResult(toolResult);
+
+                        if (
+                            executionFailed &&
+                            !infrastructureFailure
+                        ) {
+                            failureObserved = true;
+                            failureRepairPhase = "REPAIR";
+
+                            console.log(
+                                "[ForgeAI Agent] Failure-and-repair: source-level failure observed."
+                            );
+                        } else if (
+                            !executionFailed &&
+                            !infrastructureFailure &&
+                            failureRepairPhase === "VERIFY" &&
+                            repairPerformed
+                        ) {
+                            failureRepairPhase = "COMPLETE";
+                        } else if (
+                            !executionFailed &&
+                            !infrastructureFailure &&
+                            failureRepairPhase === "EXECUTE"
+                        ) {
+                            /*
+                             * The user explicitly required the first execution to fail.
+                             */
+                            failureRepairPhase = "PREPARE";
+                            sourcePreparationEditPerformed = false;
+                            intentionalFailurePrepared = false;
+
+                            addMessage(state, {
+                                role: "system",
+                                content: [
+                                    "INTENTIONAL-FAILURE REQUIREMENT NOT SATISFIED.",
+                                    "The first execution succeeded, but the user explicitly required the first execution to fail.",
+                                    "Do not mark the task complete.",
+                                    "Introduce exactly ONE intentional source-level bug, include the marker INTENTIONAL_FAILURE_PREPARED, then execute again immediately.",
+                                    "Do not introduce multiple bugs."
+                                ].join("\n")
+                            });
+                        }
+                    }
+
+                    if (
+                        isSourceEditTool &&
+                        toolResult?.success === true &&
+                        failureRepairPhase === "REPAIR" &&
+                        failureObserved
+                    ) {
+                        repairPerformed = true;
+                        failureRepairPhase = "VERIFY";
+
+                        console.log(
+                            "[ForgeAI Agent] Failure-and-repair: source repair performed."
+                        );
+                    }
+                }
+
                 if (
                     toolResult?.success
                 ) {
@@ -1899,16 +2023,6 @@ export async function runAgent({
                 /*
                  * =================================================
                  * DETERMINISTIC COMPLETION GUARD
-                 * =================================================
-                 *
-                 * IMPORTANT:
-                 *
-                 * This happens AFTER the tool result has been
-                 * persisted and added to agent memory.
-                 *
-                 * If verification has succeeded, stop immediately.
-                 *
-                 * Do NOT allow another model iteration.
                  * =================================================
                  */
 
