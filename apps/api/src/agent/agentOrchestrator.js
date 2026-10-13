@@ -1334,7 +1334,7 @@ export async function runAgent({
                                 "",
                                 "The task requires an intentional failure before the first execution.",
                                 "First modify the requested source exactly once to introduce ONE intentional bug.",
-                                "Then include the exact marker INTENTIONAL_FAILURE_PREPARED in your assistant message and execute immediately.",
+                                "After the source preparation succeeds, execute the target code.",
                                 "Do not introduce multiple bugs."
                             ].join("\n")
                         });
