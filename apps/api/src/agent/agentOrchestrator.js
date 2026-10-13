@@ -1317,10 +1317,7 @@ export async function runAgent({
                                 "The requested source has already been prepared once.",
                                 "Do NOT modify the source again before the first execution.",
                                 "",
-                                "Your assistant message must contain the exact marker:",
-                                "INTENTIONAL_FAILURE_PREPARED",
-                                "",
-                                "Then call the requested execution tool immediately."
+                                "Execute the target code now."
                             ].join("\n")
                         });
                         continue;
