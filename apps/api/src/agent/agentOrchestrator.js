@@ -1781,21 +1781,12 @@ export async function runAgent({
                         failureRepairPhase === "PREPARE"
                     ) {
                         sourcePreparationEditPerformed = true;
+                        intentionalFailurePrepared = true;
 
-                        const markerPresent =
-                            typeof result.content === "string" &&
-                            result.content.includes(
-                                "INTENTIONAL_FAILURE_PREPARED"
-                            );
-
-                        if (markerPresent) {
-                            intentionalFailurePrepared = true;
-                            failureRepairPhase = "EXECUTE";
-                        }
+                        failureRepairPhase = "EXECUTE";
 
                         console.log(
-                            "[ForgeAI Agent] Failure-and-repair: preparation edit completed.",
-                            { markerPresent }
+                            "[ForgeAI Agent] Failure-and-repair: preparation edit completed. Moving directly to EXECUTE."
                         );
                     }
 
