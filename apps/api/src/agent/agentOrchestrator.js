@@ -1812,6 +1812,18 @@ export async function runAgent({
                 ) {
                     existingSourceInspected = true;
 
+                    /*
+                    * The existing file has now been inspected.
+                    *
+                    * The model has been instructed to determine whether the
+                    * required intentional bug is already present.
+                    *
+                    * For an existing source that already contains the required
+                    * intentional bug, the next action is execution.
+                    */
+                    failureRepairPhase = "EXECUTE";
+                    intentionalFailurePrepared = true;
+
                     addMessage(state, {
                         role: "system",
                         content: [
@@ -1819,17 +1831,16 @@ export async function runAgent({
                             "",
                             "The requested source file already existed and has now been inspected.",
                             "",
-                            "If the existing source already contains the ONE intentional logic bug required by the user's request, do NOT modify it again.",
+                            "The source is now considered prepared for the required failure-and-repair workflow.",
                             "Proceed immediately with execute_code.",
                             "",
-                            "If the intentional bug is NOT present, modify the source exactly once to introduce it, then execute it.",
-                            "",
-                            "Do NOT read the same source file again before execution."
+                            "Do NOT read the same source file again.",
+                            "Do NOT modify the source again before the first execution."
                         ].join("\n")
                     });
 
                     console.log(
-                        "[ForgeAI Agent] Existing source inspected during PREPARE."
+                        "[ForgeAI Agent] Existing source inspected during PREPARE. Moving directly to EXECUTE."
                     );
                 }
 
