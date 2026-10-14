@@ -1852,30 +1852,36 @@ export async function runAgent({
                         } else if (
                             !executionFailed &&
                             !infrastructureFailure &&
-                            failureRepairPhase === "VERIFY" &&
-                            repairPerformed
-                        ) {
-                            failureRepairPhase = "COMPLETE";
-                        } else if (
-                            !executionFailed &&
-                            !infrastructureFailure &&
                             failureRepairPhase === "EXECUTE"
                         ) {
                             /*
-                             * The user explicitly required the first execution to fail.
-                             */
-                            failureRepairPhase = "PREPARE";
-                            sourcePreparationEditPerformed = false;
-                            intentionalFailurePrepared = false;
+                            * The program executed successfully.
+                            *
+                            * For a failure-and-repair task, this does NOT
+                            * automatically mean the task is complete.
+                            *
+                            * The model must inspect the actual execution
+                            * output and determine whether the intentional
+                            * logic bug produced an incorrect result.
+                            */
+                            failureRepairPhase = "REPAIR";
+
+                            failureObserved = true;
 
                             addMessage(state, {
                                 role: "system",
                                 content: [
-                                    "INTENTIONAL-FAILURE REQUIREMENT NOT SATISFIED.",
-                                    "The first execution succeeded, but the user explicitly required the first execution to fail.",
-                                    "Do not mark the task complete.",
-                                    "Introduce exactly ONE intentional source-level bug, include the marker INTENTIONAL_FAILURE_PREPARED, then execute again immediately.",
-                                    "Do not introduce multiple bugs."
+                                    "FIRST EXECUTION COMPLETED.",
+                                    "",
+                                    "The program executed successfully, but this task explicitly requires the first execution to expose an intentional bug.",
+                                    "Inspect the ACTUAL execution output, stdout, stderr, and exit code.",
+                                    "",
+                                    "If the result is incorrect because of the intentional logic bug, repair the source code now.",
+                                    "Make the smallest necessary repair.",
+                                    "Do NOT introduce another bug.",
+                                    "",
+                                    "After the repair succeeds, execute the repaired source immediately for verification.",
+                                    "Do NOT read the repaired file again before verification."
                                 ].join("\n")
                             });
                         }
