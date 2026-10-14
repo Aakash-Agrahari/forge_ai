@@ -2065,7 +2065,9 @@ export async function runAgent({
                 if (
                     isCompletionReady(
                         taskRequirements,
-                        toolResults
+                        toolResults,
+                        failureRepairPhase,
+                        repairPerformed
                     )
                 ) {
                     const completionMessage =
