@@ -28,12 +28,6 @@ const EXECUTION_STRATEGIES = {
             ".tsx"
         ],
 
-        /*
-         * TypeScript requires transpilation before normal Node execution.
-         *
-         * We intentionally use the local project's TypeScript compiler
-         * instead of downloading anything at runtime.
-         */
         build: {
             command: "npx tsc --pretty false"
         },
@@ -67,15 +61,15 @@ const EXECUTION_STRATEGIES = {
             ".java"
         ],
 
-        /*
-         * Java compilation is handled by the execution service because
-         * Java projects can contain multiple source files and packages.
-         */
         build: {
+            type: "java",
             command: "javac <project-java-files>"
         },
 
-        run: ({ filePath, packageName }) => {
+        run: ({
+            filePath,
+            packageName
+        }) => {
             const className =
                 filePath
                     .split("/")
@@ -102,11 +96,14 @@ const EXECUTION_STRATEGIES = {
         ],
 
         build: {
-            command: "cc <project-c-files> -o .forgeai-c-program"
+            type: "c",
+            command:
+                "cc <project-c-files> -o .forgeai-c-program"
         },
 
         run: {
-            command: "./.forgeai-c-program"
+            command:
+                "./.forgeai-c-program"
         }
     },
 
@@ -121,12 +118,14 @@ const EXECUTION_STRATEGIES = {
         ],
 
         build: {
+            type: "cpp",
             command:
                 "c++ <project-cpp-files> -o .forgeai-cpp-program"
         },
 
         run: {
-            command: "./.forgeai-cpp-program"
+            command:
+                "./.forgeai-cpp-program"
         }
     },
 
@@ -138,17 +137,14 @@ const EXECUTION_STRATEGIES = {
             ".cs"
         ],
 
-        /*
-         * dotnet execution depends on the project structure.
-         * The execution service will use the project-level command
-         * when a .csproj is present.
-         */
         build: {
+            type: "dotnet",
             command: "dotnet build"
         },
 
         run: {
-            command: "dotnet run --no-build"
+            command:
+                "dotnet run --no-build"
         }
     },
 
@@ -160,15 +156,11 @@ const EXECUTION_STRATEGIES = {
             ".go"
         ],
 
-        /*
-         * `go run` performs compilation and execution together,
-         * making it suitable for single-file Go programs as well
-         * as normal Go source entrypoints.
-         */
         build: null,
 
         run: ({ filePath }) => ({
-            command: `go run "${filePath}"`
+            command:
+                `go run "${filePath}"`
         })
     },
 
@@ -181,12 +173,14 @@ const EXECUTION_STRATEGIES = {
         ],
 
         build: {
+            type: "rust",
             command:
                 "rustc <file> -o .forgeai-rust-program"
         },
 
         run: {
-            command: "./.forgeai-rust-program"
+            command:
+                "./.forgeai-rust-program"
         }
     },
 
@@ -200,6 +194,7 @@ const EXECUTION_STRATEGIES = {
         ],
 
         build: {
+            type: "kotlin",
             command:
                 "kotlinc <file> -include-runtime -d .forgeai-kotlin.jar"
         },
@@ -218,13 +213,11 @@ const EXECUTION_STRATEGIES = {
             ".swift"
         ],
 
-        /*
-         * Swift can execute a standalone source file directly.
-         */
         build: null,
 
         run: ({ filePath }) => ({
-            command: `swift "${filePath}"`
+            command:
+                `swift "${filePath}"`
         })
     },
 
@@ -239,7 +232,8 @@ const EXECUTION_STRATEGIES = {
         build: null,
 
         run: ({ filePath }) => ({
-            command: `php "${filePath}"`
+            command:
+                `php "${filePath}"`
         })
     },
 
@@ -254,7 +248,8 @@ const EXECUTION_STRATEGIES = {
         build: null,
 
         run: ({ filePath }) => ({
-            command: `ruby "${filePath}"`
+            command:
+                `ruby "${filePath}"`
         })
     }
 };
