@@ -2,6 +2,7 @@ const EXECUTION_STRATEGIES = {
     javascript: {
         language: "javascript",
         runtime: "node",
+
         sourceExtensions: [
             ".js",
             ".mjs",
@@ -12,13 +13,14 @@ const EXECUTION_STRATEGIES = {
         build: null,
 
         run: ({ filePath }) => ({
-            command: `node ${filePath}`
+            command: `node "${filePath}"`
         })
     },
 
     typescript: {
         language: "typescript",
         runtime: "node",
+
         sourceExtensions: [
             ".ts",
             ".mts",
@@ -26,18 +28,26 @@ const EXECUTION_STRATEGIES = {
             ".tsx"
         ],
 
+        /*
+         * TypeScript requires transpilation before normal Node execution.
+         *
+         * We intentionally use the local project's TypeScript compiler
+         * instead of downloading anything at runtime.
+         */
         build: {
-            command: "npm run build"
+            command: "npx tsc --pretty false"
         },
 
         run: ({ filePath }) => ({
-            command: `node ${filePath}`
+            command: `node "${filePath
+                .replace(/\.(mts|cts|tsx|ts)$/i, ".js")}"`
         })
     },
 
     python: {
         language: "python",
         runtime: "python3",
+
         sourceExtensions: [
             ".py"
         ],
@@ -45,146 +55,183 @@ const EXECUTION_STRATEGIES = {
         build: null,
 
         run: ({ filePath }) => ({
-            command: `python3 ${filePath}`
+            command: `python3 "${filePath}"`
         })
     },
 
     java: {
         language: "java",
         runtime: "jvm",
+
         sourceExtensions: [
             ".java"
         ],
 
+        /*
+         * Java compilation is handled by the execution service because
+         * Java projects can contain multiple source files and packages.
+         */
         build: {
             command: "javac <project-java-files>"
         },
 
-        run: ({ filePath }) => ({
-            command: `java ${filePath}`
-        })
+        run: ({ filePath, packageName }) => {
+            const className =
+                filePath
+                    .split("/")
+                    .pop()
+                    .replace(/\.java$/i, "");
+
+            const mainClass =
+                packageName
+                    ? `${packageName}.${className}`
+                    : className;
+
+            return {
+                command: `java "${mainClass}"`
+            };
+        }
     },
 
     c: {
         language: "c",
         runtime: "native",
+
         sourceExtensions: [
-            ".c",
-            ".h"
+            ".c"
         ],
 
         build: {
-            command: "cc <project-source-files>"
+            command: "cc <project-c-files> -o .forgeai-c-program"
         },
 
-        run: ({ filePath }) => ({
-            command: `./${filePath}`
-        })
+        run: {
+            command: "./.forgeai-c-program"
+        }
     },
 
     cpp: {
         language: "cpp",
         runtime: "native",
+
         sourceExtensions: [
             ".cpp",
             ".cc",
-            ".cxx",
-            ".hpp"
+            ".cxx"
         ],
 
         build: {
-            command: "c++ <project-source-files>"
+            command:
+                "c++ <project-cpp-files> -o .forgeai-cpp-program"
         },
 
-        run: ({ filePath }) => ({
-            command: `./${filePath}`
-        })
+        run: {
+            command: "./.forgeai-cpp-program"
+        }
     },
 
     csharp: {
         language: "csharp",
         runtime: "dotnet",
+
         sourceExtensions: [
             ".cs"
         ],
 
+        /*
+         * dotnet execution depends on the project structure.
+         * The execution service will use the project-level command
+         * when a .csproj is present.
+         */
         build: {
             command: "dotnet build"
         },
 
         run: {
-            command: "dotnet run"
+            command: "dotnet run --no-build"
         }
     },
 
     go: {
         language: "go",
         runtime: "go",
+
         sourceExtensions: [
             ".go"
         ],
 
-        build: {
-            command: "go build ./..."
-        },
+        /*
+         * `go run` performs compilation and execution together,
+         * making it suitable for single-file Go programs as well
+         * as normal Go source entrypoints.
+         */
+        build: null,
 
         run: ({ filePath }) => ({
-            command: `go run ${filePath}`
+            command: `go run "${filePath}"`
         })
     },
 
     rust: {
         language: "rust",
         runtime: "rust",
+
         sourceExtensions: [
             ".rs"
         ],
 
         build: {
-            command: "cargo build"
+            command:
+                "rustc <file> -o .forgeai-rust-program"
         },
 
         run: {
-            command: "cargo run"
+            command: "./.forgeai-rust-program"
         }
     },
 
     kotlin: {
         language: "kotlin",
         runtime: "jvm",
+
         sourceExtensions: [
             ".kt",
             ".kts"
         ],
 
         build: {
-            command: "gradle build"
+            command:
+                "kotlinc <file> -include-runtime -d .forgeai-kotlin.jar"
         },
 
         run: {
-            command: "gradle run"
+            command:
+                "java -jar .forgeai-kotlin.jar"
         }
     },
 
     swift: {
         language: "swift",
         runtime: "swift",
+
         sourceExtensions: [
             ".swift"
         ],
 
-        build: {
-            command: "swift build"
-        },
+        /*
+         * Swift can execute a standalone source file directly.
+         */
+        build: null,
 
-        run: {
-            command: "swift run"
-        }
+        run: ({ filePath }) => ({
+            command: `swift "${filePath}"`
+        })
     },
 
     php: {
         language: "php",
         runtime: "php",
+
         sourceExtensions: [
             ".php"
         ],
@@ -192,13 +239,14 @@ const EXECUTION_STRATEGIES = {
         build: null,
 
         run: ({ filePath }) => ({
-            command: `php ${filePath}`
+            command: `php "${filePath}"`
         })
     },
 
     ruby: {
         language: "ruby",
         runtime: "ruby",
+
         sourceExtensions: [
             ".rb"
         ],
@@ -206,18 +254,22 @@ const EXECUTION_STRATEGIES = {
         build: null,
 
         run: ({ filePath }) => ({
-            command: `ruby ${filePath}`
+            command: `ruby "${filePath}"`
         })
     }
 };
+
 
 function normalizeLanguage(language) {
     if (typeof language !== "string") {
         return "";
     }
 
-    return language.trim().toLowerCase();
+    return language
+        .trim()
+        .toLowerCase();
 }
+
 
 export function getExecutionStrategy(language) {
     const normalizedLanguage =
@@ -242,6 +294,7 @@ export function getExecutionStrategy(language) {
     return strategy;
 }
 
+
 export function hasExecutionStrategy(language) {
     const normalizedLanguage =
         normalizeLanguage(language);
@@ -253,15 +306,18 @@ export function hasExecutionStrategy(language) {
     );
 }
 
+
 export function getSupportedExecutionLanguages() {
     return Object.keys(
         EXECUTION_STRATEGIES
     );
 }
 
+
 export function createRunCommand({
     language,
-    filePath
+    filePath,
+    packageName
 }) {
     if (!filePath) {
         const error = new Error(
@@ -279,7 +335,8 @@ export function createRunCommand({
 
     if (typeof strategy.run === "function") {
         return strategy.run({
-            filePath
+            filePath,
+            packageName
         });
     }
 
@@ -299,6 +356,7 @@ export function createRunCommand({
 
     throw error;
 }
+
 
 export function getBuildCommand(language) {
     const strategy =
