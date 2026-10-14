@@ -1254,7 +1254,7 @@ export async function runAgent({
 
                 if (
                     currentCount >
-                    MAX_IDENTICAL_TOOL_CALLS
+                    MAX_IDENTICAL_TOOL_CALLS &&!allowRepeatedExecutionForFailureRepair
                 ) {
                     repeatedToolRecoveries += 1;
 
