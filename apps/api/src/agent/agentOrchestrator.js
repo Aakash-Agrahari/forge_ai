@@ -1239,6 +1239,19 @@ export async function runAgent({
                  * =================================================
                  */
 
+                const allowRepeatedExecutionForFailureRepair =
+                    taskRequirements.requiresFailureAndRepair &&
+                    (
+                        validatedToolCall.name === "execute_code" ||
+                        validatedToolCall.name === "execute_javascript" ||
+                        validatedToolCall.name === "run_javascript_test"
+                    ) &&
+                    (
+                        failureObserved ||
+                        repairPerformed ||
+                        failureRepairPhase === "VERIFY"
+                    );
+
                 if (
                     currentCount >
                     MAX_IDENTICAL_TOOL_CALLS
