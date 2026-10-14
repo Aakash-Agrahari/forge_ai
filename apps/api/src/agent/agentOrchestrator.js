@@ -1785,6 +1785,47 @@ export async function runAgent({
                 });
 
                 /*
+                * ============================================================
+                * EXISTING SOURCE INSPECTION
+                * ============================================================
+                *
+                * If the requested source already existed, allow the agent to
+                * inspect it once during PREPARE.
+                *
+                * If the inspected source already contains the intentional bug,
+                * the next action may be execution without another source edit.
+                */
+
+                if (
+                    taskRequirements.requiresFailureAndRepair &&
+                    failureRepairPhase === "PREPARE" &&
+                    validatedToolCall.name === "read_file" &&
+                    toolResult?.success === true
+                ) {
+                    existingSourceInspected = true;
+
+                    addMessage(state, {
+                        role: "system",
+                        content: [
+                            "EXISTING SOURCE INSPECTED.",
+                            "",
+                            "The requested source file already existed and has now been inspected.",
+                            "",
+                            "If the existing source already contains the ONE intentional logic bug required by the user's request, do NOT modify it again.",
+                            "Proceed immediately with execute_code.",
+                            "",
+                            "If the intentional bug is NOT present, modify the source exactly once to introduce it, then execute it.",
+                            "",
+                            "Do NOT read the same source file again before execution."
+                        ].join("\n")
+                    });
+
+                    console.log(
+                        "[ForgeAI Agent] Existing source inspected during PREPARE."
+                    );
+                }
+
+                /*
                  * ============================================================
                  * FAILURE / REPAIR WORKFLOW STATE TRACKING
                  * ============================================================
