@@ -1015,7 +1015,9 @@ export async function runAgent({
                     !taskRequirements.requiresVerification ||
                     isCompletionReady(
                         taskRequirements,
-                        toolResults
+                        toolResults,
+                        failureRepairPhase,
+                        repairPerformed
                     );
 
                 if (
