@@ -11,7 +11,8 @@ import {
 
 import {
     getExecutionStrategy,
-    createRunCommand
+    createRunCommand,
+    getSupportedExecutionLanguages
 } from "./executionStrategy.js";
 
 
@@ -303,19 +304,10 @@ export async function executeCode({
             language
         );
 
-    /*
-     * Real execution is intentionally limited
-     * to the runtimes currently integrated with
-     * ForgeAI's generic execution service.
-     */
-    const supportedLanguages =
-        new Set([
-            "javascript",
-            "python",
-            "java"
-        ]);
-
-    if (!supportedLanguages.has(language)) {
+    if (
+        !getSupportedExecutionLanguages()
+            .includes(language)
+    ) {
         throw createUnsupportedLanguageError(
             language
         );
