@@ -580,6 +580,7 @@ export async function runAgent({
 
     let intentionalFailurePrepared = false;
     let sourcePreparationEditPerformed = false;
+    let existingSourceInspected = false;
     let failureObserved = false;
     let repairPerformed = false;
 
