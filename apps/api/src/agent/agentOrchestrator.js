@@ -1860,9 +1860,8 @@ export async function runAgent({
                             * output and determine whether the intentional
                             * logic bug produced an incorrect result.
                             */
-                            failureRepairPhase = "REPAIR";
-
                             failureObserved = true;
+                            failureRepairPhase = "REPAIR";
 
                             addMessage(state, {
                                 role: "system",
