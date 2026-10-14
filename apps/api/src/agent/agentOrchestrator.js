@@ -1359,7 +1359,9 @@ export async function runAgent({
 
                     if (
                         failureRepairPhase === "PREPARE" &&
-                        isExecutionTool
+                        isExecutionTool &&
+                        !sourcePreparationEditPerformed &&
+                        !existingSourceInspected
                     ) {
                         addMessage(state, {
                             role: "system",
@@ -1367,11 +1369,14 @@ export async function runAgent({
                                 "FAILURE-AND-REPAIR WORKFLOW VIOLATION.",
                                 "",
                                 "The task requires an intentional failure before the first execution.",
-                                "First modify the requested source exactly once to introduce ONE intentional bug.",
-                                "After the source preparation succeeds, execute the target code.",
-                                "Do not introduce multiple bugs."
+                                "The requested source has not yet been prepared or inspected.",
+                                "",
+                                "First create or modify the requested source to introduce ONE intentional bug.",
+                                "Do not introduce multiple bugs.",
+                                "After the source preparation succeeds, execute the target code."
                             ].join("\n")
                         });
+
                         continue;
                     }
 
