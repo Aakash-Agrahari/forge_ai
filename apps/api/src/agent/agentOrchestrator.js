@@ -1245,16 +1245,12 @@ export async function runAgent({
                         validatedToolCall.name === "execute_code" ||
                         validatedToolCall.name === "execute_javascript" ||
                         validatedToolCall.name === "run_javascript_test"
-                    ) &&
-                    (
-                        failureObserved ||
-                        repairPerformed ||
-                        failureRepairPhase === "VERIFY"
                     );
 
                 if (
                     currentCount >
-                    MAX_IDENTICAL_TOOL_CALLS &&!allowRepeatedExecutionForFailureRepair
+                    MAX_IDENTICAL_TOOL_CALLS &&
+                    !allowRepeatedExecutionForFailureRepair
                 ) {
                     repeatedToolRecoveries += 1;
 
