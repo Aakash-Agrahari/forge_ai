@@ -1881,7 +1881,9 @@ export async function runAgent({
                         );
                     }
 
-                    if (isExecutionTool) {
+                    if (
+                        isExecutionTool
+                    ) {
                         const executionFailed =
                             toolName === "run_javascript_test"
                                 ? toolResult?.passed === false
@@ -1898,6 +1900,15 @@ export async function runAgent({
                         const infrastructureFailure =
                             isInfrastructureFailureResult(toolResult);
 
+                        /*
+                        * ============================================================
+                        * FIRST EXECUTION
+                        * ============================================================
+                        *
+                        * The first execution is expected to expose the intentional
+                        * bug. A logic bug may still exit with code 0, so successful
+                        * process execution is NOT considered task completion here.
+                        */
                         if (
                             executionFailed &&
                             !infrastructureFailure
@@ -1914,14 +1925,11 @@ export async function runAgent({
                             failureRepairPhase === "EXECUTE"
                         ) {
                             /*
-                            * The program executed successfully.
+                            * The program executed successfully, but this is still
+                            * the FIRST execution.
                             *
-                            * For a failure-and-repair task, this does NOT
-                            * automatically mean the task is complete.
-                            *
-                            * The model must inspect the actual execution
-                            * output and determine whether the intentional
-                            * logic bug produced an incorrect result.
+                            * The task explicitly requires the intentional bug to
+                            * produce an incorrect result before repair.
                             */
                             failureObserved = true;
                             failureRepairPhase = "REPAIR";
@@ -1942,6 +1950,50 @@ export async function runAgent({
                                     "Do NOT read the repaired file again before verification."
                                 ].join("\n")
                             });
+
+                            console.log(
+                                "[ForgeAI Agent] Failure-and-repair: first execution completed. Moving to REPAIR."
+                            );
+                        }
+
+                        /*
+                        * ============================================================
+                        * POST-REPAIR VERIFICATION
+                        * ============================================================
+                        *
+                        * The source has already been repaired.
+                        *
+                        * If the repaired execution succeeds, the required
+                        * execution/verification evidence now exists.
+                        *
+                        * IMPORTANT:
+                        * This is the missing VERIFY -> COMPLETE transition.
+                        */
+                        else if (
+                            !executionFailed &&
+                            !infrastructureFailure &&
+                            failureRepairPhase === "VERIFY" &&
+                            repairPerformed
+                        ) {
+                            failureRepairPhase = "COMPLETE";
+
+                            addMessage(state, {
+                                role: "system",
+                                content: [
+                                    "FINAL VERIFICATION SUCCEEDED.",
+                                    "",
+                                    "The repaired source executed successfully.",
+                                    "Actual execution evidence has been received.",
+                                    "",
+                                    "The failure-and-repair workflow is now COMPLETE.",
+                                    "Stop immediately after reporting the verified result.",
+                                    "Do NOT perform any additional tool actions."
+                                ].join("\n")
+                            });
+
+                            console.log(
+                                "[ForgeAI Agent] Failure-and-repair: final verification succeeded. Moving to COMPLETE."
+                            );
                         }
                     }
 
