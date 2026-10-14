@@ -1,5 +1,3 @@
-import path from "node:path";
-
 import { getProjectFiles } from "../services/fileService.js";
 import { validateProjectPath } from "../agent/projectPath.js";
 import { executeInSandboxSession } from "../sandbox/sandboxSessionService.js";
@@ -64,35 +62,20 @@ function getProjectFileByPath(
 }
 
 
-function getJavaClassName(
-    filePath
-) {
-    const normalizedPath =
-        validateProjectPath(filePath);
-
-    const fileName =
-        path.posix.basename(
-            normalizedPath
-        );
-
-    if (!fileName.endsWith(".java")) {
-        const error = new Error(
-            "Java execution requires a .java file"
-        );
-
-        error.code =
-            "INVALID_JAVA_FILE";
-
-        throw error;
-    }
-
-    return fileName.slice(
-        0,
-        -".java".length
-    );
-}
-
-
+/**
+ * Extract the Java package name from source code.
+ *
+ * This is kept as a small language-specific parser,
+ * not as an execution strategy.
+ *
+ * Example:
+ *
+ * package com.example.app;
+ *
+ * returns:
+ *
+ * com.example.app
+ */
 function getJavaPackageName(
     content
 ) {
@@ -109,16 +92,40 @@ function getJavaPackageName(
 }
 
 
-function getJavaSourceFiles(
-    files
+/**
+ * Get project source files matching the requested
+ * source extensions.
+ */
+function getProjectSourceFiles(
+    files,
+    extensions
 ) {
+    const normalizedExtensions =
+        extensions.map(
+            (extension) =>
+                extension.toLowerCase()
+        );
+
     return files
         .filter(
-            (file) =>
-                typeof file.path === "string" &&
-                file.path
-                    .toLowerCase()
-                    .endsWith(".java")
+            (file) => {
+                if (
+                    typeof file.path !==
+                    "string"
+                ) {
+                    return false;
+                }
+
+                const normalizedPath =
+                    file.path.toLowerCase();
+
+                return normalizedExtensions.some(
+                    (extension) =>
+                        normalizedPath.endsWith(
+                            extension
+                        )
+                );
+            }
         )
         .map(
             (file) =>
@@ -129,105 +136,226 @@ function getJavaSourceFiles(
 }
 
 
-function getJavaCompileCommand(
-    javaFiles
+/**
+ * Convert project source paths into
+ * safely quoted command arguments.
+ */
+function createProjectSourceArguments(
+    files
 ) {
-    if (javaFiles.length === 0) {
-        const error = new Error(
-            "No Java source files found in project"
-        );
+    return files
+        .map(
+            (filePath) =>
+                `"${filePath}"`
+        )
+        .join(" ");
+}
 
-        error.code =
-            "NO_JAVA_SOURCE_FILES";
 
-        throw error;
+/**
+ * Create the build command from the
+ * centralized execution strategy.
+ *
+ * The execution strategy defines WHAT
+ * kind of build is required.
+ *
+ * This service only expands project-specific
+ * placeholders such as source files.
+ */
+function createBuildCommand({
+    language,
+    strategy,
+    files,
+    filePath
+}) {
+    if (!strategy.build) {
+        return null;
     }
 
-    const sourceArguments =
-        javaFiles
-            .map(
-                (filePath) =>
-                    `"${filePath}"`
+    const buildType =
+        strategy.build.type;
+
+    if (buildType === "java") {
+        const javaFiles =
+            getProjectSourceFiles(
+                files,
+                [".java"]
+            );
+
+        if (javaFiles.length === 0) {
+            const error = new Error(
+                "No Java source files found in project"
+            );
+
+            error.code =
+                "NO_JAVA_SOURCE_FILES";
+
+            throw error;
+        }
+
+        return strategy.build.command.replace(
+            "<project-java-files>",
+            createProjectSourceArguments(
+                javaFiles
             )
-            .join(" ");
+        );
+    }
 
-    return `javac ${sourceArguments}`;
+
+    if (buildType === "c") {
+        const cFiles =
+            getProjectSourceFiles(
+                files,
+                [".c"]
+            );
+
+        if (cFiles.length === 0) {
+            const error = new Error(
+                "No C source files found in project"
+            );
+
+            error.code =
+                "NO_C_SOURCE_FILES";
+
+            throw error;
+        }
+
+        return strategy.build.command.replace(
+            "<project-c-files>",
+            createProjectSourceArguments(
+                cFiles
+            )
+        );
+    }
+
+
+    if (buildType === "cpp") {
+        const cppFiles =
+            getProjectSourceFiles(
+                files,
+                [
+                    ".cpp",
+                    ".cc",
+                    ".cxx"
+                ]
+            );
+
+        if (cppFiles.length === 0) {
+            const error = new Error(
+                "No C++ source files found in project"
+            );
+
+            error.code =
+                "NO_CPP_SOURCE_FILES";
+
+            throw error;
+        }
+
+        return strategy.build.command.replace(
+            "<project-cpp-files>",
+            createProjectSourceArguments(
+                cppFiles
+            )
+        );
+    }
+
+
+    if (buildType === "rust") {
+        return strategy.build.command.replace(
+            "<file>",
+            `"${validateProjectPath(
+                filePath
+            )}"`
+        );
+    }
+
+
+    if (buildType === "kotlin") {
+        return strategy.build.command.replace(
+            "<file>",
+            `"${validateProjectPath(
+                filePath
+            )}"`
+        );
+    }
+
+
+    /*
+     * TypeScript, C#, and any future build
+     * strategy that does not require project
+     * source expansion simply uses its command.
+     */
+    return strategy.build.command;
 }
 
 
-function getJavaRunCommand({
-    filePath,
-    content
-}) {
-    const className =
-        getJavaClassName(
-            filePath
-        );
-
-    const packageName =
-        getJavaPackageName(
-            content
-        );
-
-    const mainClass =
-        packageName
-            ? `${packageName}.${className}`
-            : className;
-
-    return `java ${mainClass}`;
-}
-
-
+/**
+ * Create the complete execution plan.
+ *
+ * The LLM does not decide the command.
+ *
+ * Flow:
+ *
+ * language
+ *    ↓
+ * executionStrategy
+ *    ↓
+ * build command
+ *    ↓
+ * run command
+ */
 function createExecutionCommand({
     language,
     filePath,
     files,
-    fileContent
+    fileContent,
+    strategy
 }) {
-    /*
-     * Java requires special handling because
-     * the project may contain multiple source
-     * files and package declarations.
-     */
-    if (language === "java") {
-        const javaFiles =
-            getJavaSourceFiles(files);
-
-        return {
-            command:
-                getJavaRunCommand({
-                    filePath,
-                    content:
-                        fileContent
-                }),
-
-            buildCommand:
-                getJavaCompileCommand(
-                    javaFiles
-                )
-        };
-    }
+    const normalizedFilePath =
+        validateProjectPath(
+            filePath
+        );
 
     /*
-     * All other currently supported execution
-     * languages use the centralized execution
-     * strategy.
+     * Java is the only currently supported
+     * language whose runtime command needs
+     * source-level package information.
+     *
+     * The actual Java execution strategy
+     * still lives in executionStrategy.js.
      */
+    const packageName =
+        language === "java"
+            ? getJavaPackageName(
+                fileContent
+            )
+            : null;
+
+
     const runCommand =
         createRunCommand({
             language,
             filePath:
-                validateProjectPath(
-                    filePath
-                )
+                normalizedFilePath,
+            packageName
         });
+
+
+    const buildCommand =
+        createBuildCommand({
+            language,
+            strategy,
+            files,
+            filePath:
+                normalizedFilePath
+        });
+
 
     return {
         command:
             runCommand.command,
 
-        buildCommand:
-            null
+        buildCommand
     };
 }
 
@@ -247,6 +375,7 @@ export async function executeCode({
         throw error;
     }
 
+
     if (!filePath) {
         const error = new Error(
             "File path is required"
@@ -258,10 +387,17 @@ export async function executeCode({
         throw error;
     }
 
+
+    /*
+     * Load the complete project because some
+     * languages require multiple source files
+     * during compilation.
+     */
     const files =
         await getProjectFiles(
             projectId
         );
+
 
     const projectFile =
         getProjectFileByPath(
@@ -269,20 +405,33 @@ export async function executeCode({
             filePath
         );
 
+
     if (!projectFile) {
         throw createFileNotFoundError(
             filePath
         );
     }
 
+
+    /*
+     * First try to determine the language
+     * from the requested file itself.
+     */
     const fileDetection =
         detectLanguageFromFile(
             projectFile.path
         );
 
+
     let language =
         fileDetection.language;
 
+
+    /*
+     * If the file extension does not provide
+     * enough information, fall back to the
+     * primary project language.
+     */
     if (!language) {
         const projectDetection =
             detectPrimaryProjectLanguage(
@@ -293,17 +442,34 @@ export async function executeCode({
             projectDetection.language;
     }
 
+
     if (!language) {
         throw createUnsupportedLanguageError(
             "unknown"
         );
     }
 
+
+    /*
+     * Resolve the centralized execution strategy.
+     */
     const strategy =
         getExecutionStrategy(
             language
         );
 
+
+    if (!strategy) {
+        throw createUnsupportedLanguageError(
+            language
+        );
+    }
+
+
+    /*
+     * Keep this check centralized against
+     * executionStrategy.js.
+     */
     if (
         !getSupportedExecutionLanguages()
             .includes(language)
@@ -313,6 +479,22 @@ export async function executeCode({
         );
     }
 
+
+    /*
+     * Build the complete execution plan.
+     *
+     * This is where:
+     *
+     *     language
+     *        ↓
+     *     strategy
+     *        ↓
+     *     build
+     *        ↓
+     *     run
+     *
+     * is resolved.
+     */
     const {
         command,
         buildCommand
@@ -323,37 +505,65 @@ export async function executeCode({
                 projectFile.path,
             files,
             fileContent:
-                projectFile.content
+                projectFile.content,
+            strategy
         });
 
+
     /*
-     * Every execution happens inside one
-     * persistent sandbox session.
+     * Every build and execution operation
+     * happens inside ONE persistent sandbox
+     * session.
      *
-     * For Java:
+     * This is important because build artifacts
+     * must remain available to the execution step.
      *
-     *     build -> run
+     * Example:
      *
-     * happens in the same workspace.
+     * Java:
+     *
+     *     javac Main.java
+     *          ↓
+     *     java Main
+     *
+     * C:
+     *
+     *     cc main.c -o .forgeai-c-program
+     *          ↓
+     *     ./.forgeai-c-program
+     *
+     * Rust:
+     *
+     *     rustc main.rs -o .forgeai-rust-program
+     *          ↓
+     *     ./.forgeai-rust-program
      */
     const steps = [];
+
 
     if (buildCommand) {
         steps.push({
             name: "build",
+
             command:
                 buildCommand,
+
             stopOnFailure: true
         });
     }
 
+
     steps.push({
         name: "execution",
+
         command,
+
         stopOnFailure: true
     });
 
+
     let sessionResult;
+
 
     try {
         sessionResult =
@@ -363,10 +573,9 @@ export async function executeCode({
             });
     } catch (error) {
         /*
-         * Execution infrastructure errors must be
-         * returned as structured execution failures
-         * rather than forcing the model to invent
-         * application-level workarounds.
+         * Sandbox infrastructure errors are
+         * returned as structured execution
+         * failures.
          */
         return {
             success: false,
@@ -379,29 +588,34 @@ export async function executeCode({
             filePath:
                 projectFile.path,
 
-            stage: "execution",
+            stage:
+                "execution",
 
             build:
-                buildCommand
-                    ? null
-                    : null,
+                null,
 
             execution: {
-                name: "execution",
+                name:
+                    "execution",
 
-                success: false,
+                success:
+                    false,
 
-                exitCode: null,
+                exitCode:
+                    null,
 
-                stdout: "",
+                stdout:
+                    "",
 
                 stderr:
                     error?.message ??
                     "Sandbox execution failed",
 
-                timeOut: false,
+                timeOut:
+                    false,
 
-                status: "failed",
+                status:
+                    "failed",
 
                 failureType:
                     error?.code ===
@@ -412,6 +626,10 @@ export async function executeCode({
         };
     }
 
+
+    /*
+     * Extract the build result.
+     */
     const buildResult =
         buildCommand
             ? (
@@ -424,6 +642,10 @@ export async function executeCode({
             )
             : null;
 
+
+    /*
+     * Extract the actual execution result.
+     */
     const executionResult =
         sessionResult.results
             .find(
@@ -432,6 +654,11 @@ export async function executeCode({
                     "execution"
             ) ?? null;
 
+
+    /*
+     * If the build failed, do NOT execute
+     * the program.
+     */
     if (
         buildCommand &&
         buildResult &&
@@ -452,7 +679,8 @@ export async function executeCode({
             filePath:
                 projectFile.path,
 
-            stage: "build",
+            stage:
+                "build",
 
             build:
                 buildResult,
@@ -462,6 +690,17 @@ export async function executeCode({
         };
     }
 
+
+    /*
+     * Final normalized execution result.
+     *
+     * success is true only when:
+     *
+     * - sandbox succeeded
+     * - execution step succeeded
+     * - exit code is 0
+     * - execution did not timeout
+     */
     return {
         success:
             sessionResult.success &&
@@ -483,7 +722,8 @@ export async function executeCode({
         filePath:
             projectFile.path,
 
-        stage: "execution",
+        stage:
+            "execution",
 
         build:
             buildResult,
