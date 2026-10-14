@@ -495,9 +495,5 @@ export async function executeCode({
 
 
 export function getSupportedCodeExecutionLanguages() {
-    return [
-        "javascript",
-        "python",
-        "java"
-    ];
+    return getSupportedExecutionLanguages();
 }
