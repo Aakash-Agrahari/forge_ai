@@ -260,9 +260,37 @@ function normalizeLanguage(language) {
         return "";
     }
 
-    return language
-        .trim()
-        .toLowerCase();
+    const normalized =
+        language
+            .trim()
+            .toLowerCase();
+
+    const aliases = {
+        js: "javascript",
+        node: "javascript",
+        nodejs: "javascript",
+
+        ts: "typescript",
+
+        py: "python",
+        python3: "python",
+
+        "c++": "cpp",
+        cplusplus: "cpp",
+
+        "c#": "csharp",
+        cs: "csharp",
+
+        golang: "go",
+
+        rs: "rust",
+
+        kt: "kotlin",
+
+        rb: "ruby"
+    };
+
+    return aliases[normalized] ?? normalized;
 }
 
 
