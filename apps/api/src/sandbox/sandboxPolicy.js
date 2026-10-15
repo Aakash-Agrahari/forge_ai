@@ -1,53 +1,110 @@
-import path from "node:path";
-
 const ALLOWED_COMMANDS = new Set([
     "npm test",
     "npm run build",
     "npm run lint",
     "git status",
-    "node --test"
+    "node --test",
+
+    // TypeScript
+    "npx tsc --pretty false",
+
+    // .NET
+    "dotnet build",
+    "dotnet run --no-build",
+
+    // Kotlin
+    "java -jar .forgeai-kotlin.jar",
+
+    // Native / Rust executables
+    "./.forgeai-c-program",
+    "./.forgeai-cpp-program",
+    "./.forgeai-rust-program"
 ]);
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 const MAX_TIMEOUT_MS = 300_000;
 const MAX_OUTPUT_BYTES = 1_000_000;
 
-function extractCommandArguments(command, pattern) {
-    const match = command.match(pattern);
-
-    if (!match) {
+function extractQuotedOrUnquotedArgument(command, prefix) {
+    if (!command.startsWith(prefix)) {
         return null;
     }
 
-    return match
-        .slice(1)
-        .filter((value) => value !== undefined);
-}
+    const remainder = command.slice(prefix.length).trim();
 
-function isSafeProjectFilePath(filePath) {
-    if (!filePath) {
-        return false;
+    if (!remainder) {
+        return null;
     }
 
     if (
-        filePath.startsWith("-") ||
-        filePath.includes("&&") ||
-        filePath.includes("||") ||
-        filePath.includes(";") ||
-        filePath.includes("|") ||
-        filePath.includes(">") ||
-        filePath.includes("<") ||
-        filePath.includes("$(") ||
-        filePath.includes("`")
+        remainder.startsWith("\"") &&
+        remainder.endsWith("\"")
     ) {
+        return remainder.slice(1, -1);
+    }
+
+    if (
+        remainder.startsWith("'") &&
+        remainder.endsWith("'")
+    ) {
+        return remainder.slice(1, -1);
+    }
+
+    return remainder;
+}
+
+function isSafeProjectFilePath(filePath) {
+    if (typeof filePath !== "string") {
         return false;
     }
 
-    if (pathIsAbsolute(filePath)) {
+    const value = filePath.trim();
+
+    if (!value) {
         return false;
     }
 
-    const segments = filePath.split(/[\\/]+/);
+    // Never allow command-line options.
+    if (value.startsWith("-")) {
+        return false;
+    }
+
+    // Never allow shell operators.
+    const dangerousTokens = [
+        "&&",
+        "||",
+        ";",
+        "|",
+        ">",
+        "<",
+        "$(",
+        "`"
+    ];
+
+    for (const token of dangerousTokens) {
+        if (value.includes(token)) {
+            return false;
+        }
+    }
+
+    // Reject absolute Unix paths.
+    if (value.startsWith("/")) {
+        return false;
+    }
+
+    // Reject Windows absolute paths.
+    if (/^[a-zA-Z]:[\\/]/.test(value)) {
+        return false;
+    }
+
+    // Reject UNC paths.
+    if (value.startsWith("\\\\")) {
+        return false;
+    }
+
+    // Reject path traversal.
+    const normalized = value.replaceAll("\\", "/");
+    const segments = normalized.split("/");
 
     if (segments.includes("..")) {
         return false;
@@ -56,416 +113,348 @@ function isSafeProjectFilePath(filePath) {
     return true;
 }
 
-function isSafeOutputPath(filePath) {
-    return (
-        isSafeProjectFilePath(filePath) &&
-        !filePath.includes("/")
-            ? true
-            : isSafeProjectFilePath(filePath)
-    );
-}
+function isSafeSourceExtension(filePath, extensions) {
+    const normalized = filePath.toLowerCase();
 
-function pathIsAbsolute(filePath) {
-    return (
-        filePath.startsWith("/") ||
-        filePath.startsWith("\\") ||
-        /^[A-Za-z]:[\\/]/.test(filePath)
-    );
-}
-
-function isSafeFileList(fileList) {
-    if (!fileList || fileList.length === 0) {
-        return false;
-    }
-
-    return fileList.every(
-        (filePath) =>
-            isSafeProjectFilePath(filePath)
+    return extensions.some(
+        extension => normalized.endsWith(extension)
     );
 }
 
 function isSafeNodeCommand(command) {
-    const args = extractCommandArguments(
+    const filePath = extractQuotedOrUnquotedArgument(
         command,
-        /^node\s+(?:"([^"]+)"|'([^']+)'|([^\s]+))$/
+        "node "
     );
 
-    if (!args || args.length !== 1) {
+    if (!filePath) {
         return false;
     }
 
-    const filePath = args[0];
-
-    const supportedExtensions = [
-        ".js",
-        ".mjs",
-        ".cjs",
-        ".jsx"
-    ];
-
-    if (
-        !supportedExtensions.some(
-            (extension) =>
-                filePath.endsWith(extension)
-        )
-    ) {
+    if (!isSafeProjectFilePath(filePath)) {
         return false;
     }
 
-    return isSafeProjectFilePath(filePath);
+    return isSafeSourceExtension(
+        filePath,
+        [".js", ".mjs", ".cjs", ".jsx"]
+    );
 }
 
 function isSafePythonCommand(command) {
-    const args = extractCommandArguments(
+    const filePath = extractQuotedOrUnquotedArgument(
         command,
-        /^python3\s+(?:"([^"]+)"|'([^']+)'|([^\s]+))$/
+        "python3 "
     );
 
-    if (!args || args.length !== 1) {
+    if (!filePath) {
         return false;
     }
 
-    const filePath = args[0];
+    if (!isSafeProjectFilePath(filePath)) {
+        return false;
+    }
 
-    return (
-        filePath.endsWith(".py") &&
-        isSafeProjectFilePath(filePath)
-    );
+    return filePath.toLowerCase().endsWith(".py");
 }
 
-function isSafeTypeScriptCommand(command) {
-    const args = extractCommandArguments(
+function isSafeGoCommand(command) {
+    const filePath = extractQuotedOrUnquotedArgument(
         command,
-        /^node\s+(?:"([^"]+)"|'([^']+)'|([^\s]+))$/
+        "go run "
     );
 
-    if (!args || args.length !== 1) {
+    if (!filePath) {
         return false;
     }
 
-    return (
-        args[0].endsWith(".js") &&
-        isSafeProjectFilePath(args[0])
-    );
+    if (!isSafeProjectFilePath(filePath)) {
+        return false;
+    }
+
+    return filePath.toLowerCase().endsWith(".go");
 }
 
-function isSafeJavaBuildCommand(command) {
-    const prefix = "javac ";
-
-    if (!command.startsWith(prefix)) {
-        return false;
-    }
-
-    const remainder = command.slice(prefix.length).trim();
-
-    if (!remainder) {
-        return false;
-    }
-
-    const files = remainder.split(/\s+/);
-
-    if (!isSafeFileList(files)) {
-        return false;
-    }
-
-    return files.every(
-        (filePath) =>
-            filePath.endsWith(".java")
+function isSafeSwiftCommand(command) {
+    const filePath = extractQuotedOrUnquotedArgument(
+        command,
+        "swift "
     );
+
+    if (!filePath) {
+        return false;
+    }
+
+    if (!isSafeProjectFilePath(filePath)) {
+        return false;
+    }
+
+    return filePath.toLowerCase().endsWith(".swift");
 }
 
-function isSafeJavaRunCommand(command) {
-    const match =
-        command.match(
-            /^java\s+(?:"([^"]+)"|'([^']+)'|([A-Za-z_$][A-Za-z0-9_.$]*))$/
-        );
+function isSafePhpCommand(command) {
+    const filePath = extractQuotedOrUnquotedArgument(
+        command,
+        "php "
+    );
 
-    if (!match) {
+    if (!filePath) {
         return false;
     }
 
-    const className =
-        match[1] ??
-        match[2] ??
-        match[3];
+    if (!isSafeProjectFilePath(filePath)) {
+        return false;
+    }
+
+    return filePath.toLowerCase().endsWith(".php");
+}
+
+function isSafeRubyCommand(command) {
+    const filePath = extractQuotedOrUnquotedArgument(
+        command,
+        "ruby "
+    );
+
+    if (!filePath) {
+        return false;
+    }
+
+    if (!isSafeProjectFilePath(filePath)) {
+        return false;
+    }
+
+    return filePath.toLowerCase().endsWith(".rb");
+}
+
+function isSafeJavaCommand(command) {
+    if (!command.startsWith("java ")) {
+        return false;
+    }
+
+    const className = extractQuotedOrUnquotedArgument(
+        command,
+        "java "
+    );
 
     if (!className) {
         return false;
     }
 
-    return /^[A-Za-z_$][A-Za-z0-9_.$]*$/.test(
+    // Java class names may contain package separators and identifiers.
+    return /^[A-Za-z_$][A-Za-z0-9_$]*(\.[A-Za-z_$][A-Za-z0-9_$]*)*$/.test(
         className
     );
 }
 
-function isSafeCBuildCommand(command) {
-    const match =
-        command.match(
-            /^cc\s+(.+)\s+-o\s+([^\s]+)$/
-        );
-
-    if (!match) {
+function isSafeJavaBuildCommand(command) {
+    if (!command.startsWith("javac ")) {
         return false;
     }
 
-    const sourcePart = match[1];
-    const outputPath = match[2];
-
-    const files =
-        sourcePart
-            .trim()
-            .split(/\s+/);
-
-    if (
-        !isSafeFileList(files) ||
-        !isSafeOutputPath(outputPath)
-    ) {
-        return false;
-    }
-
-    return files.every(
-        (filePath) =>
-            filePath.endsWith(".c")
-    );
-}
-
-function isSafeCppBuildCommand(command) {
-    const match =
-        command.match(
-            /^c\+\+\s+(.+)\s+-o\s+([^\s]+)$/
-        );
-
-    if (!match) {
-        return false;
-    }
-
-    const sourcePart = match[1];
-    const outputPath = match[2];
-
-    const files =
-        sourcePart
-            .trim()
-            .split(/\s+/);
-
-    if (
-        !isSafeFileList(files) ||
-        !isSafeOutputPath(outputPath)
-    ) {
-        return false;
-    }
-
-    return files.every(
-        (filePath) =>
-            filePath.endsWith(".cpp") ||
-            filePath.endsWith(".cc") ||
-            filePath.endsWith(".cxx")
-    );
-}
-
-function isSafeExecutableRunCommand(command, executableName) {
-    if (!command.startsWith(executableName)) {
-        return false;
-    }
-
-    const remainder =
-        command
-            .slice(executableName.length)
-            .trim();
+    const remainder = command.slice("javac ".length).trim();
 
     if (!remainder) {
         return false;
     }
 
-    return (
-        !remainder.includes(" ") &&
-        isSafeProjectFilePath(remainder)
-    );
-}
+    const files = remainder
+        .match(/(?:"[^"]+"|'[^']+'|[^\s]+)/g);
 
-function isSafeGoCommand(command) {
-    const match =
-        command.match(
-            /^go\s+run\s+(?:"([^"]+)"|'([^']+)'|([^\s]+))$/
-        );
-
-    if (!match) {
+    if (!files || files.length === 0) {
         return false;
     }
 
-    const filePath =
-        match[1] ??
-        match[2] ??
-        match[3];
+    return files.every(file => {
+        const cleanFile = file
+            .replace(/^"/, "")
+            .replace(/"$/, "")
+            .replace(/^'/, "")
+            .replace(/'$/, "");
 
-    return (
-        filePath.endsWith(".go") &&
-        isSafeProjectFilePath(filePath)
+        return (
+            isSafeProjectFilePath(cleanFile) &&
+            cleanFile.toLowerCase().endsWith(".java")
+        );
+    });
+}
+
+function isSafeCBuildCommand(command) {
+    if (!command.startsWith("cc ")) {
+        return false;
+    }
+
+    const expectedSuffix = " -o .forgeai-c-program";
+
+    if (!command.endsWith(expectedSuffix)) {
+        return false;
+    }
+
+    const filesPart = command
+        .slice("cc ".length)
+        .slice(0, -expectedSuffix.length)
+        .trim();
+
+    if (!filesPart) {
+        return false;
+    }
+
+    const files = filesPart.match(
+        /(?:"[^"]+"|'[^']+'|[^\s]+)/
     );
+
+    if (!files) {
+        return false;
+    }
+
+    const allFiles = filesPart.match(
+        /(?:"[^"]+"|'[^']+'|[^\s]+)/g
+    );
+
+    if (!allFiles || allFiles.length === 0) {
+        return false;
+    }
+
+    return allFiles.every(file => {
+        const cleanFile = file
+            .replace(/^"/, "")
+            .replace(/"$/, "")
+            .replace(/^'/, "")
+            .replace(/'$/, "");
+
+        return (
+            isSafeProjectFilePath(cleanFile) &&
+            cleanFile.toLowerCase().endsWith(".c")
+        );
+    });
+}
+
+function isSafeCppBuildCommand(command) {
+    if (!command.startsWith("c++ ")) {
+        return false;
+    }
+
+    const expectedSuffix = " -o .forgeai-cpp-program";
+
+    if (!command.endsWith(expectedSuffix)) {
+        return false;
+    }
+
+    const filesPart = command
+        .slice("c++ ".length)
+        .slice(0, -expectedSuffix.length)
+        .trim();
+
+    if (!filesPart) {
+        return false;
+    }
+
+    const files = filesPart.match(
+        /(?:"[^"]+"|'[^']+'|[^\s]+)/g
+    );
+
+    if (!files || files.length === 0) {
+        return false;
+    }
+
+    return files.every(file => {
+        const cleanFile = file
+            .replace(/^"/, "")
+            .replace(/"$/, "")
+            .replace(/^'/, "")
+            .replace(/'$/, "");
+
+        return (
+            isSafeProjectFilePath(cleanFile) &&
+            [".cpp", ".cc", ".cxx"].some(
+                extension =>
+                    cleanFile.toLowerCase().endsWith(extension)
+            )
+        );
+    });
 }
 
 function isSafeRustBuildCommand(command) {
-    const match =
-        command.match(
-            /^rustc\s+(?:"([^"]+)"|'([^']+)'|([^\s]+))\s+-o\s+([^\s]+)$/
-        );
-
-    if (!match) {
+    if (!command.startsWith("rustc ")) {
         return false;
     }
 
-    const sourceFile =
-        match[1] ??
-        match[2] ??
-        match[3];
+    const expectedSuffix =
+        " -o .forgeai-rust-program";
 
-    const outputPath = match[4];
+    if (!command.endsWith(expectedSuffix)) {
+        return false;
+    }
+
+    const filePart = command
+        .slice("rustc ".length)
+        .slice(0, -expectedSuffix.length)
+        .trim();
+
+    const filePath = filePart
+        .replace(/^"/, "")
+        .replace(/"$/, "")
+        .replace(/^'/, "")
+        .replace(/'$/, "");
 
     return (
-        sourceFile.endsWith(".rs") &&
-        isSafeProjectFilePath(sourceFile) &&
-        isSafeOutputPath(outputPath)
+        isSafeProjectFilePath(filePath) &&
+        filePath.toLowerCase().endsWith(".rs")
     );
 }
 
 function isSafeKotlinBuildCommand(command) {
-    const match =
-        command.match(
-            /^kotlinc\s+(?:"([^"]+)"|'([^']+)'|([^\s]+))\s+-include-runtime\s+-d\s+([^\s]+)$/
-        );
-
-    if (!match) {
+    if (!command.startsWith("kotlinc ")) {
         return false;
     }
 
-    const sourceFile =
-        match[1] ??
-        match[2] ??
-        match[3];
+    const expectedSuffix =
+        " -include-runtime -d .forgeai-kotlin.jar";
 
-    const outputPath = match[4];
+    if (!command.endsWith(expectedSuffix)) {
+        return false;
+    }
+
+    const filePart = command
+        .slice("kotlinc ".length)
+        .slice(0, -expectedSuffix.length)
+        .trim();
+
+    const filePath = filePart
+        .replace(/^"/, "")
+        .replace(/"$/, "")
+        .replace(/^'/, "")
+        .replace(/'$/, "");
 
     return (
-        sourceFile.endsWith(".kt") ||
-        sourceFile.endsWith(".kts")
-    )
-        ? (
-            isSafeProjectFilePath(sourceFile) &&
-            isSafeOutputPath(outputPath)
+        isSafeProjectFilePath(filePath) &&
+        [".kt", ".kts"].some(
+            extension =>
+                filePath.toLowerCase().endsWith(extension)
         )
-        : false;
-}
-
-function isSafeJarRunCommand(command) {
-    const match =
-        command.match(
-            /^java\s+-jar\s+([^\s]+)$/
-        );
-
-    if (!match) {
-        return false;
-    }
-
-    return isSafeProjectFilePath(match[1]);
-}
-
-function isSafeDotnetBuildCommand(command) {
-    return command === "dotnet build";
-}
-
-function isSafeDotnetRunCommand(command) {
-    return command === "dotnet run --no-build";
-}
-
-function isSafeSwiftCommand(command) {
-    const match =
-        command.match(
-            /^swift\s+(?:"([^"]+)"|'([^']+)'|([^\s]+))$/
-        );
-
-    if (!match) {
-        return false;
-    }
-
-    const filePath =
-        match[1] ??
-        match[2] ??
-        match[3];
-
-    return (
-        filePath.endsWith(".swift") &&
-        isSafeProjectFilePath(filePath)
     );
 }
 
-function isSafePhpCommand(command) {
-    const match =
-        command.match(
-            /^php\s+(?:"([^"]+)"|'([^']+)'|([^\s]+))$/
-        );
-
-    if (!match) {
-        return false;
-    }
-
-    const filePath =
-        match[1] ??
-        match[2] ??
-        match[3];
-
+function isSafeSandboxExecutableCommand(command) {
     return (
-        filePath.endsWith(".php") &&
-        isSafeProjectFilePath(filePath)
+        command === "./.forgeai-c-program" ||
+        command === "./.forgeai-cpp-program" ||
+        command === "./.forgeai-rust-program"
     );
 }
 
-function isSafeRubyCommand(command) {
-    const match =
-        command.match(
-            /^ruby\s+(?:"([^"]+)"|'([^']+)'|([^\s]+))$/
-        );
-
-    if (!match) {
-        return false;
-    }
-
-    const filePath =
-        match[1] ??
-        match[2] ??
-        match[3];
-
-    return (
-        filePath.endsWith(".rb") &&
-        isSafeProjectFilePath(filePath)
-    );
+function isSafeTypeScriptBuildCommand(command) {
+    return command === "npx tsc --pretty false";
 }
 
-function isSafeCSharpCommand(command) {
+function isSafeDotnetCommand(command) {
     return (
         command === "dotnet build" ||
         command === "dotnet run --no-build"
     );
 }
 
-function isAllowedDynamicCommand(command) {
-    return (
-        isSafeNodeCommand(command) ||
-        isSafePythonCommand(command) ||
-        isSafeTypeScriptCommand(command) ||
-        isSafeJavaBuildCommand(command) ||
-        isSafeJavaRunCommand(command) ||
-        isSafeCBuildCommand(command) ||
-        isSafeCppBuildCommand(command) ||
-        isSafeGoCommand(command) ||
-        isSafeRustBuildCommand(command) ||
-        isSafeKotlinBuildCommand(command) ||
-        isSafeJarRunCommand(command) ||
-        isSafeDotnetBuildCommand(command) ||
-        isSafeDotnetRunCommand(command) ||
-        isSafeCSharpCommand(command) ||
-        isSafeSwiftCommand(command) ||
-        isSafePhpCommand(command) ||
-        isSafeRubyCommand(command)
-    );
+function isSafeKotlinRunCommand(command) {
+    return command === "java -jar .forgeai-kotlin.jar";
 }
 
 export function validateSandboxCommand(command) {
@@ -474,56 +463,103 @@ export function validateSandboxCommand(command) {
             "Sandbox command must be a string"
         );
 
-        error.code =
-            "INVALID_SANDBOX_COMMAND";
+        error.code = "SANDBOX_COMMAND_INVALID";
 
         throw error;
     }
 
-    const normalizedCommand =
-        command.trim();
+    const normalizedCommand = command.trim();
 
     if (!normalizedCommand) {
         const error = new Error(
             "Sandbox command cannot be empty"
         );
 
-        error.code =
-            "EMPTY_SANDBOX_COMMAND";
+        error.code = "SANDBOX_COMMAND_INVALID";
 
         throw error;
     }
 
-    const isExplicitlyAllowed =
-        ALLOWED_COMMANDS.has(
-            normalizedCommand
-        );
-
-    if (
-        !isExplicitlyAllowed &&
-        !isAllowedDynamicCommand(
-            normalizedCommand
-        )
-    ) {
-        const error = new Error(
-            `Command is not allowed in the sandbox: ${normalizedCommand}`
-        );
-
-        error.code =
-            "SANDBOX_COMMAND_NOT_ALLOWED";
-
-        throw error;
+    if (ALLOWED_COMMANDS.has(normalizedCommand)) {
+        return true;
     }
 
-    return normalizedCommand;
+    if (isSafeNodeCommand(normalizedCommand)) {
+        return true;
+    }
+
+    if (isSafePythonCommand(normalizedCommand)) {
+        return true;
+    }
+
+    if (isSafeGoCommand(normalizedCommand)) {
+        return true;
+    }
+
+    if (isSafeSwiftCommand(normalizedCommand)) {
+        return true;
+    }
+
+    if (isSafePhpCommand(normalizedCommand)) {
+        return true;
+    }
+
+    if (isSafeRubyCommand(normalizedCommand)) {
+        return true;
+    }
+
+    if (isSafeJavaCommand(normalizedCommand)) {
+        return true;
+    }
+
+    if (isSafeJavaBuildCommand(normalizedCommand)) {
+        return true;
+    }
+
+    if (isSafeCBuildCommand(normalizedCommand)) {
+        return true;
+    }
+
+    if (isSafeCppBuildCommand(normalizedCommand)) {
+        return true;
+    }
+
+    if (isSafeRustBuildCommand(normalizedCommand)) {
+        return true;
+    }
+
+    if (isSafeKotlinBuildCommand(normalizedCommand)) {
+        return true;
+    }
+
+    if (isSafeTypeScriptBuildCommand(normalizedCommand)) {
+        return true;
+    }
+
+    if (isSafeDotnetCommand(normalizedCommand)) {
+        return true;
+    }
+
+    if (isSafeKotlinRunCommand(normalizedCommand)) {
+        return true;
+    }
+
+    if (isSafeSandboxExecutableCommand(normalizedCommand)) {
+        return true;
+    }
+
+    const error = new Error(
+        `Sandbox command is not allowed: ${command}`
+    );
+
+    error.code = "SANDBOX_COMMAND_NOT_ALLOWED";
+
+    throw error;
 }
 
 export function getSandboxLimits({
-    timeoutMs =
-        DEFAULT_TIMEOUT_MS,
-
-    maxOutputBytes =
-        MAX_OUTPUT_BYTES
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+    maxOutputBytes = MAX_OUTPUT_BYTES
 } = {}) {
     if (
         !Number.isInteger(timeoutMs) ||
@@ -533,22 +569,17 @@ export function getSandboxLimits({
             "Sandbox timeout must be a positive integer"
         );
 
-        error.code =
-            "INVALID_SANDBOX_TIMEOUT";
+        error.code = "INVALID_SANDBOX_TIMEOUT";
 
         throw error;
     }
 
-    if (
-        timeoutMs >
-        MAX_TIMEOUT_MS
-    ) {
+    if (timeoutMs > MAX_TIMEOUT_MS) {
         const error = new Error(
             `Sandbox timeout cannot exceed ${MAX_TIMEOUT_MS}ms`
         );
 
-        error.code =
-            "SANDBOX_TIMEOUT_TOO_LARGE";
+        error.code = "SANDBOX_TIMEOUT_EXCEEDED";
 
         throw error;
     }
@@ -558,11 +589,20 @@ export function getSandboxLimits({
         maxOutputBytes <= 0
     ) {
         const error = new Error(
-            "Sandbox max output must be a positive integer"
+            "Sandbox maxOutputBytes must be a positive integer"
         );
 
-        error.code =
-            "INVALID_SANDBOX_OUTPUT_LIMIT";
+        error.code = "INVALID_SANDBOX_OUTPUT_LIMIT";
+
+        throw error;
+    }
+
+    if (maxOutputBytes > MAX_OUTPUT_BYTES) {
+        const error = new Error(
+            `Sandbox output cannot exceed ${MAX_OUTPUT_BYTES} bytes`
+        );
+
+        error.code = "SANDBOX_OUTPUT_LIMIT_EXCEEDED";
 
         throw error;
     }
@@ -576,31 +616,23 @@ export function getSandboxLimits({
 export function getAllowedSandboxCommands() {
     return [
         ...ALLOWED_COMMANDS,
-
-        "node <project-relative-file>.js",
-        "node <project-relative-file>.mjs",
-        "node <project-relative-file>.cjs",
-        "node <project-relative-file>.jsx",
-
-        "python3 <project-relative-file>.py",
-
-        "javac <project-relative-file>.java",
-        "java <project-class-name>",
-
-        "cc <project-relative-files>.c -o <output>",
-        "c++ <project-relative-files>.cpp -o <output>",
-
-        "dotnet build",
-        "dotnet run --no-build",
-
-        "go run <project-relative-file>.go",
-
-        "rustc <project-relative-file>.rs -o <output>",
-        "kotlinc <project-relative-file>.kt -include-runtime -d <output>",
-        "java -jar <project-relative-file>.jar",
-
-        "swift <project-relative-file>.swift",
-        "php <project-relative-file>.php",
-        "ruby <project-relative-file>.rb"
+        "node <safe-source-file>",
+        "python3 <safe-python-file>",
+        "go run <safe-go-file>",
+        "swift <safe-swift-file>",
+        "php <safe-php-file>",
+        "ruby <safe-ruby-file>",
+        "java <safe-class-name>",
+        "javac <safe-java-files>",
+        "cc <safe-c-files> -o .forgeai-c-program",
+        "c++ <safe-cpp-files> -o .forgeai-cpp-program",
+        "rustc <safe-rust-file> -o .forgeai-rust-program",
+        "kotlinc <safe-kotlin-file> -include-runtime -d .forgeai-kotlin.jar"
     ];
 }
+
+export {
+    DEFAULT_TIMEOUT_MS,
+    MAX_TIMEOUT_MS,
+    MAX_OUTPUT_BYTES
+};
