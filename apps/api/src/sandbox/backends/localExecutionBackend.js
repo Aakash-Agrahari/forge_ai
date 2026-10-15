@@ -30,12 +30,18 @@ async function execute({
     const startedAt = Date.now();
 
     try {
+        console.log("[LOCAL BACKEND] command:", command);
+        console.log("[LOCAL BACKEND] cwd:", cwd);
+
         const result = await execAsync(command, {
             cwd,
             timeout: timeoutMs,
             maxBuffer: maxOutputBytes,
             windowsHide: true
         });
+
+        console.log("[LOCAL BACKEND] stdout:", JSON.stringify(result.stdout));
+        console.log("[LOCAL BACKEND] stderr:", JSON.stringify(result.stderr));
 
         return {
             success: true,
