@@ -16,7 +16,6 @@ export function normalizeOpenAIToolCalls(message) {
     }));
 }
 
-
 export function convertToolsToOpenAIFormat(tools) {
     if (!Array.isArray(tools) || tools.length === 0) {
         return [];
@@ -33,6 +32,42 @@ export function convertToolsToOpenAIFormat(tools) {
     }));
 }
 
+function normalizeToolArguments(argumentsValue) {
+    if (
+        argumentsValue === null ||
+        argumentsValue === undefined
+    ) {
+        return "{}";
+    }
+
+    if (typeof argumentsValue === "string") {
+        const trimmed = argumentsValue.trim();
+
+        if (!trimmed) {
+            return "{}";
+        }
+
+        // The provider already returned JSON text.
+        // Do not JSON.stringify it again.
+        try {
+            JSON.parse(trimmed);
+            return trimmed;
+        } catch {
+            // If it is not valid JSON, safely convert it
+            // into a JSON string so the provider receives
+            // valid function.arguments.
+            return JSON.stringify(argumentsValue);
+        }
+    }
+
+    // Internal tool calls may contain an object.
+    // Convert the object exactly once to JSON text.
+    try {
+        return JSON.stringify(argumentsValue);
+    } catch {
+        return "{}";
+    }
+}
 
 export function convertMessagesToOpenAIFormat(messages) {
     if (!Array.isArray(messages)) {
@@ -40,7 +75,6 @@ export function convertMessagesToOpenAIFormat(messages) {
     }
 
     return messages.map((message) => {
-        
         if (message.role === "user") {
             return {
                 role: "user",
@@ -65,25 +99,22 @@ export function convertMessagesToOpenAIFormat(messages) {
                 Array.isArray(message.toolCalls) &&
                 message.toolCalls.length > 0
             ) {
-                result.tool_calls =
-                    message.toolCalls.map(
-                        (toolCall) => ({
-                            id:
-                                toolCall.id,
+                result.tool_calls = message.toolCalls.map(
+                    (toolCall) => ({
+                        id: toolCall.id,
 
-                            type: "function",
+                        type: "function",
 
-                            function: {
-                                name:
-                                    toolCall.name,
+                        function: {
+                            name: toolCall.name,
 
-                                arguments:
-                                    JSON.stringify(
-                                        toolCall.arguments ?? {}
-                                    )
-                            }
-                        })
-                    );
+                            arguments:
+                                normalizeToolArguments(
+                                    toolCall.arguments
+                                )
+                        }
+                    })
+                );
             }
 
             return result;
