@@ -1191,16 +1191,184 @@ export async function runAgent({
                 const toolCall
                 of result.toolCalls
             ) {
-                /*
-                 * =================================================
-                 * VALIDATE TOOL CALL
-                 * =================================================
-                 */
+                                /*
+                                * =================================================
+                                * VALIDATE TOOL CALL
+                                * =================================================
+                                *
+                                * Tool-call validation failures are recoverable.
+                                *
+                                * A model can occasionally generate an argument that
+                                * does not match the registered tool schema. The
+                                * validator must reject that call, but the rejection
+                                * must be returned to the model as tool feedback
+                                * instead of terminating the entire agent run.
+                                */
 
-                const validatedToolCall =
-                    validateToolCall(
-                        toolCall
-                    );
+                                let validatedToolCall;
+
+                                try {
+                                    validatedToolCall =
+                                        validateToolCall(
+                                            toolCall
+                                        );
+                                } catch (validationError) {
+                                    const validationToolResult = {
+                                        success: false,
+                                        error: {
+                                            code:
+                                                validationError.code ??
+                                                "INVALID_TOOL_CALL",
+                                            message:
+                                                validationError.message ??
+                                                "Tool call validation failed"
+                                        }
+                                    };
+
+                                    /*
+                                    * Record the validation problem in agent state.
+                                    * This does NOT mark the entire agent as failed.
+                                    */
+                                    recordError(
+                                        state,
+                                        validationError
+                                    );
+
+                                    console.warn(
+                                        "[ForgeAI Agent] Tool call validation failed:",
+                                        JSON.stringify(
+                                            {
+                                                tool:
+                                                    toolCall?.name ??
+                                                    null,
+                                                toolCallId:
+                                                    toolCall?.id ??
+                                                    null,
+                                                code:
+                                                    validationError.code ??
+                                                    "INVALID_TOOL_CALL",
+                                                message:
+                                                    validationError.message ??
+                                                    "Tool call validation failed"
+                                            },
+                                            null,
+                                            2
+                                        )
+                                    );
+
+                                    /*
+                                    * Give the model explicit feedback so it can
+                                    * correct the tool call on the next iteration.
+                                    */
+                                    addMessage(
+                                        state,
+                                        {
+                                            role: "system",
+                                            content: [
+                                                "TOOL CALL VALIDATION FAILED.",
+                                                "",
+                                                `Tool: ${toolCall?.name ?? "unknown"}`,
+                                                `Error: ${
+                                                    validationError.message ??
+                                                    "Invalid tool call"
+                                                }`,
+                                                "",
+                                                "The tool call was NOT executed.",
+                                                "Do not repeat the invalid arguments.",
+                                                "Inspect the tool definition and call the tool again using the correct arguments.",
+                                                "",
+                                                "Important:",
+                                                "- Do not modify application source code because of this validation error.",
+                                                "- Do not invent arguments that are not present in the tool schema.",
+                                                "- If a tool accepts no arguments, call it with an empty object.",
+                                                "- Continue the current task from the validation result."
+                                            ].join("\n")
+                                        }
+                                    );
+
+                                    /*
+                                    * Persist the rejected tool call as a tool result.
+                                    *
+                                    * This gives the LLM an actual structured result
+                                    * associated with its tool call rather than only
+                                    * an internal exception.
+                                    */
+                                    const serializedValidationResult =
+                                        JSON.stringify(
+                                            validationToolResult
+                                        );
+
+                                    await createMessage({
+                                        conversationId,
+                                        role: "tool",
+                                        content:
+                                            serializedValidationResult,
+                                        toolCallId:
+                                            toolCall?.id ?? null,
+                                        toolName:
+                                            toolCall?.name ?? "unknown",
+                                        toolResult:
+                                            validationToolResult
+                                    });
+
+                                    addMessage(
+                                        state,
+                                        {
+                                            role: "tool",
+                                            toolCallId:
+                                                toolCall?.id ?? null,
+                                            toolName:
+                                                toolCall?.name ?? "unknown",
+                                            content:
+                                                serializedValidationResult
+                                        }
+                                    );
+
+                                    await createAgentRunEvent({
+                                        runId,
+                                        type: "tool_completed",
+                                        message:
+                                            `Tool ${
+                                                toolCall?.name ??
+                                                "unknown"
+                                            } rejected during argument validation.`,
+                                        metadata: {
+                                            tool:
+                                                toolCall?.name ??
+                                                null,
+                                            iteration:
+                                                state.iteration,
+                                            toolCount:
+                                                state.toolCount,
+                                            success: false,
+                                            validationError:
+                                                validationError.code ??
+                                                "INVALID_TOOL_CALL"
+                                        }
+                                    });
+
+                                    /*
+                                    * The invalid call has been handled.
+                                    *
+                                    * Do NOT execute it.
+                                    * Do NOT enter the failure/repair workflow.
+                                    * Do NOT count it as application-code failure.
+                                    *
+                                    * Move to the next model iteration so the model
+                                    * can correct the tool call.
+                                    */
+                                    setCurrentTool(
+                                        state,
+                                        null
+                                    );
+
+                                    await persistAgentHeartbeat({
+                                        state,
+                                        runId
+                                    });
+
+                                    continue;
+                                }
 
                 if (cancellationObserved || await handleCancellation({
                     state,
