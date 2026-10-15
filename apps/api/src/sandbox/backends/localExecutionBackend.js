@@ -1,89 +1,217 @@
-import { exec } from "node:child_process";
-import { promisify } from "node:util";
+import {
+    exec as execCallback
+} from "node:child_process";
 
-import { createExecutionBackend } from "./executionBackend.js";
+import {
+    promisify
+} from "node:util";
 
-const execAsync = promisify(exec);
+import {
+    createExecutionBackend
+} from "./executionBackend.js";
 
-function limitOutput(value, maxOutputBytes) {
-    if (typeof value !== "string") {
-        return "";
-    }
+const execAsync = promisify(execCallback);
 
-    const buffer = Buffer.from(value, "utf8");
-
-    if (buffer.length <= maxOutputBytes) {
-        return value;
-    }
-
-    return buffer
-        .subarray(0, maxOutputBytes)
-        .toString("utf8");
-}
-
-async function execute({
-    command,
-    cwd,
-    timeoutMs,
+function limitOutput(
+    value,
     maxOutputBytes
-}) {
-    const startedAt = Date.now();
+) {
+    const text =
+        value === undefined ||
+        value === null
+            ? ""
+            : String(value);
 
-    try {
-        console.log("[LOCAL BACKEND] command:", command);
-        console.log("[LOCAL BACKEND] cwd:", cwd);
-
-        const result = await execAsync(command, {
-            cwd,
-            timeout: timeoutMs,
-            maxBuffer: maxOutputBytes,
-            windowsHide: true
-        });
-
-        console.log("[LOCAL BACKEND] stdout:", JSON.stringify(result.stdout));
-        console.log("[LOCAL BACKEND] stderr:", JSON.stringify(result.stderr));
-
-        return {
-            success: true,
-            exitCode: 0,
-            stdout: limitOutput(
-                result.stdout,
-                maxOutputBytes
-            ),
-            stderr: limitOutput(
-                result.stderr,
-                maxOutputBytes
-            ),
-            durationMs: Date.now() - startedAt,
-            timedOut: false
-        };
-    } catch (error) {
-        const timedOut =
-            error?.killed === true ||
-            error?.signal === "SIGTERM";
-
-        return {
-            success: false,
-            exitCode:
-                typeof error?.code === "number"
-                    ? error.code
-                    : null,
-            stdout: limitOutput(
-                error?.stdout ?? "",
-                maxOutputBytes
-            ),
-            stderr: limitOutput(
-                error?.stderr ?? error?.message ?? "",
-                maxOutputBytes
-            ),
-            durationMs: Date.now() - startedAt,
-            timedOut
-        };
+    if (
+        Buffer.byteLength(
+            text,
+            "utf8"
+        ) <= maxOutputBytes
+    ) {
+        return text;
     }
+
+    return Buffer.from(
+        text,
+        "utf8"
+    )
+        .subarray(
+            0,
+            maxOutputBytes
+        )
+        .toString("utf8");
 }
 
 export const localExecutionBackend =
     createExecutionBackend({
         name: "local",
-        execute
+
+        async execute({
+            command,
+            cwd,
+            timeoutMs = 30000,
+            maxOutputBytes = 1000000
+        }) {
+            console.log(
+                "\n[LOCAL BACKEND] ==============================="
+            );
+
+            console.log(
+                "[LOCAL BACKEND] COMMAND:",
+                command
+            );
+
+            console.log(
+                "[LOCAL BACKEND] CWD:",
+                cwd
+            );
+
+            console.log(
+                "[LOCAL BACKEND] TIMEOUT:",
+                timeoutMs
+            );
+
+            console.log(
+                "[LOCAL BACKEND] MAX OUTPUT:",
+                maxOutputBytes
+            );
+
+            try {
+                const result =
+                    await execAsync(
+                        command,
+                        {
+                            cwd,
+                            timeout:
+                                timeoutMs,
+                            maxBuffer:
+                                maxOutputBytes,
+                            windowsHide:
+                                true
+                        }
+                    );
+
+                const stdout =
+                    limitOutput(
+                        result.stdout,
+                        maxOutputBytes
+                    );
+
+                const stderr =
+                    limitOutput(
+                        result.stderr,
+                        maxOutputBytes
+                    );
+
+                console.log(
+                    "[LOCAL BACKEND] EXIT CODE:",
+                    0
+                );
+
+                console.log(
+                    "[LOCAL BACKEND] STDOUT:",
+                    JSON.stringify(
+                        stdout
+                    )
+                );
+
+                console.log(
+                    "[LOCAL BACKEND] STDERR:",
+                    JSON.stringify(
+                        stderr
+                    )
+                );
+
+                console.log(
+                    "[LOCAL BACKEND] SUCCESS"
+                );
+
+                console.log(
+                    "[LOCAL BACKEND] ===============================\n"
+                );
+
+                return {
+                    success: true,
+                    exitCode: 0,
+                    stdout,
+                    stderr
+                };
+            } catch (error) {
+                const stdout =
+                    limitOutput(
+                        error?.stdout,
+                        maxOutputBytes
+                    );
+
+                const stderr =
+                    limitOutput(
+                        error?.stderr,
+                        maxOutputBytes
+                    );
+
+                const errorMessage =
+                    error?.message ??
+                    "Command execution failed";
+
+                const combinedStderr =
+                    stderr ||
+                    errorMessage;
+
+                const exitCode =
+                    typeof error?.code ===
+                        "number"
+                        ? error.code
+                        : null;
+
+                console.error(
+                    "\n[LOCAL BACKEND] ==============================="
+                );
+
+                console.error(
+                    "[LOCAL BACKEND] COMMAND:",
+                    command
+                );
+
+                console.error(
+                    "[LOCAL BACKEND] CWD:",
+                    cwd
+                );
+
+                console.error(
+                    "[LOCAL BACKEND] ERROR:",
+                    errorMessage
+                );
+
+                console.error(
+                    "[LOCAL BACKEND] EXIT CODE:",
+                    exitCode
+                );
+
+                console.error(
+                    "[LOCAL BACKEND] STDOUT:",
+                    JSON.stringify(
+                        stdout
+                    )
+                );
+
+                console.error(
+                    "[LOCAL BACKEND] STDERR:",
+                    JSON.stringify(
+                        combinedStderr
+                    )
+                );
+
+                console.error(
+                    "[LOCAL BACKEND] ===============================\n"
+                );
+
+                return {
+                    success: false,
+                    exitCode,
+                    stdout,
+                    stderr:
+                        combinedStderr
+                };
+            }
+        }
     });
