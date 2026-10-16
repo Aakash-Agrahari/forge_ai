@@ -1406,6 +1406,18 @@ export async function runAgent({
                  * =================================================
                  */
 
+                console.log(
+                    "[ForgeAI DEBUG] BEFORE REPEAT CHECK:",
+                    JSON.stringify({
+                        iteration: state.iteration,
+                        toolName: validatedToolCall?.name,
+                        arguments: validatedToolCall?.arguments,
+                        requiresFailureAndRepair:
+                            taskRequirements.requiresFailureAndRepair,
+                        failureRepairPhase
+                    })
+                );
+
                 const toolCallKey =
                     JSON.stringify({
                         name:
