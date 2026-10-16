@@ -1884,6 +1884,7 @@ export async function runAgent({
                  * =================================================
                  */
 
+                const postToolSystemMessages = [];
                 if (
                     validatedToolCall.name ===
                         "execute_code" ||
