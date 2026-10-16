@@ -2140,9 +2140,8 @@ export async function runAgent({
                         ) {
                             failureRepairPhase = "COMPLETE";
 
-                            addMessage(state, {
-                                role: "system",
-                                content: [
+                            postToolSystemMessages.push(
+                                [
                                     "FINAL VERIFICATION SUCCEEDED.",
                                     "",
                                     "The repaired source executed successfully.",
@@ -2152,7 +2151,7 @@ export async function runAgent({
                                     "Stop immediately after reporting the verified result.",
                                     "Do NOT perform any additional tool actions."
                                 ].join("\n")
-                            });
+                            );
 
                             console.log(
                                 "[ForgeAI Agent] Failure-and-repair: final verification succeeded. Moving to COMPLETE."
