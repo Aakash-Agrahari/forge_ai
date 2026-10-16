@@ -2098,9 +2098,8 @@ export async function runAgent({
                             failureObserved = true;
                             failureRepairPhase = "REPAIR";
 
-                            addMessage(state, {
-                                role: "system",
-                                content: [
+                            postToolSystemMessages.push(
+                                [
                                     "FIRST EXECUTION COMPLETED.",
                                     "",
                                     "The program executed successfully, but this task explicitly requires the first execution to expose an intentional bug.",
@@ -2113,7 +2112,7 @@ export async function runAgent({
                                     "After the repair succeeds, execute the repaired source immediately for verification.",
                                     "Do NOT read the repaired file again before verification."
                                 ].join("\n")
-                            });
+                            );
 
                             console.log(
                                 "[ForgeAI Agent] Failure-and-repair: first execution completed. Moving to REPAIR."
