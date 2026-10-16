@@ -1751,6 +1751,18 @@ export async function runAgent({
                                 runId
                             }
                         );
+
+                        console.log(
+                            "[ForgeAI DEBUG] EXECUTE_TOOL RETURNED:",
+                            JSON.stringify({
+                                iteration: state.iteration,
+                                toolName: validatedToolCall.name,
+                                success: toolResult?.success,
+                                exitCode: toolResult?.exitCode,
+                                failureType: toolResult?.failureType
+                            })
+                        );
+
                 } catch (toolError) {
                     toolResult = {
                         success: false,
