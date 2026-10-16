@@ -1934,13 +1934,8 @@ export async function runAgent({
                             "Code execution failed. Inspect the actual execution result and determine whether the failure is caused by the application source, compilation, runtime behavior, timeout, or execution infrastructure before taking corrective action.";
                     }
 
-                    addMessage(
-                        state,
-                        {
-                            role: "system",
-                            content:
-                                executionStatus
-                        }
+                    postToolSystemMessages.push(
+                        executionStatus
                     );
 
                     console.log(
