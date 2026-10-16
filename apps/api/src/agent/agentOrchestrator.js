@@ -1207,11 +1207,31 @@ export async function runAgent({
 
                                 let validatedToolCall;
 
+                                console.log(
+                                    "[ForgeAI DEBUG] BEFORE VALIDATION:",
+                                    JSON.stringify({
+                                        iteration: state.iteration,
+                                        toolName: toolCall?.name,
+                                        toolCallId: toolCall?.id,
+                                        arguments: toolCall?.arguments
+                                    })
+                                );
+
                                 try {
                                     validatedToolCall =
                                         validateToolCall(
                                             toolCall
                                         );
+
+                                    console.log(
+                                        "[ForgeAI DEBUG] AFTER VALIDATION:",
+                                        JSON.stringify({
+                                            iteration: state.iteration,
+                                            toolName: validatedToolCall?.name,
+                                            toolCallId: validatedToolCall?.id,
+                                            arguments: validatedToolCall?.arguments
+                                        })
+                                    );
                                 } catch (validationError) {
                                     const validationToolResult = {
                                         success: false,
