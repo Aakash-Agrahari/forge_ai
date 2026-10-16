@@ -1988,9 +1988,8 @@ export async function runAgent({
                     failureRepairPhase = "EXECUTE";
                     intentionalFailurePrepared = true;
 
-                    addMessage(state, {
-                        role: "system",
-                        content: [
+                    postToolSystemMessages.push(
+                        [
                             "EXISTING SOURCE INSPECTED.",
                             "",
                             "The requested source file already existed and has now been inspected.",
@@ -2001,7 +2000,7 @@ export async function runAgent({
                             "Do NOT read the same source file again.",
                             "Do NOT modify the source again before the first execution."
                         ].join("\n")
-                    });
+                    );
 
                     console.log(
                         "[ForgeAI Agent] Existing source inspected during PREPARE. Moving directly to EXECUTE."
