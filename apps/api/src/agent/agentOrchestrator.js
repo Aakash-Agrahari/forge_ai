@@ -2204,6 +2204,13 @@ export async function runAgent({
                     toolResult
                 });
 
+                for (const systemMessage of postToolSystemMessages) {
+                    addMessage(state, {
+                        role: "system",
+                        content: systemMessage
+                    });
+                }
+
                 /*
                  * =================================================
                  * ADD TOOL RESULT TO AGENT MEMORY
