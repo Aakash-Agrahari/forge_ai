@@ -1731,6 +1731,15 @@ export async function runAgent({
                 const toolStartedAt =
                     Date.now();
 
+                console.log(
+                    "[ForgeAI DEBUG] REACHED EXECUTE_TOOL:",
+                    JSON.stringify({
+                        iteration: state.iteration,
+                        toolName: validatedToolCall.name,
+                        arguments: validatedToolCall.arguments
+                    })
+                );
+
                 try {
                     toolResult =
                         await executeTool(
