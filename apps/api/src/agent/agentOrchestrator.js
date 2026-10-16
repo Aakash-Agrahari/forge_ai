@@ -116,15 +116,30 @@ function getTaskRequirements(messages) {
         "fix incorrect"
     ];
 
-    const requiresFailureAndRepair =
+    let requiresFailureAndRepair =
         repairKeywords.some(
             (keyword) =>
                 userText.includes(keyword)
         );
 
+    /*
+     * Explicit user instructions that forbid modification,
+     * repair, fixing, or changing the source MUST override
+     * keyword-based failure-and-repair detection.
+     */
+    const repairForbidden =
+        /\b(do not|don't|never)\b[\s\S]{0,100}\b(repair|modify|change|fix)\b/i.test(
+            userText
+        );
+
+    if (repairForbidden) {
+        requiresFailureAndRepair = false;
+    }
+
     return {
         requiresVerification,
-        requiresFailureAndRepair
+        requiresFailureAndRepair,
+        repairForbidden
     };
 }
 
