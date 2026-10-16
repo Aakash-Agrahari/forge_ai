@@ -638,6 +638,7 @@ export async function runAgent({
             "",
             `Requires verification: ${taskRequirements.requiresVerification}`,
             `Requires failure-and-repair workflow: ${taskRequirements.requiresFailureAndRepair}`,
+            `Repair/modification explicitly forbidden: ${taskRequirements.repairForbidden}`,
             "",
             "Treat the current project files as the source of truth for existing project state.",
             "Inspect the project when necessary instead of relying on previous tool results.",
