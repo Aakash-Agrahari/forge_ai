@@ -137,10 +137,22 @@ function getTaskRequirements(messages) {
     }
 
     return {
-        requiresVerification,
-        requiresFailureAndRepair,
-        repairForbidden
-    };
+    requiresVerification,
+    requiresFailureAndRepair,
+    repairForbidden,
+    requiresFailureObservation:
+        repairForbidden &&
+        (
+            userText.includes("runtime error") ||
+            userText.includes("runtime failure") ||
+            userText.includes("expected failure") ||
+            userText.includes("expected error") ||
+            userText.includes("do not repair") ||
+            userText.includes("do not modify or repair") ||
+            userText.includes("do not fix") ||
+            userText.includes("return the complete execution result")
+        )
+};
 }
 
 /*
