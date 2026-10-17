@@ -53,7 +53,7 @@ const EXECUTION_STRATEGIES = {
         })
     },
 
-    java: {
+        java: {
         language: "java",
         runtime: "jvm",
 
@@ -63,7 +63,7 @@ const EXECUTION_STRATEGIES = {
 
         build: {
             type: "java",
-            command: "javac <project-java-files>"
+            command: "javac <file>"
         },
 
         run: ({
@@ -81,8 +81,13 @@ const EXECUTION_STRATEGIES = {
                     ? `${packageName}.${className}`
                     : className;
 
+            const sourceDirectory =
+                filePath.includes("/")
+                    ? filePath.substring(0, filePath.lastIndexOf("/"))
+                    : ".";
+
             return {
-                command: `java "${mainClass}"`
+                command: `java -cp "${sourceDirectory}" "${mainClass}"`
             };
         }
     },
