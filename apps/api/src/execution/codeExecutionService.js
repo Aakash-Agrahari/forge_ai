@@ -175,29 +175,12 @@ function createBuildCommand({
     const buildType =
         strategy.build.type;
 
-    if (buildType === "java") {
-        const javaFiles =
-            getProjectSourceFiles(
-                files,
-                [".java"]
-            );
-
-        if (javaFiles.length === 0) {
-            const error = new Error(
-                "No Java source files found in project"
-            );
-
-            error.code =
-                "NO_JAVA_SOURCE_FILES";
-
-            throw error;
-        }
-
+        if (buildType === "java") {
         return strategy.build.command.replace(
-            "<project-java-files>",
-            createProjectSourceArguments(
-                javaFiles
-            )
+            "<file>",
+            `"${validateProjectPath(
+                filePath
+            )}"`
         );
     }
 
