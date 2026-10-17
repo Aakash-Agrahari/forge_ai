@@ -501,23 +501,23 @@ export function validateSandboxCommand(command) {
     }
 
     if (isSafePhpCommand(normalizedCommand)) {
-        return true;
+        return normalizedCommand;
     }
 
     if (isSafeRubyCommand(normalizedCommand)) {
-        return true;
+        return normalizedCommand;
     }
 
     if (isSafeJavaCommand(normalizedCommand)) {
-        return true;
+        return normalizedCommand;
     }
 
     if (isSafeJavaBuildCommand(normalizedCommand)) {
-        return true;
+        return normalizedCommand;
     }
 
     if (isSafeCBuildCommand(normalizedCommand)) {
-        return true;
+        return normalizedCommand;
     }
 
     if (isSafeCppBuildCommand(normalizedCommand)) {
