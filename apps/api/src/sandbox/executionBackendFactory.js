@@ -9,6 +9,8 @@ const backends = new Map([
 ]);
 
 export function getExecutionBackend(name = "local") {
+    console.log("[BACKEND FACTORY] Requested backend:", name);
+
     const backend = backends.get(name);
 
     if (!backend) {
@@ -20,6 +22,11 @@ export function getExecutionBackend(name = "local") {
 
         throw error;
     }
+
+    console.log(
+        "[BACKEND FACTORY] Selected backend: ",
+        backend.name
+    );
 
     return backend;
 }
