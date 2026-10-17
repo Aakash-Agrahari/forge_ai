@@ -481,23 +481,23 @@ export function validateSandboxCommand(command) {
     }
 
     if (ALLOWED_COMMANDS.has(normalizedCommand)) {
-        return true;
+        return normalizedCommand;
     }
 
     if (isSafeNodeCommand(normalizedCommand)) {
-        return true;
+        return normalizedCommand;
     }
 
     if (isSafePythonCommand(normalizedCommand)) {
-        return true;
+        return normalizedCommand;
     }
 
     if (isSafeGoCommand(normalizedCommand)) {
-        return true;
+        return normalizedCommand;
     }
 
     if (isSafeSwiftCommand(normalizedCommand)) {
-        return true;
+        return normalizedCommand;
     }
 
     if (isSafePhpCommand(normalizedCommand)) {
