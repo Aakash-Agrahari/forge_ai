@@ -521,31 +521,31 @@ export function validateSandboxCommand(command) {
     }
 
     if (isSafeCppBuildCommand(normalizedCommand)) {
-        return true;
+        return normalizedCommand;
     }
 
     if (isSafeRustBuildCommand(normalizedCommand)) {
-        return true;
+        return normalizedCommand;
     }
 
     if (isSafeKotlinBuildCommand(normalizedCommand)) {
-        return true;
+        return normalizedCommand;
     }
 
     if (isSafeTypeScriptBuildCommand(normalizedCommand)) {
-        return true;
+        return normalizedCommand;
     }
 
     if (isSafeDotnetCommand(normalizedCommand)) {
-        return true;
+        return normalizedCommand;
     }
 
     if (isSafeKotlinRunCommand(normalizedCommand)) {
-        return true;
+        return normalizedCommand;
     }
 
     if (isSafeSandboxExecutableCommand(normalizedCommand)) {
-        return true;
+        return normalizedCommand;
     }
 
     const error = new Error(
