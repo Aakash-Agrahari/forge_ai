@@ -2048,9 +2048,9 @@ export async function runAgent({
                  */
 
                 toolResults.push({
+                    ...toolResult,
                     toolName:
-                        validatedToolCall.name,
-                    ...toolResult
+                        validatedToolCall.name
                 });
 
                 /*
