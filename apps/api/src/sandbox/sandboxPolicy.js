@@ -676,6 +676,7 @@ export function getAllowedSandboxCommands() {
         "php <safe-php-file>",
         "ruby <safe-ruby-file>",
         "java <safe-class-name>",
+        "java -cp <safe-classpath> <safe-class-name>",
         "javac <safe-java-files>",
         "cc <safe-c-files> -o .forgeai-c-program",
         "c++ <safe-cpp-files> -o .forgeai-cpp-program",
