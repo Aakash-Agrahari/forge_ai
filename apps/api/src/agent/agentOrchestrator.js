@@ -181,11 +181,17 @@ function hasSuccessfulVerification(
         if (
             toolName === "execute_code"
         ) {
+            const exitCode =
+                result.exitCode;
+
             return (
                 result.success === true &&
+                !result.timeOut &&
                 (
-                    result.exitCode === undefined ||
-                    result.exitCode === 0
+                    exitCode === undefined ||
+                    exitCode === null ||
+                    exitCode === 0 ||
+                    exitCode === "0"
                 )
             );
         }
