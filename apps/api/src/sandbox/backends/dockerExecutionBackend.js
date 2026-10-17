@@ -24,46 +24,57 @@ function limitOutput(value, maxOutputBytes){
 }
 
 async function execute({
-    command, cwd, timeoutMs, maxOutputBytes
+    command,
+    cwd,
+    timeoutMs,
+    maxOutputBytes
 }) {
     const startedAt = Date.now();
 
     const dockerArguments = [
-    "run",
-    "--rm",
+        "run",
+        "--rm",
 
-    "--network",
-    "none",
+        "--network",
+        "none",
 
-    "--memory",
-    "512m",
+        "--memory",
+        "512m",
 
-    "--cpus",
-    "1",
+        "--cpus",
+        "1",
 
-    "--pids-limit",
-    "128",
+        "--pids-limit",
+        "128",
 
-    "--read-only",
+        "--read-only",
 
-    "--tmpfs",
-    "/tmp:rw,noexec,nosuid,size=64m",
+        "--tmpfs",
+        "/tmp:rw,noexec,nosuid,size=64m",
 
-    "--tmpfs",
-    "/workspace/node_modules:rw,nosuid,size=256m",
+        "--tmpfs",
+        "/workspace/node_modules:rw,nosuid,size=256m",
 
-    "--workdir",
-    "/workspace",
+        "--workdir",
+        "/workspace",
 
-    "--volume",
-    `${cwd}:/workspace:rw`,
+        "--volume",
+        `${cwd}:/workspace:rw`,
 
-    DOCKER_IMAGE,
+        DOCKER_IMAGE,
 
-    "sh",
-    "-lc",
-    command
-];
+        "sh",
+        "-lc",
+        command
+    ];
+
+    console.log("[DOCKER BACKEND] IMAGE:", DOCKER_IMAGE);
+    console.log("[DOCKER BACKEND] CWD:", cwd);
+    console.log("[DOCKER BACKEND] COMMAND:", command);
+    console.log(
+        "[DOCKER BACKEND] ARGS:",
+        JSON.stringify(dockerArguments, null, 2)
+    );
 
     try {
         const result = await execFileAsync(
@@ -74,6 +85,20 @@ async function execute({
                 maxBuffer: maxOutputBytes,
                 windowsHide: true
             }
+        );
+
+        console.log(
+            "[DOCKER BACKEND] RAW STDOUT:",
+            JSON.stringify(result.stdout)
+        );
+
+        console.log(
+            "[DOCKER BACKEND] RAW STDERR:",
+            JSON.stringify(result.stderr)
+        );
+
+        console.log(
+            "[DOCKER BACKEND] EXECUTION SUCCESS"
         );
 
         return {
@@ -91,6 +116,30 @@ async function execute({
             timedOut: false
         };
     } catch (error) {
+        console.log(
+            "[DOCKER BACKEND] EXECUTION FAILED"
+        );
+
+        console.log(
+            "[DOCKER BACKEND] ERROR CODE:",
+            error?.code
+        );
+
+        console.log(
+            "[DOCKER BACKEND] ERROR MESSAGE:",
+            error?.message
+        );
+
+        console.log(
+            "[DOCKER BACKEND] ERROR STDOUT:",
+            JSON.stringify(error?.stdout ?? "")
+        );
+
+        console.log(
+            "[DOCKER BACKEND] ERROR STDERR:",
+            JSON.stringify(error?.stderr ?? "")
+        );
+
         const timedOut =
             error?.killed === true ||
             error?.signal === "SIGTERM";
