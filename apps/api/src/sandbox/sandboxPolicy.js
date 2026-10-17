@@ -231,17 +231,70 @@ function isSafeJavaCommand(command) {
         return false;
     }
 
-    const className = extractQuotedOrUnquotedArgument(
-        command,
-        "java "
-    );
+    /*
+     * Supported safe Java execution forms:
+     *
+     * java "MainClass"
+     * java -cp "src" "MainClass"
+     *
+     * The class name may optionally contain a package.
+     */
 
-    if (!className) {
+    const simpleClassPattern =
+        /^[A-Za-z_$][A-Za-z0-9_$]*(\.[A-Za-z_$][A-Za-z0-9_$]*)*$/;
+
+    const simpleMatch =
+        command.match(
+            /^java\s+"?([A-Za-z_$][A-Za-z0-9_$]*(?:\.[A-Za-z_$][A-Za-z0-9_$]*)*)"?$/
+        );
+
+    if (simpleMatch) {
+        return simpleClassPattern.test(
+            simpleMatch[1]
+        );
+    }
+
+    /*
+     * Java classpath execution:
+     *
+     * java -cp "safe-directory" "MainClass"
+     */
+
+    const classpathMatch =
+        command.match(
+            /^java\s+-cp\s+"([^"]+)"\s+"([A-Za-z_$][A-Za-z0-9_$]*(?:\.[A-Za-z_$][A-Za-z0-9_$]*)*)"$/
+        );
+
+    if (!classpathMatch) {
         return false;
     }
 
-    // Java class names may contain package separators and identifiers.
-    return /^[A-Za-z_$][A-Za-z0-9_$]*(\.[A-Za-z_$][A-Za-z0-9_$]*)*$/.test(
+    const classpath =
+        classpathMatch[1];
+
+    const className =
+        classpathMatch[2];
+
+    /*
+     * Classpath must be a safe project-relative path.
+     */
+    if (!isSafeProjectFilePath(classpath)) {
+        return false;
+    }
+
+    /*
+     * Classpath must point to a directory/source location,
+     * not an executable or arbitrary file.
+     */
+    if (
+        classpath.toLowerCase().endsWith(".java") ||
+        classpath.toLowerCase().endsWith(".class") ||
+        classpath.includes(".forgeai-")
+    ) {
+        return false;
+    }
+
+    return simpleClassPattern.test(
         className
     );
 }
