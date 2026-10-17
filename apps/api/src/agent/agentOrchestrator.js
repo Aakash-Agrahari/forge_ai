@@ -314,53 +314,48 @@ function hasSuccessfulVerificationAfterFailure(
 
 function isCompletionReady(
     taskRequirements,
-    toolResults,
-    failureRepairPhase,
-    repairPerformed
+    toolResults
 ) {
     /*
      * Tasks without explicit verification
      * requirements do not use this guard.
      */
-    if (
-        !taskRequirements.requiresVerification
-    ) {
+    if (!taskRequirements.requiresVerification) {
         return false;
     }
 
     /*
-     * We need actual successful execution
-     * evidence.
-     */
-    if (
-        !hasSuccessfulVerification(
-            toolResults
-        )
-    ) {
-        return false;
-    }
-
-    /*
-     * For failure-and-repair tasks, completion
-     * is valid only after the repair has actually
-     * been performed and the agent has reached
-     * the VERIFY phase.
+     * Explicitly requested failure observation.
      *
-     * This intentionally does NOT require the
-     * first execution to have exitCode != 0,
-     * because a logic bug can execute successfully
-     * while still producing an incorrect result.
+     * Example:
+     * - execute the program
+     * - do not repair it
+     * - return the runtime error
+     *
+     * In this workflow, the failure itself is the
+     * required verification evidence.
      */
-    if (
-        taskRequirements.requiresFailureAndRepair
-    ) {
+    if (taskRequirements.requiresFailureObservation) {
+        return hasObservedExecutionFailure(toolResults);
+    }
+
+    /*
+     * Failure -> repair -> successful verification.
+     */
+    if (taskRequirements.requiresFailureAndRepair) {
         return (
-            repairPerformed &&
-            failureRepairPhase === "COMPLETE"
+            hasSuccessfulVerificationAfterFailure(
+                toolResults
+            )
         );
     }
 
-    return true;
+    /*
+     * Normal verification requires successful execution.
+     */
+    return hasSuccessfulVerification(
+        toolResults
+    );
 }
 
 /*
