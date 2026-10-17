@@ -77,18 +77,31 @@ function detectCompilationFailure(
         normalizeOutput(output);
 
     const patterns = [
-        /\bSyntaxError\b/i,
-        /\bCompilation failed\b/i,
-        /\bCompilation error\b/i,
-        /\bcompile error\b/i,
-        /\bcompile failed\b/i,
-        /\bcannot find symbol\b/i,
-        /\bmodule not found\b/i,
-        /\bcannot find module\b/i,
-        /\bparse error\b/i,
-        /\berror:\s+cannot find\b/i,
-        /\berror:\s+expected\b/i
-    ];
+    /\bSyntaxError\b/i,
+    /\bCompilation failed\b/i,
+    /\bCompilation error\b/i,
+    /\bcompile error\b/i,
+    /\bcompile failed\b/i,
+
+    // Java / JVM compilation errors
+    /\berror:\s+incompatible types\b/i,
+    /\berror:\s+cannot find symbol\b/i,
+    /\berror:\s+class .* is public, should be declared in a file named .*\.java\b/i,
+    /\berror:\s+missing return statement\b/i,
+    /\berror:\s+unclosed string literal\b/i,
+    /\berror:\s+';' expected\b/i,
+
+    // Generic compiler errors
+    /\bcannot find symbol\b/i,
+    /\bmodule not found\b/i,
+    /\bcannot find module\b/i,
+    /\bparse error\b/i,
+    /\berror:\s+cannot find\b/i,
+    /\berror:\s+expected\b/i,
+    /\berror:\s+.*cannot be converted to\b/i,
+    /\berror:\s+.*does not exist\b/i,
+    /\berror:\s+.*not found\b/i
+];
 
     return patterns.some(
         (pattern) =>
