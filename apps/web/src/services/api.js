@@ -138,6 +138,22 @@ export async function getProjectFiles(projectId) {
     return apiRequest(`/projects/${projectId}/files`);
 }
 
+export async function createProjectFile(
+    projectId,
+    { path, content = "" }
+) {
+    return apiRequest(
+        `/projects/${projectId}/files`,
+        {
+            method: "POST",
+            body: JSON.stringify({
+                path,
+                content,
+            }),
+        }
+    );
+}
+
 export async function getProjectFile(
     projectId,
     fileId
