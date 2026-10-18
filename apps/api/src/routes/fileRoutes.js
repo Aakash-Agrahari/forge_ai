@@ -19,6 +19,10 @@ import {
     deleteProjectFile
 } from "../services/fileService.js";
 
+import {
+    executeCode
+} from "../execution/codeExecutionService.js";
+
 const router = Router();
 
 router.use(requireAuth);
@@ -142,6 +146,69 @@ router.get("/:projectId/files/:fileId", async (req, res, next) => {
         next(error);
     }
 });
+
+// Execute project file
+router.post(
+    "/:projectId/files/:fileId/execute",
+    async (req, res, next) => {
+        try {
+            const project =
+                await getProjectById({
+                    projectId:
+                        req.params.projectId,
+                    userId:
+                        req.user.id
+                });
+
+            if (!project) {
+                return res.status(404).json({
+                    success: false,
+                    error: {
+                        code:
+                            "PROJECT_NOT_FOUND",
+                        message:
+                            "Project not found"
+                    }
+                });
+            }
+
+            const file =
+                await getProjectFile({
+                    projectId:
+                        req.params.projectId,
+                    fileId:
+                        req.params.fileId
+                });
+
+            if (!file) {
+                return res.status(404).json({
+                    success: false,
+                    error: {
+                        code:
+                            "FILE_NOT_FOUND",
+                        message:
+                            "File not found"
+                    }
+                });
+            }
+
+            const result =
+                await executeCode({
+                    projectId:
+                        req.params.projectId,
+                    filePath:
+                        file.path
+                });
+
+            return res.status(200).json({
+                success: true,
+                result
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+);
 
 // Update file
 router.patch("/:projectId/files/:fileId", async (req, res, next) => {
