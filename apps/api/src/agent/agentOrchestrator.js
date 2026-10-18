@@ -141,15 +141,17 @@ function getTaskRequirements(messages) {
     requiresFailureAndRepair,
     repairForbidden,
     requiresFailureObservation:
-    repairForbidden &&
     (
         userText.includes("runtime error") ||
         userText.includes("runtime failure") ||
         userText.includes("expected failure") ||
         userText.includes("expected error") ||
-        userText.includes("do not repair") ||
-        userText.includes("do not modify or repair") ||
-        userText.includes("do not fix")
+        userText.includes("intentional error") ||
+        userText.includes("intentional failure") ||
+        userText.includes("must fail") ||
+        userText.includes("should fail") ||
+        userText.includes("should produce an error") ||
+        userText.includes("must produce an error")
     )
 };
 }
