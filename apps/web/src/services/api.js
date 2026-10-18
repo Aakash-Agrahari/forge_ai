@@ -180,6 +180,18 @@ export async function updateProjectFile(
     );
 }
 
+export async function runProjectFile(
+    projectId,
+    fileId
+) {
+    return apiRequest(
+        `/projects/${projectId}/files/${fileId}/execute`,
+        {
+            method: "POST",
+        }
+    );
+}
+
 /* =========================
    CONVERSATIONS
 ========================= */
