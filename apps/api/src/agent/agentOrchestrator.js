@@ -634,6 +634,8 @@ export async function runAgent({
     let existingSourceInspected = false;
     let failureObserved = false;
     let repairPerformed = false;
+    let autonomousRepairAttempts = 0;
+    let autonomousRepairPerformed = false;
 
     const taskRequirements =
         getTaskRequirements(
