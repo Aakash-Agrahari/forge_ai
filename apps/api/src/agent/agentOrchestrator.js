@@ -1805,6 +1805,108 @@ export async function runAgent({
                 }
 
                 /*
+                * ============================================================
+                * AUTONOMOUS REPAIR WORKFLOW GUARD
+                * ============================================================
+                *
+                * This workflow applies ONLY to normal tasks.
+                *
+                * The existing intentional failure-and-repair workflow above
+                * remains completely untouched.
+                */
+
+                if (
+                    !taskRequirements.requiresFailureAndRepair &&
+                    !taskRequirements.repairForbidden
+                ) {
+                    const toolName =
+                        validatedToolCall.name;
+
+                    const isExecutionTool =
+                        toolName === "execute_code" ||
+                        toolName === "execute_javascript" ||
+                        toolName === "run_javascript_test";
+
+                    const isSourceEditTool =
+                        toolName === "write_file" ||
+                        toolName === "edit_file" ||
+                        toolName === "replace_in_file";
+
+                    /*
+                    * After a source-level failure, the agent MUST repair
+                    * before attempting execution again.
+                    */
+                    if (
+                        failureRepairPhase === "REPAIR" &&
+                        isExecutionTool
+                    ) {
+                        addMessage(state, {
+                            role: "system",
+                            content: [
+                                "AUTONOMOUS REPAIR REQUIRED.",
+                                "",
+                                "The previous execution produced a source-level failure.",
+                                "Do NOT execute the same code again without repairing it.",
+                                "",
+                                "Inspect the actual execution evidence and repair the affected source code.",
+                                "Make the smallest necessary repair.",
+                                "After the repair succeeds, execute the repaired source immediately."
+                            ].join("\n")
+                        });
+
+                        continue;
+                    }
+
+                    /*
+                    * During REPAIR, unrelated actions are blocked.
+                    *
+                    * The agent may still inspect the failure evidence already
+                    * available in memory, but it must ultimately perform a
+                    * source repair before verification.
+                    */
+                    if (
+                        failureRepairPhase === "REPAIR" &&
+                        !isSourceEditTool &&
+                        !isExecutionTool
+                    ) {
+                        addMessage(state, {
+                            role: "system",
+                            content: [
+                                "AUTONOMOUS REPAIR REQUIRED.",
+                                "",
+                                "A source-level execution failure has been observed.",
+                                "Repair the affected source code using the actual execution evidence.",
+                                "Do not perform unrelated actions."
+                            ].join("\n")
+                        });
+
+                        continue;
+                    }
+
+                    /*
+                    * After a successful repair, execution is mandatory.
+                    */
+                    if (
+                        failureRepairPhase === "VERIFY" &&
+                        !isExecutionTool
+                    ) {
+                        addMessage(state, {
+                            role: "system",
+                            content: [
+                                "POST-REPAIR VERIFICATION REQUIRED.",
+                                "",
+                                "The source has been repaired.",
+                                "The next meaningful action MUST be execution or verification.",
+                                "Do not read the repaired file again.",
+                                "Do not perform unrelated actions."
+                            ].join("\n")
+                        });
+
+                        continue;
+                    }
+                }
+
+                /*
                  * =================================================
                  * START REAL TOOL EXECUTION
                  * =================================================
