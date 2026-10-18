@@ -2476,6 +2476,174 @@ export async function runAgent({
                     }
                 }
 
+                /*
+                * ============================================================
+                * AUTONOMOUS REPAIR STATE TRACKING
+                * ============================================================
+                *
+                * Applies ONLY to normal tasks.
+                *
+                * Existing intentional failure-and-repair state tracking
+                * above remains untouched.
+                */
+
+                if (
+                    !taskRequirements.requiresFailureAndRepair &&
+                    !taskRequirements.repairForbidden
+                ) {
+                    const toolName =
+                        validatedToolCall.name;
+
+                    const isExecutionTool =
+                        toolName === "execute_code" ||
+                        toolName === "execute_javascript" ||
+                        toolName === "run_javascript_test";
+
+                    const isSourceEditTool =
+                        toolName === "write_file" ||
+                        toolName === "edit_file" ||
+                        toolName === "replace_in_file";
+
+                    /*
+                    * ------------------------------------------------------------
+                    * SOURCE REPAIR
+                    * ------------------------------------------------------------
+                    */
+
+                    if (
+                        isSourceEditTool &&
+                        toolResult?.success === true &&
+                        failureRepairPhase === "REPAIR"
+                    ) {
+                        autonomousRepairAttempts += 1;
+                        autonomousRepairPerformed = true;
+
+                        failureRepairPhase = "VERIFY";
+
+                        console.log(
+                            "[ForgeAI Agent] Autonomous repair applied. Moving to VERIFY.",
+                            {
+                                attempt:
+                                    autonomousRepairAttempts
+                            }
+                        );
+                    }
+
+                    /*
+                    * ------------------------------------------------------------
+                    * EXECUTION RESULT
+                    * ------------------------------------------------------------
+                    */
+
+                    if (isExecutionTool) {
+
+                        const infrastructureFailure =
+                            isInfrastructureFailureResult(
+                                toolResult
+                            );
+
+                        const repairableFailure =
+                            isAutonomousRepairableFailure(
+                                toolName,
+                                toolResult
+                            );
+
+                        /*
+                        * Infrastructure failures NEVER trigger source repair.
+                        */
+                        if (infrastructureFailure) {
+
+                            failureRepairPhase =
+                                "NORMAL";
+
+                            console.log(
+                                "[ForgeAI Agent] Autonomous repair skipped: infrastructure failure."
+                            );
+
+                        }
+
+                        /*
+                        * A real source-level failure was observed.
+                        */
+                        else if (repairableFailure) {
+
+                            if (
+                                autonomousRepairAttempts <
+                                MAX_AUTONOMOUS_REPAIR_ATTEMPTS
+                            ) {
+                                failureObserved = true;
+
+                                failureRepairPhase =
+                                    "REPAIR";
+
+                                console.log(
+                                    "[ForgeAI Agent] Autonomous repair required.",
+                                    {
+                                        failureType:
+                                            toolResult?.failureType ??
+                                            toolResult?.execution?.failureType ??
+                                            toolResult?.build?.failureType ??
+                                            null,
+                                        attempt:
+                                            autonomousRepairAttempts
+                                    }
+                                );
+                            } else {
+
+                                /*
+                                * Do not allow endless automatic repair.
+                                */
+                                failureRepairPhase =
+                                    "NORMAL";
+
+                                console.warn(
+                                    "[ForgeAI Agent] Autonomous repair limit reached.",
+                                    {
+                                        attempts:
+                                            autonomousRepairAttempts
+                                    }
+                                );
+
+                                postToolSystemMessages.push(
+                                    [
+                                        "AUTONOMOUS REPAIR LIMIT REACHED.",
+                                        "",
+                                        `The agent has already attempted ${MAX_AUTONOMOUS_REPAIR_ATTEMPTS} automatic repairs.`,
+                                        "Do not continue making speculative source changes.",
+                                        "Use the actual execution evidence to report the remaining failure."
+                                    ].join("\n")
+                                );
+                            }
+                        }
+
+                        /*
+                        * Successful verification after a repair.
+                        */
+                        else if (
+                            !repairableFailure &&
+                            failureRepairPhase === "VERIFY" &&
+                            autonomousRepairPerformed
+                        ) {
+                            failureRepairPhase =
+                                "COMPLETE";
+
+                            postToolSystemMessages.push(
+                                [
+                                    "AUTONOMOUS REPAIR VERIFIED.",
+                                    "",
+                                    "The repaired source executed successfully.",
+                                    "Actual execution evidence confirms the repair.",
+                                    "Stop immediately after reporting the verified result."
+                                ].join("\n")
+                            );
+
+                            console.log(
+                                "[ForgeAI Agent] Autonomous repair verified successfully."
+                            );
+                        }
+                    }
+                }
+
                 if (
                     toolResult?.success
                 ) {
