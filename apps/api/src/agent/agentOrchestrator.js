@@ -181,15 +181,27 @@ function hasSuccessfulVerification(
         if (
             toolName === "execute_code"
         ) {
+            const execution =
+                result.execution;
+
+            if (!execution) {
+                return false;
+            }
+
             const exitCode =
-                result.exitCode;
+                execution.exitCode;
+
+            const executionSuccess =
+                execution.success === true;
+
+            const timedOut =
+                execution.timeOut === true;
 
             return (
                 result.success === true &&
-                !result.timeOut &&
+                executionSuccess &&
+                !timedOut &&
                 (
-                    exitCode === undefined ||
-                    exitCode === null ||
                     exitCode === 0 ||
                     exitCode === "0"
                 )
