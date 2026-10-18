@@ -165,7 +165,7 @@ function hasSuccessfulVerification(
     toolResults
 ) {
     return toolResults.some((result) => {
-        if (!result?.success) {
+        if (!result) {
             return false;
         }
 
@@ -188,14 +188,23 @@ function hasSuccessfulVerification(
                 return false;
             }
 
-            const exitCode =
-                execution.exitCode;
-
             const executionSuccess =
                 execution.success === true;
 
+            const exitCode =
+                execution.exitCode;
+
             const timedOut =
                 execution.timeOut === true;
+
+            /*
+             * execute_code is considered verified only when:
+             *
+             * 1. The tool itself succeeded
+             * 2. The actual execution succeeded
+             * 3. The process exited with code 0
+             * 4. The process did not timeout
+             */
 
             return (
                 result.success === true &&
