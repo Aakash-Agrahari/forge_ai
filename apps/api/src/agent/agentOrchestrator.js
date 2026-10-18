@@ -274,6 +274,79 @@ function isInfrastructureFailureResult(result) {
     );
 }
 
+function isAutonomousRepairableFailure(
+    toolName,
+    toolResult
+) {
+    if (!toolResult) {
+        return false;
+    }
+
+    if (isInfrastructureFailureResult(toolResult)) {
+        return false;
+    }
+
+    if (
+        toolName === "run_javascript_test"
+    ) {
+        return (
+            toolResult.passed === false
+        );
+    }
+
+    if (
+        toolName !== "execute_code" &&
+        toolName !== "execute_javascript" &&
+        toolName !== "run_command"
+    ) {
+        return false;
+    }
+
+    const failureType =
+        toolResult?.failureType ??
+        toolResult?.execution?.failureType ??
+        toolResult?.build?.failureType ??
+        null;
+
+    /*
+     * Explicit source/execution failures.
+     */
+    if (
+        failureType === "COMPILATION_FAILURE" ||
+        failureType === "RUNTIME_FAILURE" ||
+        failureType === "TEST_FAILURE" ||
+        failureType === "EXECUTION_FAILURE" ||
+        failureType === "TIMEOUT" ||
+        failureType === "UNKNOWN_EXECUTION_RESULT"
+    ) {
+        return true;
+    }
+
+    /*
+     * execute_code may expose the real failure
+     * inside the nested execution/build result.
+     */
+    if (
+        toolResult?.execution?.success === false ||
+        toolResult?.build?.success === false
+    ) {
+        return true;
+    }
+
+    /*
+     * Generic execution failure.
+     */
+    return (
+        toolResult.success === false ||
+        (
+            toolResult.exitCode !== undefined &&
+            toolResult.exitCode !== null &&
+            Number(toolResult.exitCode) !== 0
+        ) ||
+        toolResult.timeOut === true
+    );
+}
+
 function hasObservedExecutionFailure(
     toolResults
 ) {
@@ -645,7 +718,7 @@ export async function runAgent({
     let failureRepairPhase =
         taskRequirements.requiresFailureAndRepair
             ? "PREPARE"
-            : "NONE";
+            : "NORMAL";
 
     /*
      * ============================================================
