@@ -12,9 +12,11 @@ import errorHandler from "./middleware/errorHandler.js";
 import authRoutes from "./routes/authRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
 import fileRoutes from "./routes/fileRoutes.js";
+import folderRoutes from "./routes/folderRoutes.js";
 import conversationRoutes from "./routes/conversationRoutes.js";
 import agentRunRoutes from "./routes/agentRunRoutes.js";
 import modelRoutes from "./routes/modelRoutes.js";
+
 
 const app = express();
 
@@ -58,6 +60,9 @@ app.use("/api/v1/projects", projectRoutes);
 
 //File routes
 app.use("/api/v1/projects", fileRoutes);
+
+//Folder routes 
+app.use("/api/v1/projects", folderRoutes);
 
 //Conversation routes
 app.use("/api/v1/projects", conversationRoutes);
