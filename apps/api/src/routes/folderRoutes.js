@@ -1,6 +1,6 @@
 import express from "express";
 
-import { requireAuth } from "../middleware/authMiddleware.js";
+import requireAuth from "../middleware/auth.js";
 
 import {
     createProjectFolder,
@@ -22,12 +22,10 @@ const router = express.Router();
 router.use(requireAuth);
 
 async function verifyProjectOwnership(projectId, userId) {
-    const project = await getProjectById({
+    return getProjectById({
         projectId,
         userId
     });
-
-    return project;
 }
 
 /*
@@ -44,13 +42,20 @@ router.get("/:projectId/folders", async (req, res) => {
 
         if (!project) {
             return res.status(404).json({
-                message: "Project not found"
+                success: false,
+                error: {
+                    code: "PROJECT_NOT_FOUND",
+                    message: "Project not found"
+                }
             });
         }
 
         const folders = await getProjectFolders(projectId);
 
-        return res.json(folders);
+        return res.json({
+            success: true,
+            folders
+        });
     } catch (error) {
         console.error(
             "[FolderRoutes] Failed to get project folders:",
@@ -58,7 +63,11 @@ router.get("/:projectId/folders", async (req, res) => {
         );
 
         return res.status(500).json({
-            message: "Failed to get project folders"
+            success: false,
+            error: {
+                code: "FOLDERS_FETCH_FAILED",
+                message: "Failed to get project folders"
+            }
         });
     }
 });
@@ -77,7 +86,11 @@ router.post("/:projectId/folders", async (req, res) => {
 
         if (!project) {
             return res.status(404).json({
-                message: "Project not found"
+                success: false,
+                error: {
+                    code: "PROJECT_NOT_FOUND",
+                    message: "Project not found"
+                }
             });
         }
 
@@ -86,10 +99,14 @@ router.post("/:projectId/folders", async (req, res) => {
 
         if (!validation.success) {
             return res.status(400).json({
-                message: "Validation failed",
-                details: validation.error.issues.map(
-                    (issue) => issue.message
-                )
+                success: false,
+                error: {
+                    code: "VALIDATION_FAILED",
+                    message: "Validation failed",
+                    details: validation.error.issues.map(
+                        (issue) => issue.message
+                    )
+                }
             });
         }
 
@@ -98,7 +115,10 @@ router.post("/:projectId/folders", async (req, res) => {
             path: validation.data.path
         });
 
-        return res.status(201).json(folder);
+        return res.status(201).json({
+            success: true,
+            folder
+        });
     } catch (error) {
         console.error(
             "[FolderRoutes] Failed to create project folder:",
@@ -107,12 +127,21 @@ router.post("/:projectId/folders", async (req, res) => {
 
         if (error?.code === "P2002") {
             return res.status(409).json({
-                message: "A folder with this path already exists"
+                success: false,
+                error: {
+                    code: "FOLDER_ALREADY_EXISTS",
+                    message:
+                        "A folder with this path already exists"
+                }
             });
         }
 
         return res.status(500).json({
-            message: "Failed to create project folder"
+            success: false,
+            error: {
+                code: "FOLDER_CREATE_FAILED",
+                message: "Failed to create project folder"
+            }
         });
     }
 });
@@ -124,7 +153,10 @@ router.get(
     "/:projectId/folders/:folderId",
     async (req, res) => {
         try {
-            const { projectId, folderId } = req.params;
+            const {
+                projectId,
+                folderId
+            } = req.params;
 
             const project = await verifyProjectOwnership(
                 projectId,
@@ -133,7 +165,11 @@ router.get(
 
             if (!project) {
                 return res.status(404).json({
-                    message: "Project not found"
+                    success: false,
+                    error: {
+                        code: "PROJECT_NOT_FOUND",
+                        message: "Project not found"
+                    }
                 });
             }
 
@@ -144,11 +180,18 @@ router.get(
 
             if (!folder) {
                 return res.status(404).json({
-                    message: "Folder not found"
+                    success: false,
+                    error: {
+                        code: "FOLDER_NOT_FOUND",
+                        message: "Folder not found"
+                    }
                 });
             }
 
-            return res.json(folder);
+            return res.json({
+                success: true,
+                folder
+            });
         } catch (error) {
             console.error(
                 "[FolderRoutes] Failed to get project folder:",
@@ -156,7 +199,11 @@ router.get(
             );
 
             return res.status(500).json({
-                message: "Failed to get project folder"
+                success: false,
+                error: {
+                    code: "FOLDER_FETCH_FAILED",
+                    message: "Failed to get project folder"
+                }
             });
         }
     }
@@ -169,7 +216,10 @@ router.patch(
     "/:projectId/folders/:folderId",
     async (req, res) => {
         try {
-            const { projectId, folderId } = req.params;
+            const {
+                projectId,
+                folderId
+            } = req.params;
 
             const project = await verifyProjectOwnership(
                 projectId,
@@ -178,7 +228,11 @@ router.patch(
 
             if (!project) {
                 return res.status(404).json({
-                    message: "Project not found"
+                    success: false,
+                    error: {
+                        code: "PROJECT_NOT_FOUND",
+                        message: "Project not found"
+                    }
                 });
             }
 
@@ -187,10 +241,14 @@ router.patch(
 
             if (!validation.success) {
                 return res.status(400).json({
-                    message: "Validation failed",
-                    details: validation.error.issues.map(
-                        (issue) => issue.message
-                    )
+                    success: false,
+                    error: {
+                        code: "VALIDATION_FAILED",
+                        message: "Validation failed",
+                        details: validation.error.issues.map(
+                            (issue) => issue.message
+                        )
+                    }
                 });
             }
 
@@ -202,7 +260,11 @@ router.patch(
 
             if (result.count === 0) {
                 return res.status(404).json({
-                    message: "Folder not found"
+                    success: false,
+                    error: {
+                        code: "FOLDER_NOT_FOUND",
+                        message: "Folder not found"
+                    }
                 });
             }
 
@@ -211,7 +273,10 @@ router.patch(
                 folderId
             });
 
-            return res.json(folder);
+            return res.json({
+                success: true,
+                folder
+            });
         } catch (error) {
             console.error(
                 "[FolderRoutes] Failed to rename project folder:",
@@ -220,13 +285,21 @@ router.patch(
 
             if (error?.code === "P2002") {
                 return res.status(409).json({
-                    message:
-                        "A folder with this path already exists"
+                    success: false,
+                    error: {
+                        code: "FOLDER_ALREADY_EXISTS",
+                        message:
+                            "A folder with this path already exists"
+                    }
                 });
             }
 
             return res.status(500).json({
-                message: "Failed to rename project folder"
+                success: false,
+                error: {
+                    code: "FOLDER_RENAME_FAILED",
+                    message: "Failed to rename project folder"
+                }
             });
         }
     }
@@ -239,7 +312,10 @@ router.delete(
     "/:projectId/folders/:folderId",
     async (req, res) => {
         try {
-            const { projectId, folderId } = req.params;
+            const {
+                projectId,
+                folderId
+            } = req.params;
 
             const project = await verifyProjectOwnership(
                 projectId,
@@ -248,7 +324,11 @@ router.delete(
 
             if (!project) {
                 return res.status(404).json({
-                    message: "Project not found"
+                    success: false,
+                    error: {
+                        code: "PROJECT_NOT_FOUND",
+                        message: "Project not found"
+                    }
                 });
             }
 
@@ -259,7 +339,11 @@ router.delete(
 
             if (result.count === 0) {
                 return res.status(404).json({
-                    message: "Folder not found"
+                    success: false,
+                    error: {
+                        code: "FOLDER_NOT_FOUND",
+                        message: "Folder not found"
+                    }
                 });
             }
 
@@ -271,7 +355,11 @@ router.delete(
             );
 
             return res.status(500).json({
-                message: "Failed to delete project folder"
+                success: false,
+                error: {
+                    code: "FOLDER_DELETE_FAILED",
+                    message: "Failed to delete project folder"
+                }
             });
         }
     }
