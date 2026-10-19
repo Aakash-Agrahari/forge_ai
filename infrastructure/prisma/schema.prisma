@@ -50,6 +50,19 @@ model Project {
   @@index([updatedAt])
 }
 
+model ProjectFolder {
+  id        String   @id @default(cuid())
+  projectId String
+  path      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, path])
+  @@index([projectId])
+}
+
 model ProjectFile {
   id        String   @id @default(cuid())
   projectId String
