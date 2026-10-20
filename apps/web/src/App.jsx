@@ -10,9 +10,19 @@ import {
     getProjects,
     createProject,
     deleteProject,
+
     getProjectFiles,
+    createProjectFile,
     getProjectFile,
     updateProjectFile,
+    runProjectFile,
+
+    getProjectFolders,
+    createProjectFolder,
+    getProjectFolder,
+    renameProjectFolder,
+    deleteProjectFolder,
+
     createConversation,
     getProjectConversations,
     getConversationMessages,
