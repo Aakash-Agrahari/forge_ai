@@ -177,6 +177,7 @@ button {
 
 .panel-resizer-horizontal {
     width: 5px;
+    min-width: 5px;
     height: 100%;
     cursor: col-resize;
 }
