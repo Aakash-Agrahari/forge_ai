@@ -104,6 +104,43 @@ button {
     background: transparent;
 }
 
+.project-create-wrapper {
+    position: relative;
+}
+
+.project-create-menu {
+    position: absolute;
+    top: 28px;
+    right: 0;
+    z-index: 100;
+    width: 150px;
+    padding: 5px;
+    border: 1px solid #292e36;
+    border-radius: 7px;
+    background: #15191f;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.project-create-menu button {
+    width: 100%;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 9px;
+    border-radius: 5px;
+    background: transparent;
+    color: #b8bec8;
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.project-create-menu button:hover {
+    background: #20252d;
+    color: #f0f2f5;
+}
+
 .icon-button {
     width: 30px;
     height: 30px;
