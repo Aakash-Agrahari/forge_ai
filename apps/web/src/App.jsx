@@ -2296,7 +2296,8 @@ useEffect(() => {
                     title="Resize project panel"
                 />
 
-                <section className="editor-panel">
+                <section className="editor-panel"
+                        ref={editorPanelRef}>
 
                     <div className="editor-tabs">
 
@@ -2490,7 +2491,24 @@ useEffect(() => {
                     </div>
 
                         {executionResult && (
-                            <div className="execution-panel">
+                            <>
+                                <div
+                                    className="panel-resizer panel-resizer-vertical"
+                                    onMouseDown={(event) =>
+                                        startPanelResize(
+                                            "output",
+                                            event
+                                        )
+                                    }
+                                    title="Resize output panel"
+                                />
+
+                                <div
+                                    className="execution-panel"
+                                    style={{
+                                        height: `${outputHeight}px`,
+                                    }}
+                                >
                                 <div className="execution-header">
                                     <div className="execution-header-left">
                                         <span>OUTPUT</span>
@@ -2575,7 +2593,8 @@ useEffect(() => {
                                         )}
                                 </div>
                             </div>
-                        )}
+                        </>    
+                    )}
 
                     <div className="editor-statusbar">
 
@@ -2622,6 +2641,17 @@ useEffect(() => {
                 </section>
 
                 <aside className="agent-panel">
+
+                    <div
+                        className="panel-resizer panel-resizer-horizontal"
+                        onMouseDown={(event) =>
+                            startPanelResize(
+                                "agent",
+                                event
+                            )
+                        }
+                        title="Resize agent panel"
+                    />
 
                     <div className="agent-header">
 
