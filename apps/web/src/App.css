@@ -516,6 +516,7 @@ button {
 
 .code-editor {
     flex: 1 1 auto;
+    min-width: 0;
     min-height: 0;
     display: flex;
     overflow: auto;
@@ -1894,6 +1895,7 @@ button {
     flex-direction: column;
     border-top: 1px solid #20242b;
     background: #0b0e12;
+    overflow: hidden;
 }
 
 .execution-header {
