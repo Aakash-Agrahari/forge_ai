@@ -1553,114 +1553,271 @@ function Workspace({
      */
 
     function renderFileTree() {
-        if (loadingFiles) {
+        const normalizePath = (value = "") =>
+            value
+                .replace(/\\/g, "/")
+                .replace(/^\/+|\/+$/g, "");
+
+        const getNameFromPath = (path = "") => {
+            const normalized = normalizePath(path);
+            const parts = normalized.split("/");
+            return parts[parts.length - 1] || normalized;
+        };
+
+        const getParentPath = (path = "") => {
+            const normalized = normalizePath(path);
+            const lastSlash = normalized.lastIndexOf("/");
+
+            if (lastSlash === -1) {
+                return "";
+            }
+
+            return normalized.substring(0, lastSlash);
+        };
+
+        /*
+        * Build a virtual tree from:
+        *
+        * 1. Explicit folders stored in the database
+        * 2. Folder paths implied by existing files
+        *
+        * This means:
+        *
+        * src/
+        *   utils/
+        *     helper.js
+        *
+        * works even if only helper.js exists in the database.
+        */
+
+        const folderMap = new Map();
+
+        folders.forEach((folder) => {
+            const path = normalizePath(folder.path);
+
+            if (!path) {
+                return;
+            }
+
+            folderMap.set(path, {
+                id: folder.id,
+                path,
+                name: getNameFromPath(path),
+                explicit: true
+            });
+        });
+
+        files.forEach((file) => {
+            const normalizedPath = normalizePath(file.path);
+            const parts = normalizedPath.split("/");
+
+            if (parts.length <= 1) {
+                return;
+            }
+
+            let currentPath = "";
+
+            for (let index = 0; index < parts.length - 1; index += 1) {
+                currentPath = currentPath
+                    ? `${currentPath}/${parts[index]}`
+                    : parts[index];
+
+                if (!folderMap.has(currentPath)) {
+                    folderMap.set(currentPath, {
+                        id: `virtual-folder-${currentPath}`,
+                        path: currentPath,
+                        name: parts[index],
+                        explicit: false
+                    });
+                }
+            }
+        });
+
+        const tree = {
+            folders: new Map(),
+            files: []
+        };
+
+        /*
+        * Build folder nodes.
+        */
+        [...folderMap.values()].forEach((folder) => {
+            const parentPath = getParentPath(folder.path);
+
+            const node = {
+                ...folder,
+                folders: [],
+                files: []
+            };
+
+            tree.folders.set(folder.path, node);
+
+            if (parentPath && folderMap.has(parentPath)) {
+                const parent = tree.folders.get(parentPath);
+
+                if (parent) {
+                    parent.folders.push(node);
+                }
+            }
+        });
+
+        /*
+        * Root-level files.
+        */
+        files.forEach((file) => {
+            const normalizedPath = normalizePath(file.path);
+            const parentPath = getParentPath(normalizedPath);
+
+            if (!parentPath) {
+                tree.files.push(file);
+                return;
+            }
+
+            const parent = tree.folders.get(parentPath);
+
+            if (parent) {
+                parent.files.push(file);
+            }
+        });
+
+        const sortFiles = (items) =>
+            [...items].sort((a, b) =>
+                normalizePath(a.path).localeCompare(
+                    normalizePath(b.path),
+                    undefined,
+                    {
+                        numeric: true,
+                        sensitivity: "base"
+                    }
+                )
+            );
+
+        const sortFolders = (items) =>
+            [...items].sort((a, b) =>
+                a.name.localeCompare(
+                    b.name,
+                    undefined,
+                    {
+                        numeric: true,
+                        sensitivity: "base"
+                    }
+                )
+            );
+
+        const renderFile = (file, depth = 0) => {
+            const isActive = file.id === activeFileId;
+            const isAgentChanged = agentChangedFileIds.has(file.id);
+
             return (
-                <div className="file-tree-status">
-                    Loading files...
+                <button
+                    key={`file-${file.id}`}
+                    type="button"
+                    className={`file-tree-item ${isActive ? "active" : ""}`}
+                    style={{
+                        paddingLeft: `${12 + depth * 18}px`
+                    }}
+                    onClick={() => {
+                        setActiveFileId(file.id);
+                    }}
+                    title={file.path}
+                >
+                    <span className="file-tree-icon">
+                        {getFileIcon(file.path)}
+                    </span>
+
+                    <span className="file-tree-name">
+                        {getFileName(file.path)}
+                    </span>
+
+                    {isAgentChanged && (
+                        <span
+                            className="file-tree-agent-dot"
+                            title="Changed by ForgeAI"
+                        />
+                    )}
+                </button>
+            );
+        };
+
+        const renderFolder = (folder, depth = 0) => {
+            const isExpanded = expandedFolders.has(folder.id);
+
+            const childFolders = sortFolders(folder.folders);
+            const childFiles = sortFiles(folder.files);
+
+            return (
+                <div
+                    key={`folder-${folder.path}`}
+                    className="file-tree-folder"
+                >
+                    <button
+                        type="button"
+                        className="file-tree-folder-item"
+                        style={{
+                            paddingLeft: `${12 + depth * 18}px`
+                        }}
+                        onClick={() => {
+                            toggleFolder(folder.id);
+                        }}
+                        title={folder.path}
+                    >
+                        <span className="file-tree-chevron">
+                            {isExpanded ? "⌄" : "›"}
+                        </span>
+
+                        <span className="file-tree-folder-icon">
+                            {isExpanded ? "📂" : "📁"}
+                        </span>
+
+                        <span className="file-tree-name">
+                            {folder.name}
+                        </span>
+                    </button>
+
+                    {isExpanded && (
+                        <div className="file-tree-folder-children">
+                            {childFolders.map((childFolder) =>
+                                renderFolder(
+                                    childFolder,
+                                    depth + 1
+                                )
+                            )}
+
+                            {childFiles.map((file) =>
+                                renderFile(
+                                    file,
+                                    depth + 1
+                                )
+                            )}
+                        </div>
+                    )}
                 </div>
             );
-        }
+        };
 
-        if (files.length === 0) {
-            return (
-                <div className="file-tree-status">
-                    This project has no files yet.
-                </div>
-            );
-        }
-
-        const sortedFiles = [...files].sort(
-            (a, b) =>
-                a.path.localeCompare(b.path)
+        const rootFolders = sortFolders(
+            [...folderMap.values()].filter(
+                (folder) =>
+                    getParentPath(folder.path) === ""
+            )
         );
 
         return (
-            <div
-                className="file-tree"
-                style={{
-                    maxHeight: "calc(100vh - 245px)",
-                    overflowY: "auto",
-                    overflowX: "hidden",
-                    minHeight: 0,
-                }}
-            >
-                {sortedFiles.map((file) => {
-                    const isActive =
-                        file.id === activeFileId;
+            <div className="file-tree">
+                {rootFolders.map((folder) =>
+                    renderFolder(folder, 0)
+                )}
 
-                    return (
-                        <button
-                            key={file.id}
-                            className={`tree-item file ${
-                                isActive
-                                    ? "active"
-                                    : ""
-                            }`}
-                            onClick={() => {
-                              if (file.id === activeFileId) {
-                                  return;
-                              }
+                {sortFiles(tree.files).map((file) =>
+                    renderFile(file, 0)
+                )}
 
-                              if (hasUnsavedChanges) {
-                                  const confirmed = window.confirm(
-                                      "You have unsaved changes. Discard them and open another file?"
-                                  );
-
-                                  if (!confirmed) {
-                                      return;
-                                  }
-                              }
-
-                              setActiveFileId(file.id);
-                          }}
-                            title={file.path}
-                        >
-                            <span className="tree-icon">
-                                {getFileIcon(
-                                    file.path
-                                )}
-                            </span>
-
-                            <span className="tree-file-content">
-                              <span className="tree-file-name">
-                                  {getFileName(
-                                      file.path
-                                  )}
-
-                                  {agentChangedFileIds.has(file.id) && (
-                                      <span
-                                          className="tree-unsaved-indicator"
-                                          title="Changed by ForgeAI"
-                                      >
-                                          ●
-                                      </span>
-                                  )}
-
-                                  {file.id === activeFileId &&
-                                      hasUnsavedChanges &&
-                                      !agentChangedFileIds.has(file.id) && (
-                                          <span
-                                              className="tree-unsaved-indicator"
-                                              title="Unsaved changes"
-                                          >
-                                              ●
-                                          </span>
-                                      )}
-                              </span>
-
-                              {getDirectory(
-                                  file.path
-                              ) !== "root" && (
-                                  <span className="tree-file-directory">
-                                      {getDirectory(
-                                          file.path
-                                      )}
-                                  </span>
-                              )}
-                          </span>
-                        </button>
-                    );
-                })}
+                {rootFolders.length === 0 &&
+                    tree.files.length === 0 && (
+                        <div className="file-tree-empty">
+                            No files yet
+                        </div>
+                    )}
             </div>
         );
     }
