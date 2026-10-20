@@ -1888,7 +1888,7 @@ button {
 
 .execution-panel {
     flex-shrink: 0;
-    height: 180px;
+    height: 160px;
     display: flex;
     flex-direction: column;
     border-top: 1px solid #20242b;
