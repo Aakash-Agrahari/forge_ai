@@ -192,7 +192,9 @@ export async function runProjectFile(
     );
 }
 
-/* Project folders */
+/*===============================
+ Project folders 
+ ==============================*/
 export async function getProjectFolders(projectId) {
     return apiRequest(`/projects/${projectId}/folders`);
 }
