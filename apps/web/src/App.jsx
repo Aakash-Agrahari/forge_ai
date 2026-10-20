@@ -2640,18 +2640,18 @@ useEffect(() => {
 
                 </section>
 
-                <aside className="agent-panel">
+                <div
+                    className="panel-resizer panel-resizer-horizontal"
+                    onMouseDown={(event) =>
+                        startPanelResize(
+                            "agent",
+                            event
+                        )
+                    }
+                    title="Resize agent panel"
+                />
 
-                    <div
-                        className="panel-resizer panel-resizer-horizontal"
-                        onMouseDown={(event) =>
-                            startPanelResize(
-                                "agent",
-                                event
-                            )
-                        }
-                        title="Resize agent panel"
-                    />
+                <aside className="agent-panel">
 
                     <div className="agent-header">
 
