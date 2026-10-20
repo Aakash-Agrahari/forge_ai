@@ -1530,6 +1530,22 @@ function Workspace({
         return "◇";
     }
 
+    function toggleFolder(folderId) {
+        setExpandedFolders((currentExpanded) => {
+            const nextExpanded = new Set(
+                currentExpanded
+            );
+
+            if (nextExpanded.has(folderId)) {
+                nextExpanded.delete(folderId);
+            } else {
+                nextExpanded.add(folderId);
+            }
+
+            return nextExpanded;
+        });
+    }
+
     /*
      * =========================
      * RENDER FILE TREE
