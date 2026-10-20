@@ -221,6 +221,7 @@ button {
     display: flex;
     flex-direction: column;
     padding-top: 4px;
+    overflow: hidden;
 }
 
 .project-heading {
