@@ -888,10 +888,63 @@ function Workspace({
         }
     }
 
+    //changes is done hereeeeeeeeeeeee
     async function refreshProjectFiles({ markAgentChanges = false } = {}) {
-        if (!project?.id) {
-            return null;
+        return refreshProjectStructure({ markAgentChanges });
+    }
+
+    async function handleCreateProjectItem(type) {
+        if (!project?.id || creatingItem) {
+            return;
         }
+
+        const itemName = window.prompt(
+            type === "file"
+                ? "Enter file path (example: src/App.java)"
+                : "Enter folder path (example: src/components)"
+        );
+
+        if (!itemName || !itemName.trim()) {
+            return;
+        }
+
+        const path = itemName
+            .trim()
+            .replace(/\\/g, "/")
+            .replace(/^\/+|\/+$/g, "");
+
+        if (!path) {
+            return;
+        }
+
+        try {
+            setCreatingItem(true);
+            setError("");
+            setShowCreateMenu(false);
+
+            if (type === "file") {
+                await createProjectFile(project.id, {
+                    path,
+                    content: ""
+                });
+            } else {
+                await createProjectFolder(project.id, {
+                    path
+                });
+            }
+
+            await refreshProjectStructure();
+        } catch (err) {
+            console.error(`Failed to create ${type}:`, err);
+
+            setError(
+                err?.message ||
+                `Failed to create ${type === "file" ? "file" : "folder"}`
+            );
+        } finally {
+            setCreatingItem(false);
+        }
+    }
 
         try {
             const response = await getProjectFiles(project.id);
