@@ -2214,9 +2214,14 @@ function Workspace({
 
                             <button
                                 className="editor-action"
-                                disabled={!activeFile}
+                                onClick={handleRunFile}
+                                disabled={
+                                    !activeFile ||
+                                    running ||
+                                    loadingFile
+                                }
                             >
-                                Run
+                                {running ? "Running..." : "Run"}
                             </button>
 
                             <button
@@ -2332,6 +2337,82 @@ function Workspace({
                         )}
 
                     </div>
+
+                        {executionResult && (
+                            <div className="execution-panel">
+                                <div className="execution-header">
+                                    <span>OUTPUT</span>
+
+                                    <span
+                                        className={
+                                            executionResult?.success === true
+                                                ? "execution-success"
+                                                : "execution-failure"
+                                        }
+                                    >
+                                        {executionResult?.success === true
+                                            ? "SUCCESS"
+                                            : "FAILED"}
+                                    </span>
+                                </div>
+
+                                <div className="execution-body">
+                                    {executionResult?.build && (
+                                        <>
+                                            <div className="execution-section-title">
+                                                BUILD
+                                            </div>
+
+                                            {executionResult.build.stdout && (
+                                                <pre className="execution-stdout">
+                                                    {executionResult.build.stdout}
+                                                </pre>
+                                            )}
+
+                                            {executionResult.build.stderr && (
+                                                <pre className="execution-stderr">
+                                                    {executionResult.build.stderr}
+                                                </pre>
+                                            )}
+                                        </>
+                                    )}
+
+                                    {executionResult?.execution && (
+                                        <>
+                                            <div className="execution-section-title">
+                                                EXECUTION
+                                            </div>
+
+                                            {executionResult.execution.stdout && (
+                                                <pre className="execution-stdout">
+                                                    {executionResult.execution.stdout}
+                                                </pre>
+                                            )}
+
+                                            {executionResult.execution.stderr && (
+                                                <pre className="execution-stderr">
+                                                    {executionResult.execution.stderr}
+                                                </pre>
+                                            )}
+
+                                            {!executionResult.execution.stdout &&
+                                                !executionResult.execution.stderr && (
+                                                    <pre className="execution-stdout">
+                                                        No output.
+                                                    </pre>
+                                                )}
+                                        </>
+                                    )}
+
+                                    {!executionResult?.execution &&
+                                        executionResult?.stderr && (
+                                            <pre className="execution-stderr">
+                                                {executionResult.stderr}
+                                            </pre>
+                                        )}
+                                </div>
+                            </div>
+                        )}
 
                     <div className="editor-statusbar">
 
