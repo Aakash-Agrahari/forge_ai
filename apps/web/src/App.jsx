@@ -779,131 +779,131 @@ function Workspace({
         project?.name || "ForgeAI Project";
 
     function startPanelResize(type, event) {
-        event.preventDefault();
+    event.preventDefault();
 
-        resizeStateRef.current = {
-            type,
-            startX: event.clientX,
-            startY: event.clientY,
-            startSidebarWidth: sidebarWidth,
-            startAgentWidth: agentWidth,
-            startOutputHeight: outputHeight,
-        };
+    resizeStateRef.current = {
+        type,
+        startX: event.clientX,
+        startY: event.clientY,
+        startSidebarWidth: sidebarWidth,
+        startAgentWidth: agentWidth,
+        startOutputHeight: outputHeight,
+    };
 
-        if (type === "sidebar" || type === "agent") {
-            document.body.style.cursor = "col-resize";
-        }
-
-        if (type === "output") {
-            document.body.style.cursor = "row-resize";
-        }
-
-        document.body.style.userSelect = "none";
+    if (type === "sidebar" || type === "agent") {
+        document.body.style.cursor = "col-resize";
     }
 
-    useEffect(() => {
-        function handlePanelResize(event) {
-            const resizeState = resizeStateRef.current;
+    if (type === "output") {
+        document.body.style.cursor = "row-resize";
+    }
 
-            if (!resizeState) {
+    document.body.style.userSelect = "none";
+}
+
+useEffect(() => {
+    function handlePanelResize(event) {
+        const resizeState = resizeStateRef.current;
+
+        if (!resizeState) {
+            return;
+        }
+
+        if (resizeState.type === "sidebar") {
+            const deltaX =
+                event.clientX - resizeState.startX;
+
+            const nextWidth =
+                resizeState.startSidebarWidth + deltaX;
+
+            setSidebarWidth(
+                Math.min(
+                    420,
+                    Math.max(160, nextWidth)
+                )
+            );
+        }
+
+        if (resizeState.type === "agent") {
+            const deltaX =
+                resizeState.startX - event.clientX;
+
+            const nextWidth =
+                resizeState.startAgentWidth + deltaX;
+
+            setAgentWidth(
+                Math.min(
+                    600,
+                    Math.max(280, nextWidth)
+                )
+            );
+        }
+
+        if (resizeState.type === "output") {
+            const deltaY =
+                resizeState.startY - event.clientY;
+
+            const editorPanel =
+                editorPanelRef.current;
+
+            if (!editorPanel) {
                 return;
             }
 
-            if (resizeState.type === "sidebar") {
-                const deltaX =
-                    event.clientX - resizeState.startX;
+            const editorHeight =
+                editorPanel.getBoundingClientRect().height;
 
-                const nextWidth =
-                    resizeState.startSidebarWidth + deltaX;
+            const maxOutputHeight =
+                Math.max(180, editorHeight - 260);
 
-                setSidebarWidth(
-                    Math.min(
-                        420,
-                        Math.max(160, nextWidth)
-                    )
-                );
-            }
+            const nextHeight =
+                resizeState.startOutputHeight + deltaY;
 
-            if (resizeState.type === "agent") {
-                const deltaX =
-                    resizeState.startX - event.clientX;
-
-                const nextWidth =
-                    resizeState.startAgentWidth + deltaX;
-
-                setAgentWidth(
-                    Math.min(
-                        600,
-                        Math.max(280, nextWidth)
-                    )
-                );
-            }
-
-            if (resizeState.type === "output") {
-                const deltaY =
-                    resizeState.startY - event.clientY;
-
-                const editorPanel =
-                    editorPanelRef.current;
-
-                if (!editorPanel) {
-                    return;
-                }
-
-                const editorHeight =
-                    editorPanel.getBoundingClientRect().height;
-
-                const maxOutputHeight =
-                    Math.max(180, editorHeight - 260);
-
-                const nextHeight =
-                    resizeState.startOutputHeight + deltaY;
-
-                setOutputHeight(
-                    Math.min(
-                        maxOutputHeight,
-                        Math.max(80, nextHeight)
-                    )
-                );
-            }
+            setOutputHeight(
+                Math.min(
+                    maxOutputHeight,
+                    Math.max(80, nextHeight)
+                )
+            );
         }
+    }
 
-        function stopPanelResize() {
-            resizeStateRef.current = null;
+    function stopPanelResize() {
+        resizeStateRef.current = null;
 
-            document.body.style.cursor = "";
-            document.body.style.userSelect = "";
-        }
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+    }
 
-        window.addEventListener(
+    window.addEventListener(
+        "mousemove",
+        handlePanelResize
+    );
+
+    window.addEventListener(
+        "mouseup",
+        stopPanelResize
+    );
+
+    return () => {
+        window.removeEventListener(
             "mousemove",
             handlePanelResize
         );
 
-        window.addEventListener(
+        window.removeEventListener(
             "mouseup",
             stopPanelResize
         );
 
-        return () => {
-            window.removeEventListener(
-                "mousemove",
-                handlePanelResize
-            );
-
-            window.removeEventListener(
-                "mouseup",
-                stopPanelResize
-            );
-
-            document.body.style.cursor = "";
-            document.body.style.userSelect = "";
-        };
-    }, [
-        sidebarWidth,
-        agentWidth,
-        outputHeight,
-    ]);    
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+    };
+}, [
+    sidebarWidth,
+    agentWidth,
+    outputHeight,
+]);    
 
     async function loadConversationHistory(projectId) {
         if (!projectId) {
@@ -2168,7 +2168,13 @@ function Workspace({
 
             </header>
 
-            <main className="workspace">
+            <main
+                className="workspace"
+                style={{
+                    "--sidebar-width": `${sidebarWidth}px`,
+                    "--agent-width": `${agentWidth}px`,
+                }}
+            >
 
                 <aside className="sidebar">
 
@@ -2278,6 +2284,17 @@ function Workspace({
                     </div>
 
                 </aside>
+
+                <div
+                    className="panel-resizer panel-resizer-horizontal"
+                    onMouseDown={(event) =>
+                        startPanelResize(
+                            "sidebar",
+                            event
+                        )
+                    }
+                    title="Resize project panel"
+                />
 
                 <section className="editor-panel">
 
