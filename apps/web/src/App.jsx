@@ -2341,19 +2341,31 @@ function Workspace({
                         {executionResult && (
                             <div className="execution-panel">
                                 <div className="execution-header">
-                                    <span>OUTPUT</span>
+                                    <div className="execution-header-left">
+                                        <span>OUTPUT</span>
 
-                                    <span
-                                        className={
-                                            executionResult?.success === true
-                                                ? "execution-success"
-                                                : "execution-failure"
-                                        }
+                                        <span
+                                            className={
+                                                executionResult?.success === true
+                                                    ? "execution-success"
+                                                    : "execution-failure"
+                                            }
+                                        >
+                                            {executionResult?.success === true
+                                                ? "SUCCESS"
+                                                : "FAILED"}
+                                        </span>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        className="execution-close"
+                                        onClick={() => setExecutionResult(null)}
+                                        title="Close output"
+                                        aria-label="Close output"
                                     >
-                                        {executionResult?.success === true
-                                            ? "SUCCESS"
-                                            : "FAILED"}
-                                    </span>
+                                        ×
+                                    </button>
                                 </div>
 
                                 <div className="execution-body">
