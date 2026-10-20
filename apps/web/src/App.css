@@ -759,27 +759,31 @@ button {
 /*SCROLLBARS*/
 .conversation::-webkit-scrollbar,
 .code-editor::-webkit-scrollbar,
-.file-tree::-webkit-scrollbar {
+.file-tree::-webkit-scrollbar,
+.execution-body::-webkit-scrollbar {
     width: 7px;
     height: 7px;
 }
 
 .conversation::-webkit-scrollbar-track,
 .code-editor::-webkit-scrollbar-track,
-.file-tree::-webkit-scrollbar-track {
+.file-tree::-webkit-scrollbar-track,
+.execution-body::-webkit-scrollbar-track {
     background: transparent;
 }
 
 .conversation::-webkit-scrollbar-thumb,
 .code-editor::-webkit-scrollbar-thumb,
-.file-tree::-webkit-scrollbar-thumb {
+.file-tree::-webkit-scrollbar-thumb,
+.execution-body::-webkit-scrollbar-thumb {
     background: #292e36;
     border-radius: 10px;
 }
 
 .conversation::-webkit-scrollbar-thumb:hover,
 .code-editor::-webkit-scrollbar-thumb:hover,
-.file-tree::-webkit-scrollbar-thumb:hover {
+.file-tree::-webkit-scrollbar-thumb:hover,
+.execution-body::-webkit-scrollbar-thumb:hover {
     background: #363c46;
 }
 
