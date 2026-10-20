@@ -192,6 +192,54 @@ export async function runProjectFile(
     );
 }
 
+/* Project folders */
+export async function getProjectFolders(projectId) {
+    return apiRequest(`/projects/${projectId}/folders`);
+}
+
+export async function createProjectFolder(projectId, { path }) {
+    return apiRequest(`/projects/${projectId}/folders`, {
+        method: "POST",
+        body: JSON.stringify({
+            path
+        })
+    });
+}
+
+export async function getProjectFolder(projectId, folderId) {
+    return apiRequest(
+        `/projects/${projectId}/folders/${folderId}`
+    );
+}
+
+export async function renameProjectFolder(
+    projectId,
+    folderId,
+    path
+) {
+    return apiRequest(
+        `/projects/${projectId}/folders/${folderId}`,
+        {
+            method: "PATCH",
+            body: JSON.stringify({
+                path
+            })
+        }
+    );
+}
+
+export async function deleteProjectFolder(
+    projectId,
+    folderId
+) {
+    return apiRequest(
+        `/projects/${projectId}/folders/${folderId}`,
+        {
+            method: "DELETE"
+        }
+    );
+}
+
 /* =========================
    CONVERSATIONS
 ========================= */
