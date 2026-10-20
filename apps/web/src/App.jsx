@@ -2430,19 +2430,31 @@ function Workspace({
 
                         <span>
                             {activeFile
-                                ? activeFile.path.endsWith(
-                                      ".json"
-                                  )
-                                    ? "JSON"
-                                    : activeFile.path.endsWith(
-                                            ".css"
-                                        )
-                                      ? "CSS"
-                                      : activeFile.path.endsWith(
-                                              ".jsx"
-                                          )
-                                        ? "JavaScript React"
-                                        : "JavaScript"
+                                ? activeFile.path.endsWith(".java")
+                                    ? "Java"
+                                    : activeFile.path.endsWith(".py")
+                                        ? "Python"
+                                        : activeFile.path.endsWith(".js")
+                                            ? "JavaScript"
+                                            : activeFile.path.endsWith(".jsx")
+                                                ? "JavaScript React"
+                                                : activeFile.path.endsWith(".ts")
+                                                    ? "TypeScript"
+                                                    : activeFile.path.endsWith(".tsx")
+                                                        ? "TypeScript React"
+                                                        : activeFile.path.endsWith(".json")
+                                                            ? "JSON"
+                                                            : activeFile.path.endsWith(".css")
+                                                                ? "CSS"
+                                                                : activeFile.path.endsWith(".html")
+                                                                    ? "HTML"
+                                                                    : activeFile.path.endsWith(".c")
+                                                                        ? "C"
+                                                                        : activeFile.path.endsWith(".cpp")
+                                                                            ? "C++"
+                                                                            : activeFile.path.endsWith(".rs")
+                                                                                ? "Rust"
+                                                                                : "Plain Text"
                                 : "No file"}
                         </span>
 
