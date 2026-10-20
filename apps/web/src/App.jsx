@@ -733,6 +733,8 @@ function Workspace({
     const [folders, setFolders] = useState([]);
     const [expandedFolders, setExpandedFolders] = 
         useState(new Set());
+    const [showCreateMenu, setShowCreateMenu] = useState(false);
+    const [creatingItem, setCreatingItem] = useState(false);    
     const [agentChangedFileIds, setAgentChangedFileIds] =
         useState(new Set());
     const [activeFileId, setActiveFileId] = useState(null);
@@ -851,6 +853,40 @@ function Workspace({
             behavior: "smooth",
         });
     }, [conversationMessages, sendingMessage]);
+
+    async function refreshProjectStructure({ markAgentChanges = false } = {}) {
+        if (!project?.id) {
+            return null;
+        }
+
+        try {
+            const [fileResponse, folderResponse] = await Promise.all([
+                getProjectFiles(project.id),
+                getProjectFolders(project.id)
+            ]);
+
+            const nextFiles = fileResponse?.files || [];
+            const nextFolders = folderResponse?.folders || [];
+
+            setFiles(nextFiles);
+            setFolders(nextFolders);
+
+            if (markAgentChanges) {
+                setAgentChangedFileIds(
+                    new Set(nextFiles.map((file) => file.id))
+                );
+            }
+
+            return {
+                files: nextFiles,
+                folders: nextFolders
+            };
+        } catch (err) {
+            console.error("Failed to refresh project structure:", err);
+            setError(err?.message || "Failed to refresh project structure");
+            return null;
+        }
+    }
 
     async function refreshProjectFiles({ markAgentChanges = false } = {}) {
         if (!project?.id) {
@@ -1545,6 +1581,8 @@ function Workspace({
             return nextExpanded;
         });
     }
+
+    
 
     /*
      * =========================
