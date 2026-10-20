@@ -1153,7 +1153,7 @@ function Workspace({
     useEffect(() => {
         let cancelled = false;
 
-        async function loadFiles() {
+        async function loadProjectStructure() {
             if (!project?.id) {
                 return;
             }
@@ -1163,17 +1163,26 @@ function Workspace({
             setSaveMessage("");
 
             try {
-                const response =
-                    await getProjectFiles(project.id);
+                const [
+                    filesResponse,
+                    foldersResponse
+                ] = await Promise.all([
+                    getProjectFiles(project.id),
+                    getProjectFolders(project.id)
+                ]);
 
                 if (cancelled) {
                     return;
                 }
 
                 const projectFiles =
-                    response?.files || [];
+                    filesResponse?.files || [];
+
+                const projectFolders =
+                    foldersResponse?.folders || [];
 
                 setFiles(projectFiles);
+                setFolders(projectFolders);
 
                 setActiveFileId(
                     (currentActiveFileId) => {
@@ -1195,6 +1204,34 @@ function Workspace({
                     }
                 );
 
+                /*
+                * Automatically expand folders that
+                * already contain files.
+                */
+                setExpandedFolders((currentExpanded) => {
+                    const nextExpanded = new Set(
+                        currentExpanded
+                    );
+
+                    projectFolders.forEach((folder) => {
+                        const folderPrefix =
+                            `${folder.path}/`;
+
+                        const hasFiles =
+                            projectFiles.some((file) =>
+                                file.path.startsWith(
+                                    folderPrefix
+                                )
+                            );
+
+                        if (hasFiles) {
+                            nextExpanded.add(folder.id);
+                        }
+                    });
+
+                    return nextExpanded;
+                });
+
                 if (projectFiles.length === 0) {
                     setActiveFile(null);
                     setFileContent("");
@@ -1204,7 +1241,7 @@ function Workspace({
                 if (!cancelled) {
                     setError(
                         requestError.message ||
-                            "Unable to load project files."
+                            "Unable to load project files and folders."
                     );
                 }
             } finally {
@@ -1214,7 +1251,7 @@ function Workspace({
             }
         }
 
-        loadFiles();
+        loadProjectStructure();
 
         return () => {
             cancelled = true;
