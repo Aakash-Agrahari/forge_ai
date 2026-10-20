@@ -730,6 +730,9 @@ function Workspace({
     onBackToDashboard,
 }) {
     const [files, setFiles] = useState([]);
+    const [folders, setFolders] = useState([]);
+    const [expandedFolders, setExpandedFolders] = 
+        useState(new Set());
     const [agentChangedFileIds, setAgentChangedFileIds] =
         useState(new Set());
     const [activeFileId, setActiveFileId] = useState(null);
