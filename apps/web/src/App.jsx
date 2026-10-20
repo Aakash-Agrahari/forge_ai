@@ -2025,12 +2025,36 @@ function Workspace({
                                 PROJECT
                             </span>
 
-                            <button
-                                className="small-icon-button"
-                                title="Create file"
-                            >
-                                +
-                            </button>
+                            <div className="project-create-wrapper">
+                                <button
+                                    className="small-icon-button"
+                                    title="Create file or folder"
+                                    onClick={() => setShowCreateMenu((current) => !current)}
+                                    disabled={creatingItem}
+                                >
+                                    +
+                                </button>
+
+                                {showCreateMenu && (
+                                    <div className="project-create-menu">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleCreateProjectItem("file")}
+                                        >
+                                            <span>📄</span>
+                                            <span>New File</span>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => handleCreateProjectItem("folder")}
+                                        >
+                                            <span>📁</span>
+                                            <span>New Folder</span>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
 
                         </div>
 
