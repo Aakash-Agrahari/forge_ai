@@ -854,7 +854,14 @@ button {
 /*RESPONSIVE*/
 @media (max-width: 1050px) {
     .workspace {
-        grid-template-columns: 190px minmax(0, 1fr);
+        grid-template-columns:
+            var(--sidebar-width, 190px)
+            5px
+            minmax(0, 1fr);
+    }
+
+    .panel-resizer-horizontal:last-of-type {
+        display: none;
     }
 
     .agent-panel {
@@ -871,7 +878,8 @@ button {
         grid-template-columns: 1fr;
     }
 
-    .sidebar {
+    .sidebar,
+    .panel-resizer {
         display: none;
     }
 
