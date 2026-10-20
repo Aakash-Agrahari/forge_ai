@@ -45,6 +45,8 @@ function AuthScreen({ onAuthenticated }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
+
+
     async function handleSubmit(event) {
         event.preventDefault();
 
@@ -748,6 +750,8 @@ function Workspace({
     const [loadingFiles, setLoadingFiles] = useState(true);
     const [loadingFile, setLoadingFile] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [running, setRunning] = useState(false);
+    const [executionResult, setExecutionResult] = useState(null);
 
     const [error, setError] = useState("");
     const [saveMessage, setSaveMessage] = useState("");
@@ -1405,6 +1409,120 @@ function Workspace({
         }
     }
 
+    /*
+    * =========================
+    * RUN FILE
+    * =========================
+    */
+
+    async function handleRunFile() {
+        if (
+            !project?.id ||
+            !activeFileId ||
+            !activeFile
+        ) {
+            return;
+        }
+
+        setRunning(true);
+        setError("");
+        setExecutionResult(null);
+        setSaveMessage("");
+
+        try {
+            /*
+            * Always save the current editor content
+            * before execution so the backend runs
+            * exactly what is visible in the editor.
+            */
+            if (hasUnsavedChanges) {
+                const saveResponse =
+                    await updateProjectFile(
+                        project.id,
+                        activeFileId,
+                        fileContent
+                    );
+
+                const updatedFile =
+                    saveResponse?.file || null;
+
+                if (!updatedFile) {
+                    throw new Error(
+                        "Unable to save the file before execution."
+                    );
+                }
+
+                setActiveFile(updatedFile);
+
+                setFileContent(
+                    updatedFile.content || ""
+                );
+
+                setOriginalContent(
+                    updatedFile.content || ""
+                );
+
+                setFiles((currentFiles) =>
+                    currentFiles.map((file) =>
+                        file.id === updatedFile.id
+                            ? updatedFile
+                            : file
+                    )
+                );
+
+                setAgentChangedFileIds((currentIds) => {
+                    const nextIds = new Set(currentIds);
+                    nextIds.delete(updatedFile.id);
+                    return nextIds;
+                });
+            }
+
+            /*
+            * Execute the selected project file
+            * through the existing backend execution
+            * service and sandbox.
+            */
+            const response =
+                await runProjectFile(
+                    project.id,
+                    activeFileId
+                );
+
+            setExecutionResult(
+                response?.result ||
+                response?.executionResult ||
+                response?.data ||
+                response
+            );
+        } catch (requestError) {
+            console.error(
+                "Failed to run file:",
+                requestError
+            );
+
+            setExecutionResult({
+                success: false,
+                stage: "execution",
+                execution: {
+                    success: false,
+                    exitCode: null,
+                    stdout: "",
+                    stderr:
+                        requestError?.message ||
+                        "Unable to execute the file.",
+                    status: "failed"
+                }
+            });
+
+            setError(
+                requestError?.message ||
+                "Unable to execute the file."
+            );
+        } finally {
+            setRunning(false);
+        }
+    }
+
     saveFileRef.current = handleSaveFile;
 
     /*
@@ -1808,7 +1926,7 @@ function Workspace({
         };
 
         const rootFolders = sortFolders(
-            [...folderMap.values()].filter(
+            [...tree.folders.values()].filter(
                 (folder) =>
                     getParentPath(folder.path) === ""
             )
