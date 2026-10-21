@@ -759,6 +759,7 @@ function Workspace({
     const [message, setMessage] = useState("");
 
     const saveFileRef = useRef(null);
+    const allowPageReloadRef = useRef(false);
 
     const editorPanelRef = useRef(null);
     const resizeStateRef = useRef(null);
@@ -1674,6 +1675,69 @@ useEffect(() => {
             handleSaveFile();
         }
     }
+
+
+    useEffect(() => {
+        function handleBeforeUnload(event) {
+            if (
+                !hasUnsavedChanges ||
+                allowPageReloadRef.current
+            ) {
+                return;
+            }
+
+            event.preventDefault();
+            event.returnValue = "";
+        }
+
+        function handleRefreshShortcut(event) {
+            const isRefresh =
+                event.key === "F5" ||
+                (
+                    (event.ctrlKey || event.metaKey) &&
+                    event.key.toLowerCase() === "r"
+                );
+
+            if (!isRefresh || !hasUnsavedChanges) {
+                return;
+            }
+
+            event.preventDefault();
+
+            const shouldReload = window.confirm(
+                "You have unsaved changes. If you refresh, all unsaved changes will be lost. Do you want to continue?"
+            );
+
+            if (!shouldReload) {
+                return;
+            }
+
+            allowPageReloadRef.current = true;
+            window.location.reload();
+        }
+
+        window.addEventListener(
+            "beforeunload",
+            handleBeforeUnload
+        );
+
+        window.addEventListener(
+            "keydown",
+            handleRefreshShortcut
+        );
+
+        return () => {
+            window.removeEventListener(
+                "beforeunload",
+                handleBeforeUnload
+            );
+
+            window.removeEventListener(
+                "keydown",
+                handleRefreshShortcut
+            );
+        };
+    }, [hasUnsavedChanges]);
 
     /*
      * =========================
