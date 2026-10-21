@@ -16,6 +16,7 @@ import folderRoutes from "./routes/folderRoutes.js";
 import conversationRoutes from "./routes/conversationRoutes.js";
 import agentRunRoutes from "./routes/agentRunRoutes.js";
 import modelRoutes from "./routes/modelRoutes.js";
+import projectArchiveRoutes from "./routes/projectArchiveRoutes.js";
 
 
 const app = express();
@@ -72,6 +73,9 @@ app.use("/api/v1/projects", agentRunRoutes);
 
 //Model routes test endpoint
 app.use("/api/v1/models", modelRoutes);
+
+//Project archive routes
+app.use("/api/v1/projects", projectArchiveRoutes);
 
 //404 handler
 app.use(notFound);
