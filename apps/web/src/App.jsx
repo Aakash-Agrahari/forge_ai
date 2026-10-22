@@ -829,6 +829,7 @@ function Workspace({
     const [saving, setSaving] = useState(false);
     const [running, setRunning] = useState(false);
     const [executionResult, setExecutionResult] = useState(null);
+    const [exporting, setExporting] = useState(false);
 
     const [error, setError] = useState("");
     const [saveMessage, setSaveMessage] = useState("");
@@ -1367,6 +1368,56 @@ useEffect(() => {
             );
         } finally {
             setSendingMessage(false);
+        }
+    }
+
+
+    async function handleExportProject() {
+        if (!project?.id || exporting) {
+            return;
+        }
+
+        try {
+            setExporting(true);
+            setError("");
+
+            const blob = await exportProjectZip(project.id);
+
+            const url = window.URL.createObjectURL(blob);
+
+            const link = document.createElement("a");
+
+            link.href = url;
+
+            const safeProjectName =
+                (project.name || "forgeai-project")
+                    .replace(/[^a-zA-Z0-9-_ ]/g, "")
+                    .trim()
+                    .replace(/\s+/g, "-") ||
+                "forgeai-project";
+
+            link.download =
+                `${safeProjectName}.zip`;
+
+            document.body.appendChild(link);
+
+            link.click();
+
+            link.remove();
+
+            window.URL.revokeObjectURL(url);
+        } catch (requestError) {
+            console.error(
+                "Failed to export project:",
+                requestError
+            );
+
+            setError(
+                requestError.message ||
+                "Unable to export the project."
+            );
+        } finally {
+            setExporting(false);
         }
     }
 
