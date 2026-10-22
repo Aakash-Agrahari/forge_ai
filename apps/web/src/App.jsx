@@ -10,6 +10,8 @@ import {
     getProjects,
     createProject,
     deleteProject,
+    importProjectZip,
+    exportProjectZip,
 
     getProjectFiles,
     createProjectFile,
