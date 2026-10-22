@@ -2072,3 +2072,42 @@ button {
     margin-top: 8px !important;
     color: #ff7777;
 }
+
+
+//css for import export zip file
+.dashboard-title-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.import-project-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 16px;
+    border: 1px solid #2a3038;
+    border-radius: 8px;
+    background: #15191f;
+    color: #d7dce3;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
+}
+
+.import-project-button:hover:not(:disabled) {
+    background: #1b2027;
+    border-color: #3a424d;
+    color: #ffffff;
+}
+
+.import-project-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
