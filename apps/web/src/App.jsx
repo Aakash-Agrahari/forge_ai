@@ -2558,6 +2558,15 @@ useEffect(() => {
 
                             <button
                                 className="editor-action"
+                                onClick={handleExportProject}
+                                disabled={exporting}
+                                title="Download this project as a ZIP"
+                            >
+                                {exporting ? "Exporting..." : "Export ZIP"}
+                            </button>
+
+                            <button
+                                className="editor-action"
                                 onClick={handleRunFile}
                                 disabled={
                                     !activeFile ||
