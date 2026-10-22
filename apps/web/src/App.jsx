@@ -358,6 +358,74 @@ function ProjectDashboard({
         }
     }
 
+    async function handleImportProject(event) {
+        const file = event.target.files?.[0];
+
+        event.target.value = "";
+
+        if (!file) {
+            return;
+        }
+
+        if (!file.name.toLowerCase().endsWith(".zip")) {
+            setError("Please select a ZIP file.");
+            return;
+        }
+
+        setImporting(true);
+        setError("");
+
+        try {
+            const defaultName = file.name
+                .replace(/\.zip$/i, "")
+                .trim();
+
+            const projectName = window.prompt(
+                "Enter a name for the imported project:",
+                defaultName || "Imported Project"
+            );
+
+            if (projectName === null) {
+                return;
+            }
+
+            const trimmedName =
+                projectName.trim() || defaultName || "Imported Project";
+
+            const response = await importProjectZip(
+                file,
+                trimmedName
+            );
+
+            const importedProject = response?.project;
+
+            if (!importedProject) {
+                throw new Error(
+                    "Project was imported, but no project was returned."
+                );
+            }
+
+            setProjects((currentProjects) => [
+                importedProject,
+                ...currentProjects,
+            ]);
+
+            onOpenProject(importedProject);
+        } catch (requestError) {
+            console.error(
+                "Failed to import project ZIP:",
+                requestError
+            );
+
+            setError(
+                requestError.message ||
+                "Unable to import the project ZIP."
+            );
+        } finally {
+            setImporting(false);
+        }
+    }
+
     async function handleDeleteProject(
         event,
         projectId
