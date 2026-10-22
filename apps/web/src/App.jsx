@@ -280,6 +280,9 @@ function ProjectDashboard({
     const [showCreateForm, setShowCreateForm] =
         useState(false);
 
+    const [importing, setImporting] = useState(false);
+    const importInputRef = useRef(null);
+
     const [projectName, setProjectName] =
         useState("");
 
