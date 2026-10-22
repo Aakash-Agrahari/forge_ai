@@ -534,24 +534,27 @@ function ProjectDashboard({
 
             <main className="dashboard-content">
 
-                <div className="dashboard-title-row">
+                <div className="dashboard-title-actions">
 
-                    <div>
+                    <input
+                        ref={importInputRef}
+                        type="file"
+                        accept=".zip,application/zip"
+                        style={{ display: "none" }}
+                        onChange={handleImportProject}
+                    />
 
-                        <div className="dashboard-eyebrow">
-                            WORKSPACE
-                        </div>
-
-                        <h1>
-                            Your Projects
-                        </h1>
-
-                        <p>
-                            Build, modify, and ship
-                            applications with ForgeAI.
-                        </p>
-
-                    </div>
+                    <button
+                        className="import-project-button"
+                        type="button"
+                        onClick={() =>
+                            importInputRef.current?.click()
+                        }
+                        disabled={importing}
+                    >
+                        <span>↑</span>
+                        {importing ? "Importing..." : "Import ZIP"}
+                    </button>
 
                     <button
                         className="create-project-button"
