@@ -1222,26 +1222,47 @@ button {
 }
 
 .create-project-button {
-    display: flex;
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    height: 38px;
-    padding: 0 14px;
-    border-radius: 7px;
-    background: #e5e7eb;
-    color: #101318;
+
+    min-height: 40px;
+    height: 40px;
+    padding: 0 16px;
+
+    border: 1px solid #2a3038;
+    border-radius: 8px;
+
+    background: #15191f;
+    color: #d7dce3;
+
     cursor: pointer;
-    font-size: 11px;
-    font-weight: 650;
+
+    font-size: 13px;
+    font-weight: 600;
     white-space: nowrap;
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease,
+        transform 0.15s ease;
 }
 
 .create-project-button:hover {
-    background: #ffffff;
+    background: #1b2027;
+    border-color: #3a424d;
+    color: #ffffff;
+}
+
+.create-project-button:active {
+    transform: translateY(1px);
 }
 
 .create-project-button span {
-    font-size: 17px;
+    font-size: 16px;
+    line-height: 1;
 }
 
 .dashboard-error {
@@ -1535,11 +1556,6 @@ button {
     .dashboard-title-row {
         align-items: flex-start;
         flex-direction: column;
-    }
-
-    .create-project-button {
-        width: 100%;
-        justify-content: center;
     }
 
     .projects-grid {
@@ -2074,40 +2090,70 @@ button {
 }
 
 
-//css for import export zip file
+/* ZIP PROJECT ACTIONS */
+
 .dashboard-title-actions {
     display: flex;
+    flex-direction: row;
     align-items: center;
+    justify-content: flex-end;
     gap: 10px;
+    width: auto;
+    flex-shrink: 0;
+    flex-wrap: nowrap;
 }
 
-.import-project-button {
+.import-project-button,
+.create-project-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
+
+    min-width: max-content;
     min-height: 40px;
+    height: 40px;
     padding: 0 16px;
+
     border: 1px solid #2a3038;
     border-radius: 8px;
+
     background: #15191f;
     color: #d7dce3;
+
     font-size: 13px;
     font-weight: 600;
+
     cursor: pointer;
+    white-space: nowrap;
+
     transition:
         background 0.15s ease,
         border-color 0.15s ease,
-        color 0.15s ease;
+        color 0.15s ease,
+        transform 0.15s ease;
 }
 
-.import-project-button:hover:not(:disabled) {
+.import-project-button:hover:not(:disabled),
+.create-project-button:hover:not(:disabled) {
     background: #1b2027;
     border-color: #3a424d;
     color: #ffffff;
 }
 
-.import-project-button:disabled {
+.import-project-button:active:not(:disabled),
+.create-project-button:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.import-project-button:disabled,
+.create-project-button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+.import-project-button span,
+.create-project-button span {
+    font-size: 16px;
+    line-height: 1;
 }
