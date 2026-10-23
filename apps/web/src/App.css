@@ -1133,6 +1133,26 @@ button {
     overflow-y: auto;
     overflow-x: hidden;
     box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: #20242b #0b0d10;
+}
+
+/* Dashboard scrollbar */
+.dashboard-page::-webkit-scrollbar {
+    width: 8px;
+}
+
+.dashboard-page::-webkit-scrollbar-track {
+    background: #0b0d10;
+}
+
+.dashboard-page::-webkit-scrollbar-thumb {
+    background: #20242b;
+    border-radius: 8px;
+}
+
+.dashboard-page::-webkit-scrollbar-thumb:hover {
+    background: #292e36;
 }
 
 .dashboard-header {
