@@ -2690,9 +2690,33 @@ useEffect(() => {
                                 </span>
                             )}
 
-                            <span className="tab-close">
+                            <button
+                                type="button"
+                                className="tab-close"
+                                onClick={() => {
+                                    if (hasUnsavedChanges) {
+                                        const confirmed = window.confirm(
+                                            "You have unsaved changes. Close this file and discard them?"
+                                        );
+
+                                        if (!confirmed) {
+                                            return;
+                                        }
+                                    }
+
+                                    setActiveFileId(null);
+                                    setActiveFile(null);
+                                    setFileContent("");
+                                    setOriginalContent("");
+                                    setExecutionResult(null);
+                                    setSaveMessage("");
+                                    setError("");
+                                }}
+                                title="Close file"
+                                aria-label="Close file"
+                            >
                                 ×
-                            </span>
+                            </button>
 
                         </div>
 
