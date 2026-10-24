@@ -2298,36 +2298,74 @@ useEffect(() => {
 
         const renderFile = (file, depth = 0) => {
             const isActive = file.id === activeFileId;
-            const isAgentChanged = agentChangedFileIds.has(file.id);
+            const isAgentChanged =
+                agentChangedFileIds.has(file.id);
 
             return (
-                <button
+                <div
                     key={`file-${file.id}`}
-                    type="button"
-                    className={`file-tree-item ${isActive ? "active" : ""}`}
+                    className={`file-tree-row ${
+                        isActive ? "active" : ""
+                    }`}
                     style={{
                         paddingLeft: `${12 + depth * 18}px`
                     }}
-                    onClick={() => {
-                        setActiveFileId(file.id);
-                    }}
-                    title={file.path}
                 >
-                    <span className="file-tree-icon">
-                        {getFileIcon(file.path)}
-                    </span>
+                    <button
+                        type="button"
+                        className="file-tree-item"
+                        onClick={() => {
+                            setActiveFileId(file.id);
+                        }}
+                        title={file.path}
+                    >
+                        <span className="file-tree-icon">
+                            {getFileIcon(file.path)}
+                        </span>
 
-                    <span className="file-tree-name">
-                        {getFileName(file.path)}
-                    </span>
+                        <span className="file-tree-name">
+                            {getFileName(file.path)}
+                        </span>
 
-                    {isAgentChanged && (
-                        <span
-                            className="file-tree-agent-dot"
-                            title="Changed by ForgeAI"
-                        />
-                    )}
-                </button>
+                        {isAgentChanged && (
+                            <span
+                                className="file-tree-agent-dot"
+                                title="Changed by ForgeAI"
+                            />
+                        )}
+                    </button>
+
+                    <button
+                        type="button"
+                        className="file-tree-more-button"
+                        onClick={(event) => {
+                            event.stopPropagation();
+
+                            const action =
+                                window.prompt(
+                                    `File: ${getFileName(file.path)}\n\nType "rename" or "delete".`
+                                );
+
+                            if (
+                                action?.trim().toLowerCase() ===
+                                "rename"
+                            ) {
+                                handleRenameFile(file);
+                            }
+
+                            if (
+                                action?.trim().toLowerCase() ===
+                                "delete"
+                            ) {
+                                handleDeleteFile(file);
+                            }
+                        }}
+                        title="File actions"
+                        aria-label={`Actions for ${getFileName(file.path)}`}
+                    >
+                        ⋯
+                    </button>
+                </div>
             );
         };
 
