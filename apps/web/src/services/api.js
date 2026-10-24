@@ -257,6 +257,22 @@ export async function updateProjectFile(
     );
 }
 
+export async function renameProjectFile(
+    projectId,
+    fileId,
+    path
+) {
+    return apiRequest(
+        `/projects/${projectId}/files/${fileId}`,
+        {
+            method: "PATCH",
+            body: JSON.stringify({
+                path,
+            }),
+        }
+    );
+}
+
 export async function runProjectFile(
     projectId,
     fileId
