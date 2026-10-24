@@ -273,6 +273,18 @@ export async function renameProjectFile(
     );
 }
 
+export async function deleteProjectFile(
+    projectId,
+    fileId
+) {
+    return apiRequest(
+        `/projects/${projectId}/files/${fileId}`,
+        {
+            method: "DELETE",
+        }
+    );
+}
+
 export async function runProjectFile(
     projectId,
     fileId
