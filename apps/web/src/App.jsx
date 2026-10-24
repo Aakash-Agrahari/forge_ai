@@ -17,6 +17,8 @@ import {
     createProjectFile,
     getProjectFile,
     updateProjectFile,
+    renameProjectFile,
+    deleteProjectFile,
     runProjectFile,
 
     getProjectFolders,
@@ -1160,6 +1162,140 @@ useEffect(() => {
             );
         } finally {
             setCreatingItem(false);
+        }
+    }
+
+    async function handleRenameFile(file) {
+        if (!file?.id || !project?.id) {
+            return;
+        }
+
+        const currentName = getFileName(file.path);
+
+        const newName = window.prompt(
+            "Enter the new file name:",
+            currentName
+        );
+
+        if (newName === null) {
+            return;
+        }
+
+        const trimmedName = newName.trim();
+
+        if (!trimmedName) {
+            return;
+        }
+
+        if (trimmedName.includes("/") || trimmedName.includes("\\")) {
+            setError("File name cannot contain / or \\.");
+            return;
+        }
+
+        const directory = getDirectory(file.path);
+
+        const newPath =
+            directory === "root"
+                ? trimmedName
+                : `${directory}/${trimmedName}`;
+
+        if (newPath === file.path) {
+            return;
+        }
+
+        try {
+            setError("");
+
+            const response = await renameProjectFile(
+                project.id,
+                file.id,
+                newPath
+            );
+
+            const renamedFile =
+                response?.file || response;
+
+            if (!renamedFile) {
+                throw new Error(
+                    "Unable to rename the file."
+                );
+            }
+
+            setFiles((currentFiles) =>
+                currentFiles.map((currentFile) =>
+                    currentFile.id === file.id
+                        ? renamedFile
+                        : currentFile
+                )
+            );
+
+            if (activeFileId === file.id) {
+                setActiveFile(renamedFile);
+            }
+        } catch (requestError) {
+            console.error(
+                "Failed to rename file:",
+                requestError
+            );
+
+            setError(
+                requestError.message ||
+                "Unable to rename the file."
+            );
+        }
+    }
+
+    async function handleDeleteFile(file) {
+        if (!file?.id || !project?.id) {
+            return;
+        }
+
+        const confirmed = window.confirm(
+            `Delete "${getFileName(file.path)}"? This cannot be undone.`
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            setError("");
+
+            await deleteProjectFile(
+                project.id,
+                file.id
+            );
+
+            setFiles((currentFiles) =>
+                currentFiles.filter(
+                    (currentFile) =>
+                        currentFile.id !== file.id
+                )
+            );
+
+            setAgentChangedFileIds((currentIds) => {
+                const nextIds = new Set(currentIds);
+                nextIds.delete(file.id);
+                return nextIds;
+            });
+
+            if (activeFileId === file.id) {
+                setActiveFileId(null);
+                setActiveFile(null);
+                setFileContent("");
+                setOriginalContent("");
+                setExecutionResult(null);
+            }
+        } catch (requestError) {
+            console.error(
+                "Failed to delete file:",
+                requestError
+            );
+
+            setError(
+                requestError.message ||
+                "Unable to delete the file."
+            );
         }
     }
 
