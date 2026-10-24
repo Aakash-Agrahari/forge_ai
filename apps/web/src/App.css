@@ -2183,3 +2183,91 @@ button {
     font-size: 16px;
     line-height: 1;
 }
+
+/*file tree for the sidebar */
+.file-tree-row {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    padding-right: 6px;
+}
+
+.file-tree-row.active {
+    background: #171c23;
+}
+
+.file-tree-row .file-tree-item {
+    flex: 1;
+    min-width: 0;
+}
+
+.file-tree-more-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 24px;
+    height: 24px;
+
+    flex-shrink: 0;
+
+    border: 0;
+    border-radius: 5px;
+
+    background: transparent;
+    color: #6f7885;
+
+    font-size: 16px;
+    line-height: 1;
+
+    cursor: pointer;
+
+    opacity: 0;
+    transition:
+        opacity 0.15s ease,
+        background 0.15s ease,
+        color 0.15s ease;
+}
+
+.file-tree-row:hover .file-tree-more-button,
+.file-tree-row.active .file-tree-more-button {
+    opacity: 1;
+}
+
+.file-tree-more-button:hover {
+    background: #252b34;
+    color: #ffffff;
+}
+
+.tab-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 22px;
+    height: 22px;
+
+    margin-left: auto;
+
+    padding: 0;
+
+    border: 0;
+    border-radius: 4px;
+
+    background: transparent;
+    color: #6f7885;
+
+    font-size: 15px;
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition:
+        background 0.15s ease,
+        color 0.15s ease;
+}
+
+.tab-close:hover {
+    background: #252b34;
+    color: #ffffff;
+}
