@@ -2186,6 +2186,7 @@ button {
 
 /*file tree for the sidebar */
 .file-tree-row {
+    position: relative;
     display: flex;
     align-items: center;
     min-width: 0;
@@ -2237,6 +2238,67 @@ button {
 .file-tree-more-button:hover {
     background: #252b34;
     color: #ffffff;
+}
+
+.file-context-menu {
+    position: absolute;
+    top: calc(100% - 2px);
+    right: 6px;
+
+    z-index: 100;
+
+    min-width: 140px;
+
+    padding: 5px;
+
+    border: 1px solid #2a3038;
+    border-radius: 7px;
+
+    background: #15191f;
+
+    box-shadow:
+        0 10px 25px rgba(0, 0, 0, 0.35),
+        0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.file-context-menu button {
+    display: flex;
+    align-items: center;
+
+    width: 100%;
+    min-height: 32px;
+
+    padding: 0 10px;
+
+    border: 0;
+    border-radius: 5px;
+
+    background: transparent;
+    color: #d7dce3;
+
+    font-size: 12px;
+    font-weight: 500;
+
+    text-align: left;
+    cursor: pointer;
+
+    transition:
+        background 0.15s ease,
+        color 0.15s ease;
+}
+
+.file-context-menu button:hover {
+    background: #222831;
+    color: #ffffff;
+}
+
+.file-context-menu button.danger {
+    color: #c7ccd4;
+}
+
+.file-context-menu button.danger:hover {
+    background: #2a2022;
+    color: #ff8f8f;
 }
 
 .tab-close {
