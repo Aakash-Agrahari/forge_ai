@@ -1831,8 +1831,14 @@ useEffect(() => {
                 const projectFiles =
                     filesResponse?.files || [];
 
-                const projectFolders =
+                const fetchedFolders =
                     foldersResponse?.folders || [];
+
+                const projectFolders =
+                    await ensureProjectFolders(
+                        projectFiles,
+                        fetchedFolders
+                    );
 
                 setFiles(projectFiles);
                 setFolders(projectFolders);
@@ -2248,6 +2254,24 @@ useEffect(() => {
      * FILE HELPERS
      * =========================
      */
+
+    function getParentPath(path = "") {
+        const normalized = path
+            .replace(/\\/g, "/")
+            .replace(/^\/+|\/+$/g, "");
+
+        const lastSlash =
+            normalized.lastIndexOf("/");
+
+        if (lastSlash === -1) {
+            return "";
+        }
+
+        return normalized.substring(
+            0,
+            lastSlash
+        );
+    }
 
     function getFileName(path) {
         return path.split("/").pop();
