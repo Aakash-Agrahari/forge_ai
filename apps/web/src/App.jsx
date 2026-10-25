@@ -856,6 +856,8 @@ function Workspace({
     const [agentError, setAgentError] = useState("");
     const conversationEndRef = useRef(null);
 
+    const [fileContextMenu, setFileContextMenu] = useState(null);
+
     const projectName =
         project?.name || "ForgeAI Project";
 
@@ -881,6 +883,26 @@ function Workspace({
 
     document.body.style.userSelect = "none";
 }
+
+useEffect(() => {
+    function handleDocumentClick() {
+        setFileContextMenu(null);
+    }
+
+    if (fileContextMenu) {
+        document.addEventListener(
+            "click",
+            handleDocumentClick
+        );
+    }
+
+    return () => {
+        document.removeEventListener(
+            "click",
+            handleDocumentClick
+        );
+    };
+}, [fileContextMenu]);
 
 useEffect(() => {
     function handlePanelResize(event) {
