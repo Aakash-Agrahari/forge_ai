@@ -2323,6 +2323,9 @@ useEffect(() => {
             const isAgentChanged =
                 agentChangedFileIds.has(file.id);
 
+            const isMenuOpen =
+                fileContextMenu?.fileId === file.id;
+
             return (
                 <div
                     key={`file-${file.id}`}
@@ -2337,6 +2340,7 @@ useEffect(() => {
                         type="button"
                         className="file-tree-item"
                         onClick={() => {
+                            setFileContextMenu(null);
                             setActiveFileId(file.id);
                         }}
                         title={file.path}
@@ -2363,30 +2367,49 @@ useEffect(() => {
                         onClick={(event) => {
                             event.stopPropagation();
 
-                            const action =
-                                window.prompt(
-                                    `File: ${getFileName(file.path)}\n\nType "rename" or "delete".`
-                                );
-
-                            if (
-                                action?.trim().toLowerCase() ===
-                                "rename"
-                            ) {
-                                handleRenameFile(file);
-                            }
-
-                            if (
-                                action?.trim().toLowerCase() ===
-                                "delete"
-                            ) {
-                                handleDeleteFile(file);
-                            }
+                            setFileContextMenu(
+                                isMenuOpen
+                                    ? null
+                                    : {
+                                        fileId: file.id
+                                    }
+                            );
                         }}
                         title="File actions"
                         aria-label={`Actions for ${getFileName(file.path)}`}
                     >
                         ⋯
                     </button>
+
+                    {isMenuOpen && (
+                        <div
+                            className="file-context-menu"
+                            onClick={(event) => {
+                                event.stopPropagation();
+                            }}
+                        >
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setFileContextMenu(null);
+                                    handleRenameFile(file);
+                                }}
+                            >
+                                Rename
+                            </button>
+
+                            <button
+                                type="button"
+                                className="danger"
+                                onClick={() => {
+                                    setFileContextMenu(null);
+                                    handleDeleteFile(file);
+                                }}
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    )}
                 </div>
             );
         };
