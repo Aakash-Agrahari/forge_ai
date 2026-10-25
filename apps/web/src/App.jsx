@@ -1097,6 +1097,77 @@ useEffect(() => {
         });
     }, [conversationMessages, sendingMessage]);
 
+    async function ensureProjectFolders(projectFiles, projectFolders) {
+        const existingPaths = new Set(
+            projectFolders
+                .map((folder) => folder?.path)
+                .filter(Boolean)
+                .map((path) =>
+                    path
+                        .replace(/\\/g, "/")
+                        .replace(/^\/+|\/+$/g, "")
+                )
+        );
+
+        const requiredPaths = new Set();
+
+        projectFiles.forEach((file) => {
+            const normalizedPath = (file?.path || "")
+                .replace(/\\/g, "/")
+                .replace(/^\/+|\/+$/g, "");
+
+            const parts = normalizedPath.split("/");
+
+            if (parts.length <= 1) {
+                return;
+            }
+
+            let currentPath = "";
+
+            for (
+                let index = 0;
+                index < parts.length - 1;
+                index += 1
+            ) {
+                currentPath = currentPath
+                    ? `${currentPath}/${parts[index]}`
+                    : parts[index];
+
+                requiredPaths.add(currentPath);
+            }
+        });
+
+        const missingPaths = [...requiredPaths]
+            .filter((path) => !existingPaths.has(path))
+            .sort((a, b) => {
+                const depthA = a.split("/").length;
+                const depthB = b.split("/").length;
+
+                return (
+                    depthA - depthB ||
+                    a.localeCompare(b)
+                );
+            });
+
+        for (const path of missingPaths) {
+            await createProjectFolder(
+                project.id,
+                {
+                    path
+                }
+            );
+        }
+
+        if (missingPaths.length === 0) {
+            return projectFolders;
+        }
+
+        const refreshedResponse =
+            await getProjectFolders(project.id);
+
+        return refreshedResponse?.folders || [];
+    }
+
     async function refreshProjectStructure({ markAgentChanges = false } = {}) {
         if (!project?.id) {
             return null;
