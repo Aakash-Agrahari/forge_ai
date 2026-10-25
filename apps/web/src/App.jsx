@@ -1136,29 +1136,43 @@ useEffect(() => {
         return refreshProjectStructure({ markAgentChanges });
     }
 
-    async function handleCreateProjectItem(type) {
+    async function handleCreateProjectItem(
+        type,
+        parentPath = ""
+    ) {
         if (!project?.id || creatingItem) {
             return;
         }
 
         const itemName = window.prompt(
             type === "file"
-                ? "Enter file path (example: src/App.java)"
-                : "Enter folder path (example: src/components)"
+                ? parentPath
+                    ? `Enter file name inside "${parentPath}":`
+                    : "Enter file path (example: src/App.java)"
+                : parentPath
+                    ? `Enter folder name inside "${parentPath}":`
+                    : "Enter folder path (example: src/components)"
         );
 
-        if (!itemName || !itemName.trim()) {
+        if (
+            !itemName ||
+            !itemName.trim()
+        ) {
             return;
         }
 
-        const path = itemName
+        const cleanedName = itemName
             .trim()
             .replace(/\\/g, "/")
             .replace(/^\/+|\/+$/g, "");
 
-        if (!path) {
+        if (!cleanedName) {
             return;
         }
+
+        const path = parentPath
+            ? `${parentPath}/${cleanedName}`
+            : cleanedName;
 
         try {
             setCreatingItem(true);
@@ -1166,23 +1180,36 @@ useEffect(() => {
             setShowCreateMenu(false);
 
             if (type === "file") {
-                await createProjectFile(project.id, {
-                    path,
-                    content: ""
-                });
+                await createProjectFile(
+                    project.id,
+                    {
+                        path,
+                        content: ""
+                    }
+                );
             } else {
-                await createProjectFolder(project.id, {
-                    path
-                });
+                await createProjectFolder(
+                    project.id,
+                    {
+                        path
+                    }
+                );
             }
 
             await refreshProjectStructure();
         } catch (err) {
-            console.error(`Failed to create ${type}:`, err);
+            console.error(
+                `Failed to create ${type}:`,
+                err
+            );
 
             setError(
                 err?.message ||
-                `Failed to create ${type === "file" ? "file" : "folder"}`
+                `Failed to create ${
+                    type === "file"
+                        ? "file"
+                        : "folder"
+                }`
             );
         } finally {
             setCreatingItem(false);
