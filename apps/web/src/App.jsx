@@ -857,6 +857,7 @@ function Workspace({
     const conversationEndRef = useRef(null);
 
     const [fileContextMenu, setFileContextMenu] = useState(null);
+    const [folderContextMenu, setFolderContextMenu] = useState(null);
 
     const projectName =
         project?.name || "ForgeAI Project";
@@ -887,9 +888,10 @@ function Workspace({
 useEffect(() => {
     function handleDocumentClick() {
         setFileContextMenu(null);
+        setFolderContextMenu(null);
     }
 
-    if (fileContextMenu) {
+    if (fileContextMenu || folderContextMenu) {
         document.addEventListener(
             "click",
             handleDocumentClick
@@ -902,7 +904,7 @@ useEffect(() => {
             handleDocumentClick
         );
     };
-}, [fileContextMenu]);
+}, [fileContextMenu, folderContextMenu]);
 
 useEffect(() => {
     function handlePanelResize(event) {
