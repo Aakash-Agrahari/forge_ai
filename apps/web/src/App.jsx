@@ -2535,47 +2535,168 @@ useEffect(() => {
         };
 
         const renderFolder = (folder, depth = 0) => {
-            const isExpanded = expandedFolders.has(folder.id);
+            const isExpanded =
+                expandedFolders.has(folder.id);
 
-            const childFolders = sortFolders(folder.folders);
-            const childFiles = sortFiles(folder.files);
+            const childFolders =
+                sortFolders(folder.folders);
+
+            const childFiles =
+                sortFiles(folder.files);
+
+            const isMenuOpen =
+                folderContextMenu?.folderId ===
+                folder.id;
 
             return (
                 <div
                     key={`folder-${folder.path}`}
                     className="file-tree-folder"
                 >
-                    <button
-                        type="button"
-                        className="file-tree-folder-item"
+                    <div
+                        className="file-tree-folder-row"
                         style={{
-                            paddingLeft: `${12 + depth * 18}px`
+                            paddingLeft:
+                                `${12 + depth * 18}px`
                         }}
-                        onClick={() => {
-                            toggleFolder(folder.id);
-                        }}
-                        title={folder.path}
                     >
-                        <span className="file-tree-chevron">
-                            {isExpanded ? "⌄" : "›"}
-                        </span>
+                        <button
+                            type="button"
+                            className="file-tree-folder-item"
+                            onClick={() => {
+                                setFileContextMenu(null);
+                                setFolderContextMenu(null);
+                                toggleFolder(folder.id);
+                            }}
+                            title={folder.path}
+                        >
+                            <span className="file-tree-chevron">
+                                {isExpanded
+                                    ? "⌄"
+                                    : "›"}
+                            </span>
 
-                        <span className="file-tree-folder-icon">
-                            {isExpanded ? "📂" : "📁"}
-                        </span>
+                            <span className="file-tree-folder-icon">
+                                {isExpanded
+                                    ? "📂"
+                                    : "📁"}
+                            </span>
 
-                        <span className="file-tree-name">
-                            {folder.name}
-                        </span>
-                    </button>
+                            <span className="file-tree-name">
+                                {folder.name}
+                            </span>
+                        </button>
+
+                        <button
+                            type="button"
+                            className="file-tree-folder-more-button"
+                            onClick={(event) => {
+                                event.stopPropagation();
+
+                                setFileContextMenu(null);
+
+                                setFolderContextMenu(
+                                    isMenuOpen
+                                        ? null
+                                        : {
+                                            folderId:
+                                                folder.id
+                                        }
+                                );
+                            }}
+                            title="Folder actions"
+                            aria-label={`Actions for ${folder.name}`}
+                        >
+                            ⋯
+                        </button>
+
+                        {isMenuOpen && (
+                            <div
+                                className="file-context-menu folder-context-menu"
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                }}
+                            >
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setFolderContextMenu(
+                                            null
+                                        );
+
+                                        handleCreateProjectItem(
+                                            "file",
+                                            folder.path
+                                        );
+                                    }}
+                                >
+                                    New File
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setFolderContextMenu(
+                                            null
+                                        );
+
+                                        handleCreateProjectItem(
+                                            "folder",
+                                            folder.path
+                                        );
+                                    }}
+                                >
+                                    New Folder
+                                </button>
+
+                                {folder.explicit && (
+                                    <>
+                                        <div className="context-menu-divider" />
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setFolderContextMenu(
+                                                    null
+                                                );
+
+                                                handleRenameFolder(
+                                                    folder
+                                                );
+                                            }}
+                                        >
+                                            Rename
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            className="danger"
+                                            onClick={() => {
+                                                setFolderContextMenu(
+                                                    null
+                                                );
+
+                                                handleDeleteFolder(
+                                                    folder
+                                                );
+                                            }}
+                                        >
+                                            Delete
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        )}
+                    </div>
 
                     {isExpanded && (
                         <div className="file-tree-folder-children">
-                            {childFolders.map((childFolder) =>
-                                renderFolder(
-                                    childFolder,
-                                    depth + 1
-                                )
+                            {childFolders.map(
+                                (childFolder) =>
+                                    renderFolder(
+                                        childFolder,
+                                        depth + 1
+                                    )
                             )}
 
                             {childFiles.map((file) =>
