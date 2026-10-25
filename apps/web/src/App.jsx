@@ -1323,6 +1323,124 @@ useEffect(() => {
         }
     }
 
+    async function handleRenameFolder(folder) {
+        if (
+            !folder?.explicit ||
+            !folder?.id ||
+            !project?.id
+        ) {
+            return;
+        }
+
+        const currentName = folder.name;
+
+        const newName = window.prompt(
+            "Enter the new folder name:",
+            currentName
+        );
+
+        if (newName === null) {
+            return;
+        }
+
+        const trimmedName = newName.trim();
+
+        if (!trimmedName) {
+            return;
+        }
+
+        if (
+            trimmedName.includes("/") ||
+            trimmedName.includes("\\")
+        ) {
+            setError(
+                "Folder name cannot contain / or \\."
+            );
+            return;
+        }
+
+        if (trimmedName === currentName) {
+            return;
+        }
+
+        const parentPath = getParentPath(folder.path);
+
+        const newPath = parentPath
+            ? `${parentPath}/${trimmedName}`
+            : trimmedName;
+
+        try {
+            setError("");
+
+            await renameProjectFolder(
+                project.id,
+                folder.id,
+                newPath
+            );
+
+            await refreshProjectStructure();
+        } catch (requestError) {
+            console.error(
+                "Failed to rename folder:",
+                requestError
+            );
+
+            setError(
+                requestError.message ||
+                "Unable to rename the folder."
+            );
+        }
+    }
+
+    async function handleDeleteFolder(folder) {
+        if (
+            !folder?.explicit ||
+            !folder?.id ||
+            !project?.id
+        ) {
+            return;
+        }
+
+        const confirmed = window.confirm(
+            `Delete "${folder.name}" and everything inside it? This cannot be undone.`
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            setError("");
+
+            await deleteProjectFolder(
+                project.id,
+                folder.id
+            );
+
+            setExpandedFolders((currentExpanded) => {
+                const nextExpanded = new Set(
+                    currentExpanded
+                );
+
+                nextExpanded.delete(folder.id);
+
+                return nextExpanded;
+            });
+
+            await refreshProjectStructure();
+        } catch (requestError) {
+            console.error(
+                "Failed to delete folder:",
+                requestError
+            );
+
+            setError(
+                requestError.message ||
+                "Unable to delete the folder."
+            );
+        }
+    }
+
     async function waitForAgentRun(
         projectId,
         currentConversationId,
