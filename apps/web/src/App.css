@@ -2461,3 +2461,79 @@ button {
     background: #252b34;
     color: #ffffff;
 }
+
+/* =========================================
+   MULTI-FILE EDITOR TABS
+   ========================================= */
+
+.editor-tabs {
+    display: flex;
+    align-items: stretch;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #20242b #0f1217;
+}
+
+.editor-tabs::-webkit-scrollbar {
+    height: 6px;
+}
+
+.editor-tabs::-webkit-scrollbar-track {
+    background: #0f1217;
+}
+
+.editor-tabs::-webkit-scrollbar-thumb {
+    background: #20242b;
+    border-radius: 6px;
+}
+
+.editor-tabs::-webkit-scrollbar-thumb:hover {
+    background: #292e36;
+}
+
+.editor-tab {
+    position: relative;
+
+    flex: 0 0 190px;
+    min-width: 190px;
+    max-width: 240px;
+
+    cursor: pointer;
+    user-select: none;
+
+    transition:
+        background 0.12s ease,
+        color 0.12s ease;
+}
+
+.editor-tab:not(.active):hover {
+    background: #14181e;
+    color: #d7dbe2;
+}
+
+.editor-tab-label {
+    min-width: 0;
+
+    flex: 1;
+
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.editor-tab.active {
+    border-top: 1px solid #2b313a;
+}
+
+.editor-tab .tab-icon {
+    flex-shrink: 0;
+}
+
+.editor-tab .unsaved-indicator {
+    flex-shrink: 0;
+}
+
+.editor-tab .tab-close {
+    flex-shrink: 0;
+}
