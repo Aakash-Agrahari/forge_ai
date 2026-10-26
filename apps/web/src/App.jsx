@@ -2879,8 +2879,7 @@ useEffect(() => {
                         type="button"
                         className="file-tree-item"
                         onClick={() => {
-                            setFileContextMenu(null);
-                            setActiveFileId(file.id);
+                            handleOpenFile(file);
                         }}
                         title={file.path}
                     >
@@ -3371,60 +3370,69 @@ useEffect(() => {
                         ref={editorPanelRef}>
 
                     <div className="editor-tabs">
+                        {openTabs.map((tab) => {
+                            const isActive =
+                                tab.file.id === activeFileId;
 
-                        <div className="editor-tab active">
+                            const tabHasUnsavedChanges =
+                                tab.content !==
+                                tab.originalContent;
 
-                            <span className="tab-icon">
-                                {activeFile
-                                    ? getFileIcon(
-                                          activeFile.path
-                                      )
-                                    : "◇"}
-                            </span>
-
-                            {activeFile
-                                ? activeFile.path
-                                : "No file selected"}
-
-                            {hasUnsavedChanges && (
-                                <span
-                                    className="unsaved-indicator"
-                                    title="Unsaved changes"
-                                >
-                                    ●
-                                </span>
-                            )}
-
-                            <button
-                                type="button"
-                                className="tab-close"
-                                onClick={() => {
-                                    if (hasUnsavedChanges) {
-                                        const confirmed = window.confirm(
-                                            "You have unsaved changes. Close this file and discard them?"
-                                        );
-
-                                        if (!confirmed) {
-                                            return;
+                            return (
+                                <div
+                                    key={tab.file.id}
+                                    className={`editor-tab ${
+                                        isActive ? "active" : ""
+                                    }`}
+                                    onClick={() => {
+                                        if (!isActive) {
+                                            handleOpenFile(tab.file);
                                         }
-                                    }
+                                    }}
+                                    title={tab.file.path}
+                                >
+                                    <span className="tab-icon">
+                                        {getFileIcon(
+                                            tab.file.path
+                                        )}
+                                    </span>
 
-                                    setActiveFileId(null);
-                                    setActiveFile(null);
-                                    setFileContent("");
-                                    setOriginalContent("");
-                                    setExecutionResult(null);
-                                    setSaveMessage("");
-                                    setError("");
-                                }}
-                                title="Close file"
-                                aria-label="Close file"
-                            >
-                                ×
-                            </button>
+                                    <span className="editor-tab-label">
+                                        {getFileName(
+                                            tab.file.path
+                                        )}
+                                    </span>
 
-                        </div>
+                                    {tabHasUnsavedChanges && (
+                                        <span
+                                            className="unsaved-indicator"
+                                            title="Unsaved changes"
+                                        >
+                                            ●
+                                        </span>
+                                    )}
 
+                                    <button
+                                        type="button"
+                                        className="tab-close"
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            handleCloseTab(
+                                                tab.file.id
+                                            );
+                                        }}
+                                        title={`Close ${getFileName(
+                                            tab.file.path
+                                        )}`}
+                                        aria-label={`Close ${getFileName(
+                                            tab.file.path
+                                        )}`}
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            );
+                        })}
                     </div>
 
                     <div className="editor-toolbar">
