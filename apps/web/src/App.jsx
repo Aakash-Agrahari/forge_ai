@@ -1356,6 +1356,17 @@ useEffect(() => {
                 )
             );
 
+            setOpenTabs((currentTabs) =>
+                currentTabs.map((tab) =>
+                    tab.file.id === file.id
+                        ? {
+                            ...tab,
+                            file: renamedFile
+                        }
+                        : tab
+                )
+            );
+
             if (activeFileId === file.id) {
                 setActiveFile(renamedFile);
             }
