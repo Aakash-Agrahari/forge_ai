@@ -2125,6 +2125,36 @@ useEffect(() => {
             setSaveMessage("");
 
             try {
+                /*
+                * If the file is already open, restore its
+                * local editor state instead of fetching it.
+                */
+                const existingTab =
+                    openTabsRef.current.find(
+                        (tab) =>
+                            tab.file.id === activeFileId
+                    );
+
+                if (existingTab) {
+                    if (cancelled) {
+                        return;
+                    }
+
+                    setActiveFile(existingTab.file);
+                    setFileContent(
+                        existingTab.content
+                    );
+                    setOriginalContent(
+                        existingTab.originalContent
+                    );
+
+                    return;
+                }
+
+                /*
+                * First time opening this file:
+                * fetch it from the backend.
+                */
                 const response =
                     await getProjectFile(
                         project.id,
@@ -2144,13 +2174,36 @@ useEffect(() => {
                     );
                 }
 
+                const content =
+                    file.content || "";
+
                 setActiveFile(file);
-                setFileContent(
-                    file.content || ""
-                );
-                setOriginalContent(
-                    file.content || ""
-                );
+                setFileContent(content);
+                setOriginalContent(content);
+
+                /*
+                * Add the newly opened file as a tab.
+                */
+                setOpenTabs((currentTabs) => {
+                    const alreadyOpen =
+                        currentTabs.some(
+                            (tab) =>
+                                tab.file.id === file.id
+                        );
+
+                    if (alreadyOpen) {
+                        return currentTabs;
+                    }
+
+                    return [
+                        ...currentTabs,
+                        {
+                            file,
+                            content,
+                            originalContent: content
+                        }
+                    ];
+                });
             } catch (requestError) {
                 if (!cancelled) {
                     setError(
@@ -2171,6 +2224,61 @@ useEffect(() => {
             cancelled = true;
         };
     }, [project?.id, activeFileId]);
+
+    //this will make the changes in the editor synchronized with open tabs, so that if the user switches tabs and comes back, the changes are not lost
+    useEffect(() => {
+        if (
+            !activeFileId ||
+            !activeFile ||
+            activeFile.id !== activeFileId
+        ) {
+            return;
+        }
+
+        setOpenTabs((currentTabs) => {
+            const tabIndex = currentTabs.findIndex(
+                (tab) =>
+                    tab.file.id === activeFileId
+            );
+
+            const nextTab = {
+                file: activeFile,
+                content: fileContent,
+                originalContent
+            };
+
+            if (tabIndex === -1) {
+                return [
+                    ...currentTabs,
+                    nextTab
+                ];
+            }
+
+            const currentTab =
+                currentTabs[tabIndex];
+
+            if (
+                currentTab.file === activeFile &&
+                currentTab.content === fileContent &&
+                currentTab.originalContent ===
+                    originalContent
+            ) {
+                return currentTabs;
+            }
+
+            const nextTabs = [...currentTabs];
+
+            nextTabs[tabIndex] = nextTab;
+
+            return nextTabs;
+        });
+    }, [
+        activeFileId,
+        activeFile,
+        fileContent,
+        originalContent
+    ]);
+
 
     /*
      * =========================
