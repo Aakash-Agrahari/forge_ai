@@ -1765,6 +1765,10 @@ useEffect(() => {
                     );
                 })
                 .map((file) => file.id);
+            
+            const changedFiles = agentFiles.filter((file) =>
+                changedIds.includes(file.id)
+            );
 
             if (changedIds.length > 0) {
                 setAgentChangedFileIds((currentIds) => {
@@ -1780,6 +1784,12 @@ useEffect(() => {
 
             setFiles(agentFiles);
             syncOpenTabsWithFiles(agentFiles);
+
+            setAgentRunResult({
+                status: "completed",
+                changedFiles,
+            });
+
             setActiveFileId((currentActiveFileId) => {
                 if (
                     currentActiveFileId &&
@@ -1796,10 +1806,17 @@ useEffect(() => {
 
             setMessage("");
         } catch (requestError) {
-            setAgentError(
+            const errorMessage =
                 requestError.message ||
-                    "Unable to start the ForgeAI agent."
-            );
+                "Unable to start the ForgeAI agent.";
+
+            setAgentRunResult({
+                status: "failed",
+                error: errorMessage,
+                changedFiles: [],
+            });
+
+            setAgentError("");
         } finally {
             setSendingMessage(false);
         }
