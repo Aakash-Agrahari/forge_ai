@@ -1802,6 +1802,120 @@ useEffect(() => {
         }
     }
 
+    function handleOpenFile(file) {
+        if (!file?.id) {
+            return;
+        }
+
+        /*
+        * Preserve the current editor state before switching.
+        */
+        if (
+            activeFileId &&
+            activeFile &&
+            activeFile.id === activeFileId
+        ) {
+            setOpenTabs((currentTabs) =>
+                currentTabs.map((tab) =>
+                    tab.file.id === activeFileId
+                        ? {
+                            ...tab,
+                            file: activeFile,
+                            content: fileContent,
+                            originalContent
+                        }
+                        : tab
+                )
+            );
+        }
+
+        setFileContextMenu(null);
+        setFolderContextMenu(null);
+
+        setExecutionResult(null);
+        setSaveMessage("");
+        setError("");
+
+        setActiveFileId(file.id);
+    }
+
+    function handleCloseTab(tabId) {
+        if (!tabId) {
+            return;
+        }
+
+        const currentTabs = openTabsRef.current;
+
+        const tabIndex = currentTabs.findIndex(
+            (tab) => tab.file.id === tabId
+        );
+
+        if (tabIndex === -1) {
+            return;
+        }
+
+        const tabToClose = currentTabs[tabIndex];
+
+        const tabHasUnsavedChanges =
+            tabToClose.content !==
+            tabToClose.originalContent;
+
+        if (tabHasUnsavedChanges) {
+            const confirmed = window.confirm(
+                `You have unsaved changes in "${getFileName(
+                    tabToClose.file.path
+                )}". Close this tab and discard them?`
+            );
+
+            if (!confirmed) {
+                return;
+            }
+        }
+
+        const remainingTabs = currentTabs.filter(
+            (tab) => tab.file.id !== tabId
+        );
+
+        setOpenTabs(remainingTabs);
+
+        /*
+        * Closing an inactive tab does not change
+        * the currently displayed editor.
+        */
+        if (tabId !== activeFileId) {
+            return;
+        }
+
+        /*
+        * Prefer the tab to the right.
+        * If there isn't one, use the tab to the left.
+        */
+        const nextTab =
+            remainingTabs[tabIndex] ||
+            remainingTabs[tabIndex - 1] ||
+            null;
+
+        setExecutionResult(null);
+        setSaveMessage("");
+        setError("");
+
+        if (nextTab) {
+            setActiveFileId(nextTab.file.id);
+            setActiveFile(nextTab.file);
+            setFileContent(nextTab.content);
+            setOriginalContent(
+                nextTab.originalContent
+            );
+            setLoadingFile(false);
+        } else {
+            setActiveFileId(null);
+            setActiveFile(null);
+            setFileContent("");
+            setOriginalContent("");
+            setLoadingFile(false);
+        }
+    }
+
     /*
      * =========================
      * LOAD PROJECT FILES
