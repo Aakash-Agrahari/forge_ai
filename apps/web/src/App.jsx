@@ -1417,13 +1417,48 @@ useEffect(() => {
                 return nextIds;
             });
 
+            const currentTabs =
+                openTabsRef.current;
+
+            const deletedTabIndex =
+                currentTabs.findIndex(
+                    (tab) => tab.file.id === file.id
+                );
+
+            const remainingTabs =
+                currentTabs.filter(
+                    (tab) => tab.file.id !== file.id
+                );
+
+            setOpenTabs(remainingTabs);
+
             if (activeFileId === file.id) {
-                setActiveFileId(null);
-                setActiveFile(null);
-                setFileContent("");
-                setOriginalContent("");
+                const nextTab =
+                    remainingTabs[deletedTabIndex] ||
+                    remainingTabs[deletedTabIndex - 1] ||
+                    null;
+
+                if (nextTab) {
+                    setActiveFileId(
+                        nextTab.file.id
+                    );
+                    setActiveFile(nextTab.file);
+                    setFileContent(
+                        nextTab.content
+                    );
+                    setOriginalContent(
+                        nextTab.originalContent
+                    );
+                } else {
+                    setActiveFileId(null);
+                    setActiveFile(null);
+                    setFileContent("");
+                    setOriginalContent("");
+                }
+
                 setExecutionResult(null);
             }
+
         } catch (requestError) {
             console.error(
                 "Failed to delete file:",
