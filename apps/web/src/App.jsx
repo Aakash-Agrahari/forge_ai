@@ -859,6 +859,7 @@ function Workspace({
     const [loadingConversation, setLoadingConversation] = useState(true);
     const [sendingMessage, setSendingMessage] = useState(false);
     const [agentError, setAgentError] = useState("");
+    const [agentRunResult, setAgentRunResult] = useState(null);
     const conversationEndRef = useRef(null);
 
     const [fileContextMenu, setFileContextMenu] = useState(null);
@@ -1090,6 +1091,7 @@ useEffect(() => {
         setConversationMessages([]);
         setMessage("");
         setAgentError("");
+        setAgentRunResult(null);
     }
 
     useEffect(() => {
@@ -1659,6 +1661,10 @@ useEffect(() => {
 
         setSendingMessage(true);
         setAgentError("");
+        setAgentRunResult({
+            status: "running",
+            changedFiles: [],
+        });
 
         try {
             let currentConversationId = conversationId;
