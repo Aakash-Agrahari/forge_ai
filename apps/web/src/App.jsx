@@ -3996,10 +3996,99 @@ useEffect(() => {
                                 {sendingMessage && (
                                     <div className="chat-message chat-message-assistant">
                                         <div className="chat-message-avatar">F</div>
+
                                         <div className="chat-message-body">
-                                            <div className="chat-message-author">ForgeAI</div>
-                                            <div className="chat-message-content agent-working-message">
-                                                ForgeAI is working on your project…
+                                            <div className="chat-message-author">
+                                                ForgeAI
+                                            </div>
+
+                                            <div className="agent-status-card agent-status-running">
+                                                <div className="agent-status-title">
+                                                    <span className="agent-status-icon agent-status-spinner">
+                                                        ◌
+                                                    </span>
+                                                    ForgeAI is working...
+                                                </div>
+
+                                                <div className="agent-status-description">
+                                                    Running your task and making the required changes.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {!sendingMessage && agentRunResult?.status === "completed" && (
+                                    <div className="chat-message chat-message-assistant">
+                                        <div className="chat-message-avatar">F</div>
+
+                                        <div className="chat-message-body">
+                                            <div className="chat-message-author">
+                                                ForgeAI
+                                            </div>
+
+                                            <div className="agent-status-card agent-status-completed">
+                                                <div className="agent-status-title">
+                                                    <span className="agent-status-icon">
+                                                        ✓
+                                                    </span>
+                                                    Task completed
+                                                </div>
+
+                                                {agentRunResult.changedFiles?.length > 0 ? (
+                                                    <>
+                                                        <div className="agent-status-description">
+                                                            Changed{" "}
+                                                            {agentRunResult.changedFiles.length}{" "}
+                                                            {agentRunResult.changedFiles.length === 1
+                                                                ? "file"
+                                                                : "files"}.
+                                                        </div>
+
+                                                        <div className="agent-changed-files">
+                                                            {agentRunResult.changedFiles.map((file) => (
+                                                                <div
+                                                                    className="agent-changed-file"
+                                                                    key={file.id}
+                                                                >
+                                                                    <span className="agent-file-dot">
+                                                                        •
+                                                                    </span>
+                                                                    <span>{file.path}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div className="agent-status-description">
+                                                        Task completed without changing any files.
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {!sendingMessage && agentRunResult?.status === "failed" && (
+                                    <div className="chat-message chat-message-assistant">
+                                        <div className="chat-message-avatar">F</div>
+
+                                        <div className="chat-message-body">
+                                            <div className="chat-message-author">
+                                                ForgeAI
+                                            </div>
+
+                                            <div className="agent-status-card agent-status-failed">
+                                                <div className="agent-status-title">
+                                                    <span className="agent-status-icon">
+                                                        ×
+                                                    </span>
+                                                    Task failed
+                                                </div>
+
+                                                <div className="agent-status-description">
+                                                    {agentRunResult.error}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
