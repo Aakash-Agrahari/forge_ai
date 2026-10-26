@@ -1598,7 +1598,7 @@ useEffect(() => {
         currentConversationId,
         runId
     ) {
-        const maxAttempts = 180;
+        const maxAttempts = 380;
         const delayMs = 1000;
 
         for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
@@ -3969,7 +3969,43 @@ useEffect(() => {
                             </>
                         ) : (
                             <div className="conversation-messages">
-                                {conversationMessages.map((chatMessage) => (
+                                {conversationMessages
+                                    .filter((chatMessage) => {
+                                        if (!chatMessage) {
+                                            return false;
+                                        }
+
+                                        /*
+                                        * Hide internal tool messages from the normal
+                                        * conversation UI.
+                                        */
+                                        if (chatMessage.role === "tool") {
+                                            return false;
+                                        }
+
+                                        if (
+                                            chatMessage.toolName ||
+                                            chatMessage.toolCallId
+                                        ) {
+                                            return false;
+                                        }
+
+                                        /*
+                                        * Do not render empty assistant messages.
+                                        */
+                                        if (
+                                            chatMessage.role === "assistant" &&
+                                            !chatMessage.content?.trim()
+                                        ) {
+                                            return false;
+                                        }
+
+                                        return (
+                                            chatMessage.role === "user" ||
+                                            chatMessage.role === "assistant"
+                                        );
+                                    })
+                                    .map((chatMessage) => (
                                     <div
                                         className={`chat-message ${
                                             chatMessage.role === "user"
