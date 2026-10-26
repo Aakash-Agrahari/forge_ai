@@ -1916,6 +1916,76 @@ useEffect(() => {
         }
     }
 
+    function syncOpenTabsWithFiles(nextFiles) {
+        setOpenTabs((currentTabs) => {
+            return currentTabs
+                .map((tab) => {
+                    const latestFile = nextFiles.find(
+                        (file) =>
+                            file.id === tab.file.id
+                    );
+
+                    /*
+                    * The file was deleted.
+                    */
+                    if (!latestFile) {
+                        return null;
+                    }
+
+                    const tabHasUnsavedChanges =
+                        tab.content !==
+                        tab.originalContent;
+
+                    /*
+                    * Never overwrite unsaved editor content.
+                    * Only update the file metadata/path.
+                    */
+                    if (tabHasUnsavedChanges) {
+                        return {
+                            ...tab,
+                            file: latestFile
+                        };
+                    }
+
+                    /*
+                    * Clean tabs can safely receive
+                    * the latest server content.
+                    */
+                    const latestContent =
+                        latestFile.content || "";
+
+                    return {
+                        file: latestFile,
+                        content: latestContent,
+                        originalContent: latestContent
+                    };
+                })
+                .filter(Boolean);
+        });
+
+        const latestActiveFile =
+            nextFiles.find(
+                (file) => file.id === activeFileId
+            );
+
+        /*
+        * If the active file has no local changes,
+        * keep its editor synchronized too.
+        */
+        if (
+            latestActiveFile &&
+            !hasUnsavedChanges
+        ) {
+            const latestContent =
+                latestActiveFile.content || "";
+
+            setActiveFile(latestActiveFile);
+            setFileContent(latestContent);
+            setOriginalContent(latestContent);
+        }
+    }
+
+
     /*
      * =========================
      * LOAD PROJECT FILES
