@@ -1188,6 +1188,7 @@ useEffect(() => {
             const nextFolders = folderResponse?.folders || [];
 
             setFiles(nextFiles);
+            syncOpenTabsWithFiles(nextFiles);
             setFolders(nextFolders);
 
             if (markAgentChanges) {
@@ -1772,7 +1773,7 @@ useEffect(() => {
             }
 
             setFiles(agentFiles);
-
+            syncOpenTabsWithFiles(agentFiles);
             setActiveFileId((currentActiveFileId) => {
                 if (
                     currentActiveFileId &&
@@ -2045,6 +2046,12 @@ useEffect(() => {
             if (!project?.id) {
                 return;
             }
+
+            setOpenTabs([]);
+            setActiveFileId(null);
+            setActiveFile(null);
+            setFileContent("");
+            setOriginalContent("");
 
             setLoadingFiles(true);
             setError("");
