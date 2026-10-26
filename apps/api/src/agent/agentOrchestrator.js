@@ -1593,18 +1593,32 @@ export async function runAgent({
                  * =================================================
                  */
 
-                const allowRepeatedExecutionForFailureRepair =
-                    taskRequirements.requiresFailureAndRepair &&
-                    (
-                        validatedToolCall.name === "execute_code" ||
-                        validatedToolCall.name === "execute_javascript" ||
-                        validatedToolCall.name === "run_javascript_test"
-                    );
+                const isExecutionTool =
+                    validatedToolCall.name === "execute_code" ||
+                    validatedToolCall.name === "execute_javascript" ||
+                    validatedToolCall.name === "run_javascript_test" ||
+                    validatedToolCall.name === "run_command";
+
+                /*
+                * Once an actual execution failure has been observed,
+                * allow the model to retry execution.
+                *
+                * This is important for cases where the model needs to:
+                * - retry a command after compilation failure
+                * - compile multiple dependent Java files together
+                * - change the execution command after inspecting an error
+                *
+                * The normal identical-call protection still applies when
+                * there is no actual execution failure.
+                */
+                const allowRepeatedExecutionAfterFailure =
+                    isExecutionTool &&
+                    hasObservedExecutionFailure(toolResults);
 
                 if (
                     currentCount >
                     MAX_IDENTICAL_TOOL_CALLS &&
-                    !allowRepeatedExecutionForFailureRepair
+                    !allowRepeatedExecutionAfterFailure
                 ) {
                     repeatedToolRecoveries += 1;
 
@@ -1646,13 +1660,9 @@ export async function runAgent({
                             "",
                             "Inspect the current project state and continue from the result of the previous operation.",
                             "",
-                            "If this is a failure-and-repair task and the phase is EXECUTE, execute the target immediately.",
-                            "If this is a failure-and-repair task and the phase is REPAIR, repair the source using the actual execution evidence.",
-                            "If this is a failure-and-repair task and the phase is VERIFY, execute the repaired source immediately.",
-                            "Do NOT read the repaired file again before verification.",
+                            "If an execution failure has already been observed, use the actual failure evidence to determine the next execution or repair action.",
                             "",
-                            "For a JavaScript task requiring behavioral verification, use run_javascript_test.",
-                            "Do not claim completion from write_file success or source inspection alone.",
+                            "Do not claim completion from source inspection alone.",
                             "",
                             `Recovery attempt: ${repeatedToolRecoveries}/${MAX_REPEATED_TOOL_RECOVERIES}`
                         ].join("\n");
