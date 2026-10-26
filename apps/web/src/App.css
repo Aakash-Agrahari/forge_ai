@@ -2055,9 +2055,98 @@ button {
     color: #c8ced8;
 }
 
-.agent-working-message {
-    color: #8d96a5;
-    font-style: italic;
+.agent-status-card {
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 8px;
+    background: #151922;
+}
+
+.agent-status-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #d8dde6;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.agent-status-description {
+    margin-top: 4px;
+    color: #858e9d;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.agent-status-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: #9aa3b2;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.agent-status-spinner {
+    animation: agent-status-spin 1.2s linear infinite;
+}
+
+.agent-status-completed {
+    border-color: rgba(112, 170, 125, 0.2);
+    background: #141a17;
+}
+
+.agent-status-completed .agent-status-icon {
+    color: #82b88b;
+}
+
+.agent-status-failed {
+    border-color: #43282a;
+    background: #241719;
+}
+
+.agent-status-failed .agent-status-icon {
+    color: #e98b8b;
+}
+
+.agent-changed-files {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+    padding-top: 7px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.agent-changed-file {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    color: #aeb6c4;
+    font-family: monospace;
+    font-size: 10px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.agent-file-dot {
+    color: #7f8998;
+    font-family: sans-serif;
+}
+
+@keyframes agent-status-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 @media (max-width: 900px) {
