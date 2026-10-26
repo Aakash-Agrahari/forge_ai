@@ -820,11 +820,16 @@ function Workspace({
         useState(new Set());
     const [activeFileId, setActiveFileId] = useState(null);
     const [activeFile, setActiveFile] = useState(null);
-
+    const [openTabs, setOpenTabs] = useState([]);
+    const openTabsRef = useRef([]);
     const [fileContent, setFileContent] = useState("");
     const [originalContent, setOriginalContent] = useState("");
 
     const hasUnsavedChanges = fileContent !== originalContent;
+
+    useEffect(() => {
+        openTabsRef.current = openTabs;
+    }, [openTabs]);
 
     const [loadingFiles, setLoadingFiles] = useState(true);
     const [loadingFile, setLoadingFile] = useState(false);
