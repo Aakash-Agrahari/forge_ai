@@ -309,17 +309,41 @@ function isAutonomousRepairableFailure(
         null;
 
     /*
-     * Explicit source/execution failures.
-     */
+    * Explicit source-level failures.
+    *
+    * Compilation failures are intentionally excluded here because
+    * a compilation failure can also be caused by an incorrect
+    * execution strategy, such as compiling only one file when
+    * multiple dependent files are required.
+    *
+    * The agent is allowed to inspect the compilation evidence and
+    * choose between changing the execution strategy and repairing
+    * source code.
+    */
     if (
-        failureType === "COMPILATION_FAILURE" ||
         failureType === "RUNTIME_FAILURE" ||
-        failureType === "TEST_FAILURE" ||
+        failureType === "TEST_FAILURE"
+    ) {
+        return true;
+    }
+
+    if (
+        failureType === "TIMEOUT"
+    ) {
+        return true;
+    }
+
+    if (
         failureType === "EXECUTION_FAILURE" ||
-        failureType === "TIMEOUT" ||
         failureType === "UNKNOWN_EXECUTION_RESULT"
     ) {
         return true;
+    }
+
+    if (
+        failureType === "COMPILATION_FAILURE"
+    ) {
+        return false;
     }
 
     /*
