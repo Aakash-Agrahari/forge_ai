@@ -1853,18 +1853,28 @@ export async function runAgent({
                         addMessage(state, {
                             role: "system",
                             content: [
-                                "AUTONOMOUS REPAIR REQUIRED.",
+                                "EXECUTION RECOVERY REQUIRED.",
                                 "",
-                                "The previous execution produced a source-level failure.",
-                                "Do NOT execute the same code again without repairing it.",
+                                "The previous execution produced a failure.",
+                                "Do NOT blindly repeat the same execution.",
                                 "",
-                                "Inspect the actual execution evidence and repair the affected source code.",
-                                "Make the smallest necessary repair.",
-                                "After the repair succeeds, execute the repaired source immediately."
+                                "First inspect the actual execution evidence.",
+                                "",
+                                "If the failure is caused by the execution strategy, build command, missing dependency, wrong target, or multi-file compilation requirement, change the execution strategy and try again.",
+                                "",
+                                "If the failure clearly identifies an application-source defect, repair the source code before verification.",
+                                "",
+                                "A different execution command or target is allowed when it is supported by the actual failure evidence.",
+                                "Do NOT repeat the exact same tool call unchanged."
                             ].join("\n")
                         });
 
-                        continue;
+                        /*
+                        * Execution recovery is allowed.
+                        *
+                        * The identical-tool-call guard still prevents the model
+                        * from endlessly repeating the exact same command.
+                        */
                     }
 
                     /*
