@@ -1719,6 +1719,7 @@ export async function runAgent({
                         toolName === "run_javascript_test";
 
                     const isSourceEditTool =
+                        toolName === "create_file" ||
                         toolName === "write_file" ||
                         toolName === "edit_file" ||
                         toolName === "replace_in_file";
@@ -1862,6 +1863,7 @@ export async function runAgent({
                         toolName === "run_javascript_test";
 
                     const isSourceEditTool =
+                        toolName === "create_file" ||
                         toolName === "write_file" ||
                         toolName === "edit_file" ||
                         toolName === "replace_in_file";
@@ -2367,6 +2369,7 @@ export async function runAgent({
                         validatedToolCall.name;
 
                     const isSourceEditTool =
+                        toolName === "create_file" ||
                         toolName === "write_file" ||
                         toolName === "edit_file" ||
                         toolName === "replace_in_file";
@@ -2544,6 +2547,7 @@ export async function runAgent({
                         toolName === "run_javascript_test";
 
                     const isSourceEditTool =
+                        toolName === "create_file" ||
                         toolName === "write_file" ||
                         toolName === "edit_file" ||
                         toolName === "replace_in_file";
