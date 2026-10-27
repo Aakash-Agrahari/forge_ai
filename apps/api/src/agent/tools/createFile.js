@@ -83,6 +83,11 @@ export const createFileTool = createTool({
             throw error;
         }
 
+        console.log("[CREATE_FILE]", {
+            projectId: context.projectId,
+            path,
+        });
+
         const createdFile = await createProjectFile({
             projectId: context.projectId,
             path,
