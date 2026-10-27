@@ -376,11 +376,21 @@ export async function executeCode({
      * languages require multiple source files
      * during compilation.
      */
+
+    console.log("[EXECUTE_CODE]", {
+        projectId,
+        requestedFilePath: filePath,
+    });
+
     const files =
         await getProjectFiles(
             projectId
         );
 
+    console.log(
+        "[EXECUTE_CODE_PROJECT_FILES]",
+        files.map((file) => file.path)
+    );    
 
     const projectFile =
         getProjectFileByPath(
