@@ -54,43 +54,26 @@ const EXECUTION_STRATEGIES = {
     },
 
         java: {
-        language: "java",
-        runtime: "jvm",
+            language: "java",
+            runtime: "jvm",
 
-        sourceExtensions: [
-            ".java"
-        ],
+            sourceExtensions: [
+                ".java"
+            ],
 
-        build: {
-            type: "java",
-            command: "javac <file>"
+            build: {
+                type: "java",
+                command:
+                    'javac -d ".forgeai-java-build" <project-java-files>'
+            },
+
+            run: ({
+                mainClass
+            }) => ({
+                command:
+                    `java -cp ".forgeai-java-build" "${mainClass}"`
+            })
         },
-
-        run: ({
-            filePath,
-            packageName
-        }) => {
-            const className =
-                filePath
-                    .split("/")
-                    .pop()
-                    .replace(/\.java$/i, "");
-
-            const mainClass =
-                packageName
-                    ? `${packageName}.${className}`
-                    : className;
-
-            const sourceDirectory =
-                filePath.includes("/")
-                    ? filePath.substring(0, filePath.lastIndexOf("/"))
-                    : ".";
-
-            return {
-                command: `java -cp "${sourceDirectory}" "${mainClass}"`
-            };
-        }
-    },
 
     c: {
         language: "c",
