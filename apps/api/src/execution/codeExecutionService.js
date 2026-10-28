@@ -396,10 +396,22 @@ function createBuildCommand({
         strategy.build.type;
 
         if (buildType === "java") {
-            const javaFiles =
-                getProjectSourceFiles(
+            const requestedFile =
+                getProjectFileByPath(
                     files,
-                    [".java"]
+                    filePath
+                );
+
+            if (!requestedFile) {
+                throw createFileNotFoundError(
+                    filePath
+                );
+            }
+
+            const javaFiles =
+                getJavaSourceDependencies(
+                    files,
+                    requestedFile
                 );
 
             if (javaFiles.length === 0) {
