@@ -91,6 +91,47 @@ function getJavaPackageName(
     return match?.[1] ?? null;
 }
 
+function hasJavaMainMethod(
+    content
+) {
+    if (typeof content !== "string") {
+        return false;
+    }
+
+    return /\bpublic\s+static\s+void\s+main\s*\(\s*String\s*(?:\[\s*\]|\.\.\.)\s+\w+\s*\)/.test(
+        content
+    );
+}
+
+
+function getJavaClassName(
+    filePath
+) {
+    const fileName =
+        filePath
+            .split("/")
+            .pop();
+
+    return fileName
+        .replace(/\.java$/i, "");
+}
+
+
+function getJavaMainClass(
+    filePath,
+    content
+) {
+    const packageName =
+        getJavaPackageName(content);
+
+    const className =
+        getJavaClassName(filePath);
+
+    return packageName
+        ? `${packageName}.${className}`
+        : className;
+}
+
 
 /**
  * Get project source files matching the requested
