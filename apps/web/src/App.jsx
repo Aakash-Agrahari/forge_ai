@@ -2927,9 +2927,8 @@ useEffect(() => {
 
             case "cs":
                 return (
-                    <SiCsharp
-                        {...iconProps}
-                        color="#512BD4"
+                    <Code2
+                        size={15}
                     />
                 );
 
