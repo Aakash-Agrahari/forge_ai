@@ -688,7 +688,21 @@ export async function executeCode({
                     "execution",
 
                 success:
-                    false,
+                    sessionResult.success &&
+                    (
+                        !isExecutable ||
+                        (
+                            executionResult?.success === true &&
+                            (
+                                executionResult?.exitCode ===
+                                    undefined ||
+                                executionResult?.exitCode ===
+                                    null ||
+                                executionResult?.exitCode === 0
+                            ) &&
+                            executionResult?.timeOut !== true
+                        )
+                    ),
 
                 exitCode:
                     null,
