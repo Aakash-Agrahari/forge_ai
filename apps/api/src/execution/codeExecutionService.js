@@ -583,7 +583,8 @@ export async function executeCode({
      */
     const {
         command,
-        buildCommand
+        buildCommand,
+        isExecutable
     } =
         createExecutionCommand({
             language,
@@ -639,13 +640,15 @@ export async function executeCode({
     }
 
 
-    steps.push({
-        name: "execution",
+    if (isExecutable) {
+        steps.push({
+            name: "execution",
 
-        command,
+            command,
 
-        stopOnFailure: true
-    });
+            stopOnFailure: true
+        });
+    }
 
 
     let sessionResult;
