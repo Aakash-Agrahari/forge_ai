@@ -2776,165 +2776,439 @@ useEffect(() => {
   }
 
     function getFileIcon(path) {
-        const fileName = path.split("/").pop()?.toLowerCase() || "";
+        const fileName =
+            path.split("/").pop()?.toLowerCase() || "";
+
         const extension = fileName.includes(".")
             ? fileName.split(".").pop()
             : "";
 
         const iconProps = {
             size: 15,
-            strokeWidth: 1.8,
         };
 
         // Special files
         if (fileName === "dockerfile") {
-            return <Box {...iconProps} />;
+            return (
+                <SiDocker
+                    {...iconProps}
+                    color="#2496ED"
+                />
+            );
         }
 
         if (fileName === "makefile") {
-            return <Settings {...iconProps} />;
+            return <Settings size={15} />;
         }
 
-        if (fileName === ".env" || fileName.startsWith(".env.")) {
-            return <Settings {...iconProps} />;
+        if (
+            fileName === ".env" ||
+            fileName.startsWith(".env.")
+        ) {
+            return <Settings size={15} />;
         }
 
         switch (extension) {
-            // JavaScript / TypeScript
+            // =========================================
+            // JAVASCRIPT / TYPESCRIPT / REACT
+            // =========================================
+
             case "js":
             case "mjs":
             case "cjs":
-                return <FileCode2 {...iconProps} />;
+                return (
+                    <SiJavascript
+                        {...iconProps}
+                        color="#F7DF1E"
+                    />
+                );
 
             case "jsx":
-                return <Code2 {...iconProps} />;
+                return (
+                    <SiReact
+                        {...iconProps}
+                        color="#61DAFB"
+                    />
+                );
 
             case "ts":
             case "mts":
             case "cts":
-                return <FileCode2 {...iconProps} />;
+                return (
+                    <SiTypescript
+                        {...iconProps}
+                        color="#3178C6"
+                    />
+                );
 
             case "tsx":
-                return <Code2 {...iconProps} />;
+                return (
+                    <SiReact
+                        {...iconProps}
+                        color="#61DAFB"
+                    />
+                );
 
-            // Java / JVM
+            // =========================================
+            // JAVA / JVM
+            // =========================================
+
             case "java":
+                return (
+                    <SiJava
+                        {...iconProps}
+                        color="#ED8B00"
+                    />
+                );
+
             case "kt":
             case "kts":
-            case "scala":
-                return <FileCode2 {...iconProps} />;
+                return (
+                    <SiKotlin
+                        {...iconProps}
+                        color="#7F52FF"
+                    />
+                );
 
+            case "scala":
+                return (
+                    <SiScala
+                        {...iconProps}
+                        color="#DC322F"
+                    />
+                );
+
+            case "groovy":
+                return (
+                    <SiGroovy
+                        {...iconProps}
+                        color="#4298B8"
+                    />
+                );
+
+            case "gradle":
+                return (
+                    <SiGradle
+                        {...iconProps}
+                        color="#02303A"
+                    />
+                );
+
+            // =========================================
             // C / C++
+            // =========================================
+
             case "c":
             case "h":
+                return (
+                    <SiC
+                        {...iconProps}
+                        color="#A8B9CC"
+                    />
+                );
+
             case "cpp":
             case "cc":
             case "cxx":
             case "hpp":
             case "hh":
             case "hxx":
-                return <FileCode2 {...iconProps} />;
+                return (
+                    <SiCplusplus
+                        {...iconProps}
+                        color="#00599C"
+                    />
+                );
 
-            // Rust / Go
-            case "rs":
-            case "go":
-                return <FileCode2 {...iconProps} />;
+            // =========================================
+            // C#
+            // =========================================
 
-            // Python
+            case "cs":
+                return (
+                    <SiCsharp
+                        {...iconProps}
+                        color="#512BD4"
+                    />
+                );
+
+            // =========================================
+            // PYTHON
+            // =========================================
+
             case "py":
             case "pyw":
-                return <FileCode2 {...iconProps} />;
+                return (
+                    <SiPython
+                        {...iconProps}
+                        color="#3776AB"
+                    />
+                );
 
-            // C#
-            case "cs":
-                return <FileCode2 {...iconProps} />;
+            // =========================================
+            // RUST
+            // =========================================
 
+            case "rs":
+                return (
+                    <SiRust
+                        {...iconProps}
+                        color="#DEA584"
+                    />
+                );
+
+            // =========================================
+            // GO
+            // =========================================
+
+            case "go":
+                return (
+                    <SiGo
+                        {...iconProps}
+                        color="#00ADD8"
+                    />
+                );
+
+            // =========================================
             // PHP
-            case "php":
-                return <FileCode2 {...iconProps} />;
+            // =========================================
 
-            // Ruby
+            case "php":
+                return (
+                    <SiPhp
+                        {...iconProps}
+                        color="#777BB4"
+                    />
+                );
+
+            // =========================================
+            // RUBY
+            // =========================================
+
             case "rb":
             case "rake":
-                return <FileCode2 {...iconProps} />;
+                return (
+                    <SiRuby
+                        {...iconProps}
+                        color="#CC342D"
+                    />
+                );
 
-            // Swift
+            // =========================================
+            // SWIFT
+            // =========================================
+
             case "swift":
-                return <FileCode2 {...iconProps} />;
+                return (
+                    <SiSwift
+                        {...iconProps}
+                        color="#F05138"
+                    />
+                );
 
-            // Dart
+            // =========================================
+            // DART / FLUTTER
+            // =========================================
+
             case "dart":
-                return <FileCode2 {...iconProps} />;
+                return (
+                    <SiDart
+                        {...iconProps}
+                        color="#0175C2"
+                    />
+                );
 
-            // Web
+            // =========================================
+            // WEB
+            // =========================================
+
             case "html":
             case "htm":
-                return <Globe {...iconProps} />;
+                return (
+                    <SiHtml5
+                        {...iconProps}
+                        color="#E34F26"
+                    />
+                );
 
             case "css":
+                return (
+                    <SiCss3
+                        {...iconProps}
+                        color="#1572B6"
+                    />
+                );
+
             case "scss":
             case "sass":
-            case "less":
-                return <Hash {...iconProps} />;
+                return (
+                    <SiSass
+                        {...iconProps}
+                        color="#CC6699"
+                    />
+                );
 
-            // Data / configuration
+            // =========================================
+            // JSON / CONFIG
+            // =========================================
+
             case "json":
             case "jsonc":
-                return <FileJson {...iconProps} />;
+                return (
+                    <SiJson
+                        {...iconProps}
+                        color="#F7DF1E"
+                    />
+                );
 
             case "xml":
-                return <FileType2 {...iconProps} />;
+                return (
+                    <FileType2
+                        size={15}
+                    />
+                );
 
             case "yaml":
             case "yml":
-                return <FileText {...iconProps} />;
+                return (
+                    <FileText
+                        size={15}
+                    />
+                );
 
             case "toml":
             case "ini":
             case "conf":
-                return <Settings {...iconProps} />;
+                return (
+                    <Settings
+                        size={15}
+                    />
+                );
 
-            // Database
+            // =========================================
+            // DATABASE
+            // =========================================
+
             case "sql":
-                return <Database {...iconProps} />;
+                return (
+                    <Database
+                        size={15}
+                    />
+                );
 
-            // Shell
+            // =========================================
+            // SHELL
+            // =========================================
+
             case "sh":
             case "bash":
             case "zsh":
             case "fish":
-                return <Terminal {...iconProps} />;
+                return (
+                    <SiGnubash
+                        {...iconProps}
+                        color="#4EAA25"
+                    />
+                );
 
             case "bat":
             case "cmd":
             case "ps1":
-                return <Terminal {...iconProps} />;
+                return (
+                    <Terminal
+                        size={15}
+                    />
+                );
 
-            // Markdown / text
+            // =========================================
+            // MARKDOWN
+            // =========================================
+
             case "md":
             case "mdx":
-                return <FileText {...iconProps} />;
+                return (
+                    <SiMarkdown
+                        {...iconProps}
+                        color="#FFFFFF"
+                    />
+                );
+
+            // =========================================
+            // OTHER LANGUAGES
+            // =========================================
+
+            case "lua":
+                return (
+                    <SiLua
+                        {...iconProps}
+                        color="#2C2D72"
+                    />
+                );
+
+            case "pl":
+                return (
+                    <SiPerl
+                        {...iconProps}
+                        color="#39457E"
+                    />
+                );
+
+            case "r":
+                return (
+                    <SiR
+                        {...iconProps}
+                        color="#276DC3"
+                    />
+                );
+
+            case "ex":
+            case "exs":
+                return (
+                    <SiElixir
+                        {...iconProps}
+                        color="#4B275F"
+                    />
+                );
+
+            case "erl":
+            case "hrl":
+                return (
+                    <SiErlang
+                        {...iconProps}
+                        color="#A90533"
+                    />
+                );
+
+            case "clj":
+                return (
+                    <SiClojure
+                        {...iconProps}
+                        color="#5881D8"
+                    />
+                );
+
+            // =========================================
+            // TEXT / LOG
+            // =========================================
 
             case "txt":
             case "log":
-                return <FileText {...iconProps} />;
+                return (
+                    <FileText
+                        size={15}
+                    />
+                );
 
-            // Generic source/code
-            case "asm":
-            case "lua":
-            case "pl":
-            case "r":
-            case "ex":
-            case "exs":
-            case "erl":
-            case "hrl":
-            case "clj":
-            case "groovy":
-            case "gradle":
-                return <FileCode2 {...iconProps} />;
+            // =========================================
+            // DEFAULT
+            // =========================================
 
             default:
-                return <File {...iconProps} />;
+                return (
+                    <File
+                        size={15}
+                    />
+                );
         }
     }
 
