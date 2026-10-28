@@ -176,6 +176,185 @@ function getProjectSourceFiles(
         );
 }
 
+function getJavaImports(content) {
+    if (typeof content !== "string") {
+        return [];
+    }
+
+    const imports = [];
+
+    const importRegex =
+        /^\s*import\s+(?:static\s+)?([A-Za-z_][A-Za-z0-9_.]*)\s*;/gm;
+
+    let match;
+
+    while ((match = importRegex.exec(content)) !== null) {
+        imports.push(match[1]);
+    }
+
+    return imports;
+}
+
+
+function getJavaTypeReferences(content) {
+    if (typeof content !== "string") {
+        return [];
+    }
+
+    const references = new Set();
+
+    const typeRegex =
+        /\b(?:class|interface|enum|record)\s+([A-Za-z_][A-Za-z0-9_]*)|\bnew\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/g;
+
+    let match;
+
+    while ((match = typeRegex.exec(content)) !== null) {
+        const typeName = match[1] ?? match[2];
+
+        if (typeName) {
+            references.add(typeName);
+        }
+    }
+
+    return [...references];
+}
+
+
+function getJavaSourceDependencies(
+    files,
+    requestedFile
+) {
+    const javaFiles =
+        files.filter(
+            (file) =>
+                typeof file.path === "string" &&
+                file.path
+                    .toLowerCase()
+                    .endsWith(".java")
+        );
+
+    const fileByPath =
+        new Map(
+            javaFiles.map(
+                (file) => [
+                    validateProjectPath(file.path),
+                    file
+                ]
+            )
+        );
+
+    const selected = new Map();
+
+    const queue = [
+        validateProjectPath(requestedFile.path)
+    ];
+
+    while (queue.length > 0) {
+        const currentPath = queue.shift();
+
+        if (selected.has(currentPath)) {
+            continue;
+        }
+
+        const currentFile =
+            fileByPath.get(currentPath);
+
+        if (!currentFile) {
+            continue;
+        }
+
+        selected.set(
+            currentPath,
+            currentFile
+        );
+
+        const packageName =
+            getJavaPackageName(
+                currentFile.content
+            );
+
+        const imports =
+            getJavaImports(
+                currentFile.content
+            );
+
+        const typeReferences =
+            getJavaTypeReferences(
+                currentFile.content
+            );
+
+        /*
+         * 1. Resolve explicit imports.
+         */
+        for (const importName of imports) {
+            if (importName.endsWith(".*")) {
+                continue;
+            }
+
+            const importedClass =
+                importName.split(".").pop();
+
+            for (const file of javaFiles) {
+                const className =
+                    getJavaClassName(file.path);
+
+                if (className !== importedClass) {
+                    continue;
+                }
+
+                const normalizedPath =
+                    validateProjectPath(
+                        file.path
+                    );
+
+                if (!selected.has(normalizedPath)) {
+                    queue.push(normalizedPath);
+                }
+            }
+        }
+
+        /*
+         * 2. Resolve classes in the same package.
+         */
+        for (const file of javaFiles) {
+            const normalizedPath =
+                validateProjectPath(file.path);
+
+            if (selected.has(normalizedPath)) {
+                continue;
+            }
+
+            const filePackage =
+                getJavaPackageName(
+                    file.content
+                );
+
+            if (
+                filePackage &&
+                filePackage === packageName
+            ) {
+                const className =
+                    getJavaClassName(file.path);
+
+                if (
+                    typeReferences.includes(
+                        className
+                    )
+                ) {
+                    queue.push(normalizedPath);
+                }
+            }
+        }
+    }
+
+    return [...selected.values()]
+        .map(
+            (file) =>
+                validateProjectPath(
+                    file.path
+                )
+        );
+}
 
 /**
  * Convert project source paths into
