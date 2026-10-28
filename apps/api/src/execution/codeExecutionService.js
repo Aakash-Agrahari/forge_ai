@@ -662,10 +662,10 @@ export async function executeCode({
             });
     } catch (error) {
         /*
-         * Sandbox infrastructure errors are
-         * returned as structured execution
-         * failures.
-         */
+        * Sandbox infrastructure errors are
+        * returned as structured execution
+        * failures.
+        */
         return {
             success: false,
 
@@ -688,21 +688,7 @@ export async function executeCode({
                     "execution",
 
                 success:
-                    sessionResult.success &&
-                    (
-                        !isExecutable ||
-                        (
-                            executionResult?.success === true &&
-                            (
-                                executionResult?.exitCode ===
-                                    undefined ||
-                                executionResult?.exitCode ===
-                                    null ||
-                                executionResult?.exitCode === 0
-                            ) &&
-                            executionResult?.timeOut !== true
-                        )
-                    ),
+                    false,
 
                 exitCode:
                     null,
