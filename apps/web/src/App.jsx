@@ -45,6 +45,7 @@ import {
     SiElixir,
     SiErlang,
     SiClojure,
+    SiGradle,
     SiGroovy,
 } from "react-icons/si";
 
