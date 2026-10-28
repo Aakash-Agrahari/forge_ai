@@ -807,15 +807,20 @@ export async function executeCode({
     return {
         success:
             sessionResult.success &&
-            executionResult?.success === true &&
             (
-                executionResult?.exitCode ===
-                    undefined ||
-                executionResult?.exitCode ===
-                    null ||
-                executionResult?.exitCode === 0
-            ) &&
-            executionResult?.timeOut !== true,
+                !isExecutable ||
+                (
+                    executionResult?.success === true &&
+                    (
+                        executionResult?.exitCode ===
+                            undefined ||
+                        executionResult?.exitCode ===
+                            null ||
+                        executionResult?.exitCode === 0
+                    ) &&
+                    executionResult?.timeOut !== true
+                )
+            ),
 
         language,
 
