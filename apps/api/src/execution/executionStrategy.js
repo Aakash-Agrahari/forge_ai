@@ -328,7 +328,8 @@ export function getSupportedExecutionLanguages() {
 export function createRunCommand({
     language,
     filePath,
-    packageName
+    packageName,
+    mainClass
 }) {
     if (!filePath) {
         const error = new Error(
@@ -347,7 +348,8 @@ export function createRunCommand({
     if (typeof strategy.run === "function") {
         return strategy.run({
             filePath,
-            packageName
+            packageName,
+            mainClass
         });
     }
 
@@ -367,7 +369,6 @@ export function createRunCommand({
 
     throw error;
 }
-
 
 export function getBuildCommand(language) {
     const strategy =
