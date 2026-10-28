@@ -585,7 +585,11 @@ button {
 }
 
 .tab-icon {
-    color: #8d96a4;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 15px;
+    line-height: 1;
 }
 
 .tab-close {
