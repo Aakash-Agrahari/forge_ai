@@ -13,6 +13,7 @@ import {
     Terminal,
     Settings,
     Box,
+    Code2,
 } from "lucide-react";
 
 import {
@@ -31,7 +32,6 @@ import {
     SiKotlin,
     SiDart,
     SiScala,
-    SiCsharp,
     SiHtml5,
     SiCss3,
     SiSass,
