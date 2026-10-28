@@ -3,6 +3,25 @@ import Editor from "@monaco-editor/react";
 import "./App.css";
 
 import {
+    FileCode2,
+    FileJson,
+    FileText,
+    FileType2,
+    Braces,
+    Database,
+    Globe,
+    Hash,
+    Terminal,
+    Settings,
+    File,
+    FolderOpen,
+    Code2,
+    Cpu,
+    Box,
+    Package,
+} from "lucide-react";
+
+import {
     getCurrentUser,
     loginUser,
     registerUser,
