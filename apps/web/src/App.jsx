@@ -3238,21 +3238,6 @@ useEffect(() => {
      * =========================
      */
 
-    function renderLineNumbers() {
-        const lineCount =
-            fileContent.length === 0
-                ? 1
-                : fileContent.split("\n").length;
-
-        return Array.from(
-            { length: lineCount },
-            (_, index) => (
-                <span key={index}>
-                    {index + 1}
-                </span>
-            )
-        );
-    }
 
     return (
         <div className="forgeai-app">
@@ -3617,9 +3602,6 @@ useEffect(() => {
                             </div>
                         ) : (
                             <>
-                                <div className="line-numbers">
-                                    {renderLineNumbers()}
-                                </div>
 
                                 <Editor
                                   height="100%"
