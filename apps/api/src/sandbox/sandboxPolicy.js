@@ -231,87 +231,82 @@ function isSafeJavaCommand(command) {
         return false;
     }
 
-    /*
-     * Supported safe Java execution forms:
-     *
-     * java "MainClass"
-     * java -cp "src" "MainClass"
-     *
-     * The class name may optionally contain a package.
-     */
-
     const simpleClassPattern =
         /^[A-Za-z_$][A-Za-z0-9_$]*(\.[A-Za-z_$][A-Za-z0-9_$]*)*$/;
 
-    const simpleMatch =
-        command.match(
-            /^java\s+"?([A-Za-z_$][A-Za-z0-9_$]*(?:\.[A-Za-z_$][A-Za-z0-9_$]*)*)"?$/
-        );
+    /*
+     * Supported:
+     *
+     * java "MainClass"
+     * java -cp ".forgeai-java-build" "com.example.MainClass"
+     */
+
+    const simpleMatch = command.match(
+        /^java\s+"?([A-Za-z_$][A-Za-z0-9_$]*(?:\.[A-Za-z_$][A-Za-z0-9_$]*)*)"?$/
+    );
 
     if (simpleMatch) {
-        return simpleClassPattern.test(
-            simpleMatch[1]
-        );
+        return simpleClassPattern.test(simpleMatch[1]);
     }
 
     /*
-     * Java classpath execution:
+     * Only allow ForgeAI's controlled Java build directory.
      *
-     * java -cp "safe-directory" "MainClass"
+     * This prevents arbitrary classpaths while allowing the
+     * execution strategy used by ForgeAI.
      */
-
-    const classpathMatch =
-        command.match(
-            /^java\s+-cp\s+"([^"]+)"\s+"([A-Za-z_$][A-Za-z0-9_$]*(?:\.[A-Za-z_$][A-Za-z0-9_$]*)*)"$/
-        );
+    const classpathMatch = command.match(
+        /^java\s+-cp\s+"(\.forgeai-java-build)"\s+"([A-Za-z_$][A-Za-z0-9_$]*(?:\.[A-Za-z_$][A-Za-z0-9_$]*)*)"$/
+    );
 
     if (!classpathMatch) {
         return false;
     }
 
-    const classpath =
-        classpathMatch[1];
+    const classpath = classpathMatch[1];
+    const className = classpathMatch[2];
 
-    const className =
-        classpathMatch[2];
-
-    /*
-     * Classpath must be a safe project-relative path.
-     */
-    if (!isSafeProjectFilePath(classpath)) {
-        return false;
-    }
-
-    /*
-     * Classpath must point to a directory/source location,
-     * not an executable or arbitrary file.
-     */
-    if (
-        classpath.toLowerCase().endsWith(".java") ||
-        classpath.toLowerCase().endsWith(".class") ||
-        classpath.includes(".forgeai-")
-    ) {
-        return false;
-    }
-
-    return simpleClassPattern.test(
-        className
+    return (
+        classpath === ".forgeai-java-build" &&
+        simpleClassPattern.test(className)
     );
 }
+
 
 function isSafeJavaBuildCommand(command) {
     if (!command.startsWith("javac ")) {
         return false;
     }
 
-    const remainder = command.slice("javac ".length).trim();
+    /*
+     * ForgeAI Java build format:
+     *
+     * javac -d ".forgeai-java-build" "<file1.java>" "<file2.java>"
+     *
+     * Only this exact compiler option is allowed.
+     */
 
-    if (!remainder) {
+    const match = command.match(
+        /^javac\s+-d\s+"(\.forgeai-java-build)"\s+(.+)$/
+    );
+
+    if (!match) {
         return false;
     }
 
-    const files = remainder
-        .match(/(?:"[^"]+"|'[^']+'|[^\s]+)/g);
+    const outputDirectory = match[1];
+    const filesPart = match[2];
+
+    if (outputDirectory !== ".forgeai-java-build") {
+        return false;
+    }
+
+    /*
+     * Extract quoted or unquoted source files.
+     */
+    const files = filesPart.match(
+        /(?:"[^"]+"|'[^']+'|[^\s]+)/g
+    );
 
     if (!files || files.length === 0) {
         return false;
