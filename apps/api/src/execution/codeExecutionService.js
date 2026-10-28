@@ -357,21 +357,56 @@ function createExecutionCommand({
             filePath
         );
 
-    /*
-     * Java is the only currently supported
-     * language whose runtime command needs
-     * source-level package information.
-     *
-     * The actual Java execution strategy
-     * still lives in executionStrategy.js.
-     */
+    if (language === "java") {
+        const isExecutable =
+            hasJavaMainMethod(
+                fileContent
+            );
+
+        const mainClass =
+            isExecutable
+                ? getJavaMainClass(
+                    normalizedFilePath,
+                    fileContent
+                )
+                : null;
+
+        const buildCommand =
+            createBuildCommand({
+                language,
+                strategy,
+                files,
+                filePath:
+                    normalizedFilePath
+            });
+
+        const runCommand =
+            isExecutable
+                ? createRunCommand({
+                    language,
+                    filePath:
+                        normalizedFilePath,
+                    mainClass
+                })
+                : null;
+
+        return {
+            command:
+                runCommand?.command ??
+                null,
+
+            buildCommand,
+
+            isExecutable
+        };
+    }
+
     const packageName =
         language === "java"
             ? getJavaPackageName(
                 fileContent
             )
             : null;
-
 
     const runCommand =
         createRunCommand({
@@ -380,7 +415,6 @@ function createExecutionCommand({
                 normalizedFilePath,
             packageName
         });
-
 
     const buildCommand =
         createBuildCommand({
@@ -391,12 +425,13 @@ function createExecutionCommand({
                 normalizedFilePath
         });
 
-
     return {
         command:
             runCommand.command,
 
-        buildCommand
+        buildCommand,
+
+        isExecutable: true
     };
 }
 
