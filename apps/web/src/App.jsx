@@ -2749,31 +2749,166 @@ useEffect(() => {
   }
 
     function getFileIcon(path) {
-        if (path.endsWith(".jsx")) {
-            return "◇";
+        const fileName = path.split("/").pop()?.toLowerCase() || "";
+        const extension = fileName.includes(".")
+            ? fileName.split(".").pop()
+            : "";
+
+        const iconProps = {
+            size: 15,
+            strokeWidth: 1.8,
+        };
+
+        // Special files
+        if (fileName === "dockerfile") {
+            return <Box {...iconProps} />;
         }
 
-        if (path.endsWith(".js")) {
-            return "◇";
+        if (fileName === "makefile") {
+            return <Settings {...iconProps} />;
         }
 
-        if (path.endsWith(".json")) {
-            return "{}";
+        if (fileName === ".env" || fileName.startsWith(".env.")) {
+            return <Settings {...iconProps} />;
         }
 
-        if (path.endsWith(".css")) {
-            return "#";
-        }
+        switch (extension) {
+            // JavaScript / TypeScript
+            case "js":
+            case "mjs":
+            case "cjs":
+                return <FileCode2 {...iconProps} />;
 
-        if (path.endsWith(".html")) {
-            return "<>";
-        }
+            case "jsx":
+                return <Code2 {...iconProps} />;
 
-        if (path.endsWith(".md")) {
-            return "M";
-        }
+            case "ts":
+            case "mts":
+            case "cts":
+                return <FileCode2 {...iconProps} />;
 
-        return "◇";
+            case "tsx":
+                return <Code2 {...iconProps} />;
+
+            // Java / JVM
+            case "java":
+            case "kt":
+            case "kts":
+            case "scala":
+                return <FileCode2 {...iconProps} />;
+
+            // C / C++
+            case "c":
+            case "h":
+            case "cpp":
+            case "cc":
+            case "cxx":
+            case "hpp":
+            case "hh":
+            case "hxx":
+                return <FileCode2 {...iconProps} />;
+
+            // Rust / Go
+            case "rs":
+            case "go":
+                return <FileCode2 {...iconProps} />;
+
+            // Python
+            case "py":
+            case "pyw":
+                return <FileCode2 {...iconProps} />;
+
+            // C#
+            case "cs":
+                return <FileCode2 {...iconProps} />;
+
+            // PHP
+            case "php":
+                return <FileCode2 {...iconProps} />;
+
+            // Ruby
+            case "rb":
+            case "rake":
+                return <FileCode2 {...iconProps} />;
+
+            // Swift
+            case "swift":
+                return <FileCode2 {...iconProps} />;
+
+            // Dart
+            case "dart":
+                return <FileCode2 {...iconProps} />;
+
+            // Web
+            case "html":
+            case "htm":
+                return <Globe {...iconProps} />;
+
+            case "css":
+            case "scss":
+            case "sass":
+            case "less":
+                return <Hash {...iconProps} />;
+
+            // Data / configuration
+            case "json":
+            case "jsonc":
+                return <FileJson {...iconProps} />;
+
+            case "xml":
+                return <FileType2 {...iconProps} />;
+
+            case "yaml":
+            case "yml":
+                return <FileText {...iconProps} />;
+
+            case "toml":
+            case "ini":
+            case "conf":
+                return <Settings {...iconProps} />;
+
+            // Database
+            case "sql":
+                return <Database {...iconProps} />;
+
+            // Shell
+            case "sh":
+            case "bash":
+            case "zsh":
+            case "fish":
+                return <Terminal {...iconProps} />;
+
+            case "bat":
+            case "cmd":
+            case "ps1":
+                return <Terminal {...iconProps} />;
+
+            // Markdown / text
+            case "md":
+            case "mdx":
+                return <FileText {...iconProps} />;
+
+            case "txt":
+            case "log":
+                return <FileText {...iconProps} />;
+
+            // Generic source/code
+            case "asm":
+            case "lua":
+            case "pl":
+            case "r":
+            case "ex":
+            case "exs":
+            case "erl":
+            case "hrl":
+            case "clj":
+            case "groovy":
+            case "gradle":
+                return <FileCode2 {...iconProps} />;
+
+            default:
+                return <File {...iconProps} />;
+        }
     }
 
     function toggleFolder(folderId) {
