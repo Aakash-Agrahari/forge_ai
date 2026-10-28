@@ -21,7 +21,6 @@ import {
     SiTypescript,
     SiReact,
     SiPython,
-    SiJava,
     SiC,
     SiCplusplus,
     SiRust,
@@ -33,7 +32,7 @@ import {
     SiDart,
     SiScala,
     SiHtml5,
-    SiCss3,
+    SiCss,
     SiSass,
     SiJson,
     SiMarkdown,
@@ -46,9 +45,9 @@ import {
     SiErlang,
     SiClojure,
     SiGradle,
-    SiGroovy,
+    SiApachegroovy,
 } from "react-icons/si";
-
+import { FaJava } from "react-icons/fa";
 import {
     getCurrentUser,
     loginUser,
@@ -2856,7 +2855,7 @@ useEffect(() => {
 
             case "java":
                 return (
-                    <SiJava
+                    <FaJava
                         {...iconProps}
                         color="#ED8B00"
                     />
@@ -2879,13 +2878,8 @@ useEffect(() => {
                     />
                 );
 
-            case "groovy":
-                return (
-                    <SiGroovy
-                        {...iconProps}
-                        color="#4298B8"
-                    />
-                );
+           case "groovy":
+                return <SiApachegroovy {...iconProps} />;
 
             case "gradle":
                 return (
@@ -3033,7 +3027,7 @@ useEffect(() => {
 
             case "css":
                 return (
-                    <SiCss3
+                    <SiCss
                         {...iconProps}
                         color="#1572B6"
                     />
