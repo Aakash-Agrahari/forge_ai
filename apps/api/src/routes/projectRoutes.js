@@ -12,11 +12,10 @@ import {
     getUserProjects,
     getProjectById,
     updateProject,
-    deleteProject,
-    createOrGetCollaborationRoom,
-    deactivateCollaborationRoom
+    deleteProject
 } from "../services/projectService.js";
 
+import {createOrGetCollaborationRoom, deactivateCollaborationRoom} from "../services/CollaborationService.js";
 
 const router = Router();
 
