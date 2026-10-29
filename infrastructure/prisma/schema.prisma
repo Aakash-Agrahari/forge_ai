@@ -8,27 +8,27 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(cuid())
+  id           String   @id @default(cuid())
   name         String
-  email        String    @unique
+  email        String   @unique
   passwordHash String
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  sessions     Session[]
-  projects     Project[]
+  sessions           Session[]
+  projects           Project[]
   collaborationRooms CollaborationRoom[]
 }
 
 model Session {
-  id         String    @id @default(cuid())
-  tokenHash  String    @unique
-  userId     String
-  expiresAt  DateTime
-  createdAt  DateTime  @default(now())
-  revokedAt  DateTime?
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
 
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
@@ -42,10 +42,10 @@ model Project {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  folders       ProjectFolder[]
-  files         ProjectFile[]
-  conversations Conversation[]
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folders           ProjectFolder[]
+  files             ProjectFile[]
+  conversations     Conversation[]
   collaborationRoom CollaborationRoom?
 
   @@index([userId])
@@ -53,13 +53,13 @@ model Project {
 }
 
 model CollaborationRoom {
-  id        String   @id @default(cuid())
-  projectId String   @unique
-  ownerId   String
-  shareToken String  @unique
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  projectId  String   @unique
+  ownerId    String
+  shareToken String   @unique
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   owner   User    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
@@ -112,18 +112,18 @@ model Conversation {
 }
 
 model Message {
-  id             String   @id @default(cuid())
+  id             String @id @default(cuid())
   conversationId String
 
-  role           String
-  content        String
+  role    String
+  content String
 
-  toolCallId     String?
-  toolName       String?
-  toolArguments  Json?
-  toolResult     Json?
+  toolCallId    String?
+  toolName      String?
+  toolArguments Json?
+  toolResult    Json?
 
-  createdAt      DateTime @default(now())
+  createdAt DateTime @default(now())
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
@@ -133,27 +133,27 @@ model Message {
 }
 
 model AgentRun {
-  id             String           @id @default(cuid())
+  id             String @id @default(cuid())
   conversationId String
 
-  status         String
-  phase          String           @default("queued")
+  status String
+  phase  String @default("queued")
 
-  provider       String?
-  model          String?
+  provider String?
+  model    String?
 
-  iteration      Int              @default(0)
-  toolCount      Int              @default(0)
-  currentTool    String?
+  iteration   Int     @default(0)
+  toolCount   Int     @default(0)
+  currentTool String?
 
-  startedAt      DateTime         @default(now())
-  lastHeartbeatAt DateTime        @default(now())
-  completedAt    DateTime?
+  startedAt       DateTime  @default(now())
+  lastHeartbeatAt DateTime  @default(now())
+  completedAt     DateTime?
 
-  error          String?
+  error String?
 
-  conversation   Conversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  events         AgentRunEvent[]
+  conversation Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  events       AgentRunEvent[]
 
   @@index([conversationId])
   @@index([status])
@@ -163,12 +163,12 @@ model AgentRun {
 }
 
 model AgentRunEvent {
-  id        String   @id @default(cuid())
-  runId     String
+  id    String @id @default(cuid())
+  runId String
 
-  type      String
-  message   String?
-  metadata  Json?
+  type     String
+  message  String?
+  metadata Json?
 
   createdAt DateTime @default(now())
 

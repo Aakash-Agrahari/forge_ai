@@ -29,6 +29,11 @@ export type Session = $Result.DefaultSelection<Prisma.$SessionPayload>
  */
 export type Project = $Result.DefaultSelection<Prisma.$ProjectPayload>
 /**
+ * Model CollaborationRoom
+ * 
+ */
+export type CollaborationRoom = $Result.DefaultSelection<Prisma.$CollaborationRoomPayload>
+/**
  * Model ProjectFolder
  * 
  */
@@ -209,6 +214,16 @@ export class PrismaClient<
     * ```
     */
   get project(): Prisma.ProjectDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.collaborationRoom`: Exposes CRUD operations for the **CollaborationRoom** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CollaborationRooms
+    * const collaborationRooms = await prisma.collaborationRoom.findMany()
+    * ```
+    */
+  get collaborationRoom(): Prisma.CollaborationRoomDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.projectFolder`: Exposes CRUD operations for the **ProjectFolder** model.
@@ -719,6 +734,7 @@ export namespace Prisma {
     User: 'User',
     Session: 'Session',
     Project: 'Project',
+    CollaborationRoom: 'CollaborationRoom',
     ProjectFolder: 'ProjectFolder',
     ProjectFile: 'ProjectFile',
     Conversation: 'Conversation',
@@ -740,7 +756,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "session" | "project" | "projectFolder" | "projectFile" | "conversation" | "message" | "agentRun" | "agentRunEvent"
+      modelProps: "user" | "session" | "project" | "collaborationRoom" | "projectFolder" | "projectFile" | "conversation" | "message" | "agentRun" | "agentRunEvent"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -963,6 +979,80 @@ export namespace Prisma {
           count: {
             args: Prisma.ProjectCountArgs<ExtArgs>
             result: $Utils.Optional<ProjectCountAggregateOutputType> | number
+          }
+        }
+      }
+      CollaborationRoom: {
+        payload: Prisma.$CollaborationRoomPayload<ExtArgs>
+        fields: Prisma.CollaborationRoomFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CollaborationRoomFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CollaborationRoomPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CollaborationRoomFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CollaborationRoomPayload>
+          }
+          findFirst: {
+            args: Prisma.CollaborationRoomFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CollaborationRoomPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CollaborationRoomFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CollaborationRoomPayload>
+          }
+          findMany: {
+            args: Prisma.CollaborationRoomFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CollaborationRoomPayload>[]
+          }
+          create: {
+            args: Prisma.CollaborationRoomCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CollaborationRoomPayload>
+          }
+          createMany: {
+            args: Prisma.CollaborationRoomCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CollaborationRoomCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CollaborationRoomPayload>[]
+          }
+          delete: {
+            args: Prisma.CollaborationRoomDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CollaborationRoomPayload>
+          }
+          update: {
+            args: Prisma.CollaborationRoomUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CollaborationRoomPayload>
+          }
+          deleteMany: {
+            args: Prisma.CollaborationRoomDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CollaborationRoomUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.CollaborationRoomUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CollaborationRoomPayload>[]
+          }
+          upsert: {
+            args: Prisma.CollaborationRoomUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CollaborationRoomPayload>
+          }
+          aggregate: {
+            args: Prisma.CollaborationRoomAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCollaborationRoom>
+          }
+          groupBy: {
+            args: Prisma.CollaborationRoomGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CollaborationRoomGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CollaborationRoomCountArgs<ExtArgs>
+            result: $Utils.Optional<CollaborationRoomCountAggregateOutputType> | number
           }
         }
       }
@@ -1536,6 +1626,7 @@ export namespace Prisma {
     user?: UserOmit
     session?: SessionOmit
     project?: ProjectOmit
+    collaborationRoom?: CollaborationRoomOmit
     projectFolder?: ProjectFolderOmit
     projectFile?: ProjectFileOmit
     conversation?: ConversationOmit
@@ -1624,11 +1715,13 @@ export namespace Prisma {
   export type UserCountOutputType = {
     sessions: number
     projects: number
+    collaborationRooms: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     sessions?: boolean | UserCountOutputTypeCountSessionsArgs
     projects?: boolean | UserCountOutputTypeCountProjectsArgs
+    collaborationRooms?: boolean | UserCountOutputTypeCountCollaborationRoomsArgs
   }
 
   // Custom InputTypes
@@ -1654,6 +1747,13 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountProjectsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ProjectWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountCollaborationRoomsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CollaborationRoomWhereInput
   }
 
 
@@ -1955,6 +2055,7 @@ export namespace Prisma {
     updatedAt?: boolean
     sessions?: boolean | User$sessionsArgs<ExtArgs>
     projects?: boolean | User$projectsArgs<ExtArgs>
+    collaborationRooms?: boolean | User$collaborationRoomsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -1989,6 +2090,7 @@ export namespace Prisma {
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     sessions?: boolean | User$sessionsArgs<ExtArgs>
     projects?: boolean | User$projectsArgs<ExtArgs>
+    collaborationRooms?: boolean | User$collaborationRoomsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -1999,6 +2101,7 @@ export namespace Prisma {
     objects: {
       sessions: Prisma.$SessionPayload<ExtArgs>[]
       projects: Prisma.$ProjectPayload<ExtArgs>[]
+      collaborationRooms: Prisma.$CollaborationRoomPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -2403,6 +2506,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     sessions<T extends User$sessionsArgs<ExtArgs> = {}>(args?: Subset<T, User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     projects<T extends User$projectsArgs<ExtArgs> = {}>(args?: Subset<T, User$projectsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    collaborationRooms<T extends User$collaborationRoomsArgs<ExtArgs> = {}>(args?: Subset<T, User$collaborationRoomsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CollaborationRoomPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2876,6 +2980,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: ProjectScalarFieldEnum | ProjectScalarFieldEnum[]
+  }
+
+  /**
+   * User.collaborationRooms
+   */
+  export type User$collaborationRoomsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollaborationRoom
+     */
+    select?: CollaborationRoomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollaborationRoom
+     */
+    omit?: CollaborationRoomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CollaborationRoomInclude<ExtArgs> | null
+    where?: CollaborationRoomWhereInput
+    orderBy?: CollaborationRoomOrderByWithRelationInput | CollaborationRoomOrderByWithRelationInput[]
+    cursor?: CollaborationRoomWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CollaborationRoomScalarFieldEnum | CollaborationRoomScalarFieldEnum[]
   }
 
   /**
@@ -4149,6 +4277,7 @@ export namespace Prisma {
     folders?: boolean | Project$foldersArgs<ExtArgs>
     files?: boolean | Project$filesArgs<ExtArgs>
     conversations?: boolean | Project$conversationsArgs<ExtArgs>
+    collaborationRoom?: boolean | Project$collaborationRoomArgs<ExtArgs>
     _count?: boolean | ProjectCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["project"]>
 
@@ -4187,6 +4316,7 @@ export namespace Prisma {
     folders?: boolean | Project$foldersArgs<ExtArgs>
     files?: boolean | Project$filesArgs<ExtArgs>
     conversations?: boolean | Project$conversationsArgs<ExtArgs>
+    collaborationRoom?: boolean | Project$collaborationRoomArgs<ExtArgs>
     _count?: boolean | ProjectCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ProjectIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4203,6 +4333,7 @@ export namespace Prisma {
       folders: Prisma.$ProjectFolderPayload<ExtArgs>[]
       files: Prisma.$ProjectFilePayload<ExtArgs>[]
       conversations: Prisma.$ConversationPayload<ExtArgs>[]
+      collaborationRoom: Prisma.$CollaborationRoomPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -4609,6 +4740,7 @@ export namespace Prisma {
     folders<T extends Project$foldersArgs<ExtArgs> = {}>(args?: Subset<T, Project$foldersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectFolderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     files<T extends Project$filesArgs<ExtArgs> = {}>(args?: Subset<T, Project$filesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     conversations<T extends Project$conversationsArgs<ExtArgs> = {}>(args?: Subset<T, Project$conversationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ConversationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    collaborationRoom<T extends Project$collaborationRoomArgs<ExtArgs> = {}>(args?: Subset<T, Project$collaborationRoomArgs<ExtArgs>>): Prisma__CollaborationRoomClient<$Result.GetResult<Prisma.$CollaborationRoomPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5117,6 +5249,25 @@ export namespace Prisma {
   }
 
   /**
+   * Project.collaborationRoom
+   */
+  export type Project$collaborationRoomArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollaborationRoom
+     */
+    select?: CollaborationRoomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollaborationRoom
+     */
+    omit?: CollaborationRoomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CollaborationRoomInclude<ExtArgs> | null
+    where?: CollaborationRoomWhereInput
+  }
+
+  /**
    * Project without action
    */
   export type ProjectDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -5132,6 +5283,1103 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: ProjectInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model CollaborationRoom
+   */
+
+  export type AggregateCollaborationRoom = {
+    _count: CollaborationRoomCountAggregateOutputType | null
+    _min: CollaborationRoomMinAggregateOutputType | null
+    _max: CollaborationRoomMaxAggregateOutputType | null
+  }
+
+  export type CollaborationRoomMinAggregateOutputType = {
+    id: string | null
+    projectId: string | null
+    ownerId: string | null
+    shareToken: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CollaborationRoomMaxAggregateOutputType = {
+    id: string | null
+    projectId: string | null
+    ownerId: string | null
+    shareToken: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CollaborationRoomCountAggregateOutputType = {
+    id: number
+    projectId: number
+    ownerId: number
+    shareToken: number
+    isActive: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type CollaborationRoomMinAggregateInputType = {
+    id?: true
+    projectId?: true
+    ownerId?: true
+    shareToken?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CollaborationRoomMaxAggregateInputType = {
+    id?: true
+    projectId?: true
+    ownerId?: true
+    shareToken?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CollaborationRoomCountAggregateInputType = {
+    id?: true
+    projectId?: true
+    ownerId?: true
+    shareToken?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type CollaborationRoomAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CollaborationRoom to aggregate.
+     */
+    where?: CollaborationRoomWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CollaborationRooms to fetch.
+     */
+    orderBy?: CollaborationRoomOrderByWithRelationInput | CollaborationRoomOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CollaborationRoomWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CollaborationRooms from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CollaborationRooms.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CollaborationRooms
+    **/
+    _count?: true | CollaborationRoomCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CollaborationRoomMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CollaborationRoomMaxAggregateInputType
+  }
+
+  export type GetCollaborationRoomAggregateType<T extends CollaborationRoomAggregateArgs> = {
+        [P in keyof T & keyof AggregateCollaborationRoom]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCollaborationRoom[P]>
+      : GetScalarType<T[P], AggregateCollaborationRoom[P]>
+  }
+
+
+
+
+  export type CollaborationRoomGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CollaborationRoomWhereInput
+    orderBy?: CollaborationRoomOrderByWithAggregationInput | CollaborationRoomOrderByWithAggregationInput[]
+    by: CollaborationRoomScalarFieldEnum[] | CollaborationRoomScalarFieldEnum
+    having?: CollaborationRoomScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CollaborationRoomCountAggregateInputType | true
+    _min?: CollaborationRoomMinAggregateInputType
+    _max?: CollaborationRoomMaxAggregateInputType
+  }
+
+  export type CollaborationRoomGroupByOutputType = {
+    id: string
+    projectId: string
+    ownerId: string
+    shareToken: string
+    isActive: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: CollaborationRoomCountAggregateOutputType | null
+    _min: CollaborationRoomMinAggregateOutputType | null
+    _max: CollaborationRoomMaxAggregateOutputType | null
+  }
+
+  type GetCollaborationRoomGroupByPayload<T extends CollaborationRoomGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CollaborationRoomGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CollaborationRoomGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CollaborationRoomGroupByOutputType[P]>
+            : GetScalarType<T[P], CollaborationRoomGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CollaborationRoomSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    projectId?: boolean
+    ownerId?: boolean
+    shareToken?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["collaborationRoom"]>
+
+  export type CollaborationRoomSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    projectId?: boolean
+    ownerId?: boolean
+    shareToken?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["collaborationRoom"]>
+
+  export type CollaborationRoomSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    projectId?: boolean
+    ownerId?: boolean
+    shareToken?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["collaborationRoom"]>
+
+  export type CollaborationRoomSelectScalar = {
+    id?: boolean
+    projectId?: boolean
+    ownerId?: boolean
+    shareToken?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type CollaborationRoomOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "projectId" | "ownerId" | "shareToken" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["collaborationRoom"]>
+  export type CollaborationRoomInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type CollaborationRoomIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type CollaborationRoomIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $CollaborationRoomPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CollaborationRoom"
+    objects: {
+      project: Prisma.$ProjectPayload<ExtArgs>
+      owner: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      projectId: string
+      ownerId: string
+      shareToken: string
+      isActive: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["collaborationRoom"]>
+    composites: {}
+  }
+
+  type CollaborationRoomGetPayload<S extends boolean | null | undefined | CollaborationRoomDefaultArgs> = $Result.GetResult<Prisma.$CollaborationRoomPayload, S>
+
+  type CollaborationRoomCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CollaborationRoomFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CollaborationRoomCountAggregateInputType | true
+    }
+
+  export interface CollaborationRoomDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CollaborationRoom'], meta: { name: 'CollaborationRoom' } }
+    /**
+     * Find zero or one CollaborationRoom that matches the filter.
+     * @param {CollaborationRoomFindUniqueArgs} args - Arguments to find a CollaborationRoom
+     * @example
+     * // Get one CollaborationRoom
+     * const collaborationRoom = await prisma.collaborationRoom.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CollaborationRoomFindUniqueArgs>(args: SelectSubset<T, CollaborationRoomFindUniqueArgs<ExtArgs>>): Prisma__CollaborationRoomClient<$Result.GetResult<Prisma.$CollaborationRoomPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one CollaborationRoom that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {CollaborationRoomFindUniqueOrThrowArgs} args - Arguments to find a CollaborationRoom
+     * @example
+     * // Get one CollaborationRoom
+     * const collaborationRoom = await prisma.collaborationRoom.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CollaborationRoomFindUniqueOrThrowArgs>(args: SelectSubset<T, CollaborationRoomFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CollaborationRoomClient<$Result.GetResult<Prisma.$CollaborationRoomPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CollaborationRoom that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CollaborationRoomFindFirstArgs} args - Arguments to find a CollaborationRoom
+     * @example
+     * // Get one CollaborationRoom
+     * const collaborationRoom = await prisma.collaborationRoom.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CollaborationRoomFindFirstArgs>(args?: SelectSubset<T, CollaborationRoomFindFirstArgs<ExtArgs>>): Prisma__CollaborationRoomClient<$Result.GetResult<Prisma.$CollaborationRoomPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CollaborationRoom that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CollaborationRoomFindFirstOrThrowArgs} args - Arguments to find a CollaborationRoom
+     * @example
+     * // Get one CollaborationRoom
+     * const collaborationRoom = await prisma.collaborationRoom.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CollaborationRoomFindFirstOrThrowArgs>(args?: SelectSubset<T, CollaborationRoomFindFirstOrThrowArgs<ExtArgs>>): Prisma__CollaborationRoomClient<$Result.GetResult<Prisma.$CollaborationRoomPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more CollaborationRooms that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CollaborationRoomFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CollaborationRooms
+     * const collaborationRooms = await prisma.collaborationRoom.findMany()
+     * 
+     * // Get first 10 CollaborationRooms
+     * const collaborationRooms = await prisma.collaborationRoom.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const collaborationRoomWithIdOnly = await prisma.collaborationRoom.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends CollaborationRoomFindManyArgs>(args?: SelectSubset<T, CollaborationRoomFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CollaborationRoomPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a CollaborationRoom.
+     * @param {CollaborationRoomCreateArgs} args - Arguments to create a CollaborationRoom.
+     * @example
+     * // Create one CollaborationRoom
+     * const CollaborationRoom = await prisma.collaborationRoom.create({
+     *   data: {
+     *     // ... data to create a CollaborationRoom
+     *   }
+     * })
+     * 
+     */
+    create<T extends CollaborationRoomCreateArgs>(args: SelectSubset<T, CollaborationRoomCreateArgs<ExtArgs>>): Prisma__CollaborationRoomClient<$Result.GetResult<Prisma.$CollaborationRoomPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many CollaborationRooms.
+     * @param {CollaborationRoomCreateManyArgs} args - Arguments to create many CollaborationRooms.
+     * @example
+     * // Create many CollaborationRooms
+     * const collaborationRoom = await prisma.collaborationRoom.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CollaborationRoomCreateManyArgs>(args?: SelectSubset<T, CollaborationRoomCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CollaborationRooms and returns the data saved in the database.
+     * @param {CollaborationRoomCreateManyAndReturnArgs} args - Arguments to create many CollaborationRooms.
+     * @example
+     * // Create many CollaborationRooms
+     * const collaborationRoom = await prisma.collaborationRoom.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CollaborationRooms and only return the `id`
+     * const collaborationRoomWithIdOnly = await prisma.collaborationRoom.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CollaborationRoomCreateManyAndReturnArgs>(args?: SelectSubset<T, CollaborationRoomCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CollaborationRoomPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a CollaborationRoom.
+     * @param {CollaborationRoomDeleteArgs} args - Arguments to delete one CollaborationRoom.
+     * @example
+     * // Delete one CollaborationRoom
+     * const CollaborationRoom = await prisma.collaborationRoom.delete({
+     *   where: {
+     *     // ... filter to delete one CollaborationRoom
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CollaborationRoomDeleteArgs>(args: SelectSubset<T, CollaborationRoomDeleteArgs<ExtArgs>>): Prisma__CollaborationRoomClient<$Result.GetResult<Prisma.$CollaborationRoomPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one CollaborationRoom.
+     * @param {CollaborationRoomUpdateArgs} args - Arguments to update one CollaborationRoom.
+     * @example
+     * // Update one CollaborationRoom
+     * const collaborationRoom = await prisma.collaborationRoom.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CollaborationRoomUpdateArgs>(args: SelectSubset<T, CollaborationRoomUpdateArgs<ExtArgs>>): Prisma__CollaborationRoomClient<$Result.GetResult<Prisma.$CollaborationRoomPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more CollaborationRooms.
+     * @param {CollaborationRoomDeleteManyArgs} args - Arguments to filter CollaborationRooms to delete.
+     * @example
+     * // Delete a few CollaborationRooms
+     * const { count } = await prisma.collaborationRoom.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CollaborationRoomDeleteManyArgs>(args?: SelectSubset<T, CollaborationRoomDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CollaborationRooms.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CollaborationRoomUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CollaborationRooms
+     * const collaborationRoom = await prisma.collaborationRoom.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CollaborationRoomUpdateManyArgs>(args: SelectSubset<T, CollaborationRoomUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CollaborationRooms and returns the data updated in the database.
+     * @param {CollaborationRoomUpdateManyAndReturnArgs} args - Arguments to update many CollaborationRooms.
+     * @example
+     * // Update many CollaborationRooms
+     * const collaborationRoom = await prisma.collaborationRoom.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more CollaborationRooms and only return the `id`
+     * const collaborationRoomWithIdOnly = await prisma.collaborationRoom.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends CollaborationRoomUpdateManyAndReturnArgs>(args: SelectSubset<T, CollaborationRoomUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CollaborationRoomPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one CollaborationRoom.
+     * @param {CollaborationRoomUpsertArgs} args - Arguments to update or create a CollaborationRoom.
+     * @example
+     * // Update or create a CollaborationRoom
+     * const collaborationRoom = await prisma.collaborationRoom.upsert({
+     *   create: {
+     *     // ... data to create a CollaborationRoom
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CollaborationRoom we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CollaborationRoomUpsertArgs>(args: SelectSubset<T, CollaborationRoomUpsertArgs<ExtArgs>>): Prisma__CollaborationRoomClient<$Result.GetResult<Prisma.$CollaborationRoomPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of CollaborationRooms.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CollaborationRoomCountArgs} args - Arguments to filter CollaborationRooms to count.
+     * @example
+     * // Count the number of CollaborationRooms
+     * const count = await prisma.collaborationRoom.count({
+     *   where: {
+     *     // ... the filter for the CollaborationRooms we want to count
+     *   }
+     * })
+    **/
+    count<T extends CollaborationRoomCountArgs>(
+      args?: Subset<T, CollaborationRoomCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CollaborationRoomCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CollaborationRoom.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CollaborationRoomAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CollaborationRoomAggregateArgs>(args: Subset<T, CollaborationRoomAggregateArgs>): Prisma.PrismaPromise<GetCollaborationRoomAggregateType<T>>
+
+    /**
+     * Group by CollaborationRoom.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CollaborationRoomGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CollaborationRoomGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CollaborationRoomGroupByArgs['orderBy'] }
+        : { orderBy?: CollaborationRoomGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CollaborationRoomGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCollaborationRoomGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CollaborationRoom model
+   */
+  readonly fields: CollaborationRoomFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CollaborationRoom.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CollaborationRoomClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    project<T extends ProjectDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProjectDefaultArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    owner<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CollaborationRoom model
+   */
+  interface CollaborationRoomFieldRefs {
+    readonly id: FieldRef<"CollaborationRoom", 'String'>
+    readonly projectId: FieldRef<"CollaborationRoom", 'String'>
+    readonly ownerId: FieldRef<"CollaborationRoom", 'String'>
+    readonly shareToken: FieldRef<"CollaborationRoom", 'String'>
+    readonly isActive: FieldRef<"CollaborationRoom", 'Boolean'>
+    readonly createdAt: FieldRef<"CollaborationRoom", 'DateTime'>
+    readonly updatedAt: FieldRef<"CollaborationRoom", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CollaborationRoom findUnique
+   */
+  export type CollaborationRoomFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollaborationRoom
+     */
+    select?: CollaborationRoomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollaborationRoom
+     */
+    omit?: CollaborationRoomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CollaborationRoomInclude<ExtArgs> | null
+    /**
+     * Filter, which CollaborationRoom to fetch.
+     */
+    where: CollaborationRoomWhereUniqueInput
+  }
+
+  /**
+   * CollaborationRoom findUniqueOrThrow
+   */
+  export type CollaborationRoomFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollaborationRoom
+     */
+    select?: CollaborationRoomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollaborationRoom
+     */
+    omit?: CollaborationRoomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CollaborationRoomInclude<ExtArgs> | null
+    /**
+     * Filter, which CollaborationRoom to fetch.
+     */
+    where: CollaborationRoomWhereUniqueInput
+  }
+
+  /**
+   * CollaborationRoom findFirst
+   */
+  export type CollaborationRoomFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollaborationRoom
+     */
+    select?: CollaborationRoomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollaborationRoom
+     */
+    omit?: CollaborationRoomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CollaborationRoomInclude<ExtArgs> | null
+    /**
+     * Filter, which CollaborationRoom to fetch.
+     */
+    where?: CollaborationRoomWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CollaborationRooms to fetch.
+     */
+    orderBy?: CollaborationRoomOrderByWithRelationInput | CollaborationRoomOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CollaborationRooms.
+     */
+    cursor?: CollaborationRoomWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CollaborationRooms from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CollaborationRooms.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CollaborationRooms.
+     */
+    distinct?: CollaborationRoomScalarFieldEnum | CollaborationRoomScalarFieldEnum[]
+  }
+
+  /**
+   * CollaborationRoom findFirstOrThrow
+   */
+  export type CollaborationRoomFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollaborationRoom
+     */
+    select?: CollaborationRoomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollaborationRoom
+     */
+    omit?: CollaborationRoomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CollaborationRoomInclude<ExtArgs> | null
+    /**
+     * Filter, which CollaborationRoom to fetch.
+     */
+    where?: CollaborationRoomWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CollaborationRooms to fetch.
+     */
+    orderBy?: CollaborationRoomOrderByWithRelationInput | CollaborationRoomOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CollaborationRooms.
+     */
+    cursor?: CollaborationRoomWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CollaborationRooms from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CollaborationRooms.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CollaborationRooms.
+     */
+    distinct?: CollaborationRoomScalarFieldEnum | CollaborationRoomScalarFieldEnum[]
+  }
+
+  /**
+   * CollaborationRoom findMany
+   */
+  export type CollaborationRoomFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollaborationRoom
+     */
+    select?: CollaborationRoomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollaborationRoom
+     */
+    omit?: CollaborationRoomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CollaborationRoomInclude<ExtArgs> | null
+    /**
+     * Filter, which CollaborationRooms to fetch.
+     */
+    where?: CollaborationRoomWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CollaborationRooms to fetch.
+     */
+    orderBy?: CollaborationRoomOrderByWithRelationInput | CollaborationRoomOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CollaborationRooms.
+     */
+    cursor?: CollaborationRoomWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CollaborationRooms from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CollaborationRooms.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CollaborationRooms.
+     */
+    distinct?: CollaborationRoomScalarFieldEnum | CollaborationRoomScalarFieldEnum[]
+  }
+
+  /**
+   * CollaborationRoom create
+   */
+  export type CollaborationRoomCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollaborationRoom
+     */
+    select?: CollaborationRoomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollaborationRoom
+     */
+    omit?: CollaborationRoomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CollaborationRoomInclude<ExtArgs> | null
+    /**
+     * The data needed to create a CollaborationRoom.
+     */
+    data: XOR<CollaborationRoomCreateInput, CollaborationRoomUncheckedCreateInput>
+  }
+
+  /**
+   * CollaborationRoom createMany
+   */
+  export type CollaborationRoomCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CollaborationRooms.
+     */
+    data: CollaborationRoomCreateManyInput | CollaborationRoomCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CollaborationRoom createManyAndReturn
+   */
+  export type CollaborationRoomCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollaborationRoom
+     */
+    select?: CollaborationRoomSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollaborationRoom
+     */
+    omit?: CollaborationRoomOmit<ExtArgs> | null
+    /**
+     * The data used to create many CollaborationRooms.
+     */
+    data: CollaborationRoomCreateManyInput | CollaborationRoomCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CollaborationRoomIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CollaborationRoom update
+   */
+  export type CollaborationRoomUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollaborationRoom
+     */
+    select?: CollaborationRoomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollaborationRoom
+     */
+    omit?: CollaborationRoomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CollaborationRoomInclude<ExtArgs> | null
+    /**
+     * The data needed to update a CollaborationRoom.
+     */
+    data: XOR<CollaborationRoomUpdateInput, CollaborationRoomUncheckedUpdateInput>
+    /**
+     * Choose, which CollaborationRoom to update.
+     */
+    where: CollaborationRoomWhereUniqueInput
+  }
+
+  /**
+   * CollaborationRoom updateMany
+   */
+  export type CollaborationRoomUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CollaborationRooms.
+     */
+    data: XOR<CollaborationRoomUpdateManyMutationInput, CollaborationRoomUncheckedUpdateManyInput>
+    /**
+     * Filter which CollaborationRooms to update
+     */
+    where?: CollaborationRoomWhereInput
+    /**
+     * Limit how many CollaborationRooms to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CollaborationRoom updateManyAndReturn
+   */
+  export type CollaborationRoomUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollaborationRoom
+     */
+    select?: CollaborationRoomSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollaborationRoom
+     */
+    omit?: CollaborationRoomOmit<ExtArgs> | null
+    /**
+     * The data used to update CollaborationRooms.
+     */
+    data: XOR<CollaborationRoomUpdateManyMutationInput, CollaborationRoomUncheckedUpdateManyInput>
+    /**
+     * Filter which CollaborationRooms to update
+     */
+    where?: CollaborationRoomWhereInput
+    /**
+     * Limit how many CollaborationRooms to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CollaborationRoomIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CollaborationRoom upsert
+   */
+  export type CollaborationRoomUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollaborationRoom
+     */
+    select?: CollaborationRoomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollaborationRoom
+     */
+    omit?: CollaborationRoomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CollaborationRoomInclude<ExtArgs> | null
+    /**
+     * The filter to search for the CollaborationRoom to update in case it exists.
+     */
+    where: CollaborationRoomWhereUniqueInput
+    /**
+     * In case the CollaborationRoom found by the `where` argument doesn't exist, create a new CollaborationRoom with this data.
+     */
+    create: XOR<CollaborationRoomCreateInput, CollaborationRoomUncheckedCreateInput>
+    /**
+     * In case the CollaborationRoom was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CollaborationRoomUpdateInput, CollaborationRoomUncheckedUpdateInput>
+  }
+
+  /**
+   * CollaborationRoom delete
+   */
+  export type CollaborationRoomDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollaborationRoom
+     */
+    select?: CollaborationRoomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollaborationRoom
+     */
+    omit?: CollaborationRoomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CollaborationRoomInclude<ExtArgs> | null
+    /**
+     * Filter which CollaborationRoom to delete.
+     */
+    where: CollaborationRoomWhereUniqueInput
+  }
+
+  /**
+   * CollaborationRoom deleteMany
+   */
+  export type CollaborationRoomDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CollaborationRooms to delete
+     */
+    where?: CollaborationRoomWhereInput
+    /**
+     * Limit how many CollaborationRooms to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * CollaborationRoom without action
+   */
+  export type CollaborationRoomDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CollaborationRoom
+     */
+    select?: CollaborationRoomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CollaborationRoom
+     */
+    omit?: CollaborationRoomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CollaborationRoomInclude<ExtArgs> | null
   }
 
 
@@ -11859,6 +13107,19 @@ export namespace Prisma {
   export type ProjectScalarFieldEnum = (typeof ProjectScalarFieldEnum)[keyof typeof ProjectScalarFieldEnum]
 
 
+  export const CollaborationRoomScalarFieldEnum: {
+    id: 'id',
+    projectId: 'projectId',
+    ownerId: 'ownerId',
+    shareToken: 'shareToken',
+    isActive: 'isActive',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type CollaborationRoomScalarFieldEnum = (typeof CollaborationRoomScalarFieldEnum)[keyof typeof CollaborationRoomScalarFieldEnum]
+
+
   export const ProjectFolderScalarFieldEnum: {
     id: 'id',
     projectId: 'projectId',
@@ -12014,6 +13275,13 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
    * Reference to a field of type 'Json'
    */
   export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
@@ -12070,6 +13338,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"User"> | Date | string
     sessions?: SessionListRelationFilter
     projects?: ProjectListRelationFilter
+    collaborationRooms?: CollaborationRoomListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -12081,6 +13350,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     sessions?: SessionOrderByRelationAggregateInput
     projects?: ProjectOrderByRelationAggregateInput
+    collaborationRooms?: CollaborationRoomOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -12095,6 +13365,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"User"> | Date | string
     sessions?: SessionListRelationFilter
     projects?: ProjectListRelationFilter
+    collaborationRooms?: CollaborationRoomListRelationFilter
   }, "id" | "email">
 
   export type UserOrderByWithAggregationInput = {
@@ -12195,6 +13466,7 @@ export namespace Prisma {
     folders?: ProjectFolderListRelationFilter
     files?: ProjectFileListRelationFilter
     conversations?: ConversationListRelationFilter
+    collaborationRoom?: XOR<CollaborationRoomNullableScalarRelationFilter, CollaborationRoomWhereInput> | null
   }
 
   export type ProjectOrderByWithRelationInput = {
@@ -12208,6 +13480,7 @@ export namespace Prisma {
     folders?: ProjectFolderOrderByRelationAggregateInput
     files?: ProjectFileOrderByRelationAggregateInput
     conversations?: ConversationOrderByRelationAggregateInput
+    collaborationRoom?: CollaborationRoomOrderByWithRelationInput
   }
 
   export type ProjectWhereUniqueInput = Prisma.AtLeast<{
@@ -12224,6 +13497,7 @@ export namespace Prisma {
     folders?: ProjectFolderListRelationFilter
     files?: ProjectFileListRelationFilter
     conversations?: ConversationListRelationFilter
+    collaborationRoom?: XOR<CollaborationRoomNullableScalarRelationFilter, CollaborationRoomWhereInput> | null
   }, "id">
 
   export type ProjectOrderByWithAggregationInput = {
@@ -12248,6 +13522,74 @@ export namespace Prisma {
     userId?: StringWithAggregatesFilter<"Project"> | string
     createdAt?: DateTimeWithAggregatesFilter<"Project"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Project"> | Date | string
+  }
+
+  export type CollaborationRoomWhereInput = {
+    AND?: CollaborationRoomWhereInput | CollaborationRoomWhereInput[]
+    OR?: CollaborationRoomWhereInput[]
+    NOT?: CollaborationRoomWhereInput | CollaborationRoomWhereInput[]
+    id?: StringFilter<"CollaborationRoom"> | string
+    projectId?: StringFilter<"CollaborationRoom"> | string
+    ownerId?: StringFilter<"CollaborationRoom"> | string
+    shareToken?: StringFilter<"CollaborationRoom"> | string
+    isActive?: BoolFilter<"CollaborationRoom"> | boolean
+    createdAt?: DateTimeFilter<"CollaborationRoom"> | Date | string
+    updatedAt?: DateTimeFilter<"CollaborationRoom"> | Date | string
+    project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+    owner?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type CollaborationRoomOrderByWithRelationInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    ownerId?: SortOrder
+    shareToken?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    project?: ProjectOrderByWithRelationInput
+    owner?: UserOrderByWithRelationInput
+  }
+
+  export type CollaborationRoomWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    projectId?: string
+    shareToken?: string
+    AND?: CollaborationRoomWhereInput | CollaborationRoomWhereInput[]
+    OR?: CollaborationRoomWhereInput[]
+    NOT?: CollaborationRoomWhereInput | CollaborationRoomWhereInput[]
+    ownerId?: StringFilter<"CollaborationRoom"> | string
+    isActive?: BoolFilter<"CollaborationRoom"> | boolean
+    createdAt?: DateTimeFilter<"CollaborationRoom"> | Date | string
+    updatedAt?: DateTimeFilter<"CollaborationRoom"> | Date | string
+    project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+    owner?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id" | "projectId" | "shareToken">
+
+  export type CollaborationRoomOrderByWithAggregationInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    ownerId?: SortOrder
+    shareToken?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: CollaborationRoomCountOrderByAggregateInput
+    _max?: CollaborationRoomMaxOrderByAggregateInput
+    _min?: CollaborationRoomMinOrderByAggregateInput
+  }
+
+  export type CollaborationRoomScalarWhereWithAggregatesInput = {
+    AND?: CollaborationRoomScalarWhereWithAggregatesInput | CollaborationRoomScalarWhereWithAggregatesInput[]
+    OR?: CollaborationRoomScalarWhereWithAggregatesInput[]
+    NOT?: CollaborationRoomScalarWhereWithAggregatesInput | CollaborationRoomScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"CollaborationRoom"> | string
+    projectId?: StringWithAggregatesFilter<"CollaborationRoom"> | string
+    ownerId?: StringWithAggregatesFilter<"CollaborationRoom"> | string
+    shareToken?: StringWithAggregatesFilter<"CollaborationRoom"> | string
+    isActive?: BoolWithAggregatesFilter<"CollaborationRoom"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"CollaborationRoom"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"CollaborationRoom"> | Date | string
   }
 
   export type ProjectFolderWhereInput = {
@@ -12672,6 +14014,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     sessions?: SessionCreateNestedManyWithoutUserInput
     projects?: ProjectCreateNestedManyWithoutUserInput
+    collaborationRooms?: CollaborationRoomCreateNestedManyWithoutOwnerInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -12683,6 +14026,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     projects?: ProjectUncheckedCreateNestedManyWithoutUserInput
+    collaborationRooms?: CollaborationRoomUncheckedCreateNestedManyWithoutOwnerInput
   }
 
   export type UserUpdateInput = {
@@ -12694,6 +14038,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sessions?: SessionUpdateManyWithoutUserNestedInput
     projects?: ProjectUpdateManyWithoutUserNestedInput
+    collaborationRooms?: CollaborationRoomUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -12705,6 +14050,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     projects?: ProjectUncheckedUpdateManyWithoutUserNestedInput
+    collaborationRooms?: CollaborationRoomUncheckedUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -12806,6 +14152,7 @@ export namespace Prisma {
     folders?: ProjectFolderCreateNestedManyWithoutProjectInput
     files?: ProjectFileCreateNestedManyWithoutProjectInput
     conversations?: ConversationCreateNestedManyWithoutProjectInput
+    collaborationRoom?: CollaborationRoomCreateNestedOneWithoutProjectInput
   }
 
   export type ProjectUncheckedCreateInput = {
@@ -12818,6 +14165,7 @@ export namespace Prisma {
     folders?: ProjectFolderUncheckedCreateNestedManyWithoutProjectInput
     files?: ProjectFileUncheckedCreateNestedManyWithoutProjectInput
     conversations?: ConversationUncheckedCreateNestedManyWithoutProjectInput
+    collaborationRoom?: CollaborationRoomUncheckedCreateNestedOneWithoutProjectInput
   }
 
   export type ProjectUpdateInput = {
@@ -12830,6 +14178,7 @@ export namespace Prisma {
     folders?: ProjectFolderUpdateManyWithoutProjectNestedInput
     files?: ProjectFileUpdateManyWithoutProjectNestedInput
     conversations?: ConversationUpdateManyWithoutProjectNestedInput
+    collaborationRoom?: CollaborationRoomUpdateOneWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateInput = {
@@ -12842,6 +14191,7 @@ export namespace Prisma {
     folders?: ProjectFolderUncheckedUpdateManyWithoutProjectNestedInput
     files?: ProjectFileUncheckedUpdateManyWithoutProjectNestedInput
     conversations?: ConversationUncheckedUpdateManyWithoutProjectNestedInput
+    collaborationRoom?: CollaborationRoomUncheckedUpdateOneWithoutProjectNestedInput
   }
 
   export type ProjectCreateManyInput = {
@@ -12866,6 +14216,74 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     userId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CollaborationRoomCreateInput = {
+    id?: string
+    shareToken: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    project: ProjectCreateNestedOneWithoutCollaborationRoomInput
+    owner: UserCreateNestedOneWithoutCollaborationRoomsInput
+  }
+
+  export type CollaborationRoomUncheckedCreateInput = {
+    id?: string
+    projectId: string
+    ownerId: string
+    shareToken: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CollaborationRoomUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    shareToken?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    project?: ProjectUpdateOneRequiredWithoutCollaborationRoomNestedInput
+    owner?: UserUpdateOneRequiredWithoutCollaborationRoomsNestedInput
+  }
+
+  export type CollaborationRoomUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    ownerId?: StringFieldUpdateOperationsInput | string
+    shareToken?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CollaborationRoomCreateManyInput = {
+    id?: string
+    projectId: string
+    ownerId: string
+    shareToken: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CollaborationRoomUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    shareToken?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CollaborationRoomUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    ownerId?: StringFieldUpdateOperationsInput | string
+    shareToken?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -13348,11 +14766,21 @@ export namespace Prisma {
     none?: ProjectWhereInput
   }
 
+  export type CollaborationRoomListRelationFilter = {
+    every?: CollaborationRoomWhereInput
+    some?: CollaborationRoomWhereInput
+    none?: CollaborationRoomWhereInput
+  }
+
   export type SessionOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
   export type ProjectOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type CollaborationRoomOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -13510,6 +14938,11 @@ export namespace Prisma {
     none?: ConversationWhereInput
   }
 
+  export type CollaborationRoomNullableScalarRelationFilter = {
+    is?: CollaborationRoomWhereInput | null
+    isNot?: CollaborationRoomWhereInput | null
+  }
+
   export type ProjectFolderOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -13567,9 +15000,52 @@ export namespace Prisma {
     _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type ProjectScalarRelationFilter = {
     is?: ProjectWhereInput
     isNot?: ProjectWhereInput
+  }
+
+  export type CollaborationRoomCountOrderByAggregateInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    ownerId?: SortOrder
+    shareToken?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CollaborationRoomMaxOrderByAggregateInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    ownerId?: SortOrder
+    shareToken?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CollaborationRoomMinOrderByAggregateInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    ownerId?: SortOrder
+    shareToken?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type ProjectFolderProjectIdPathCompoundUniqueInput = {
@@ -13902,6 +15378,13 @@ export namespace Prisma {
     connect?: ProjectWhereUniqueInput | ProjectWhereUniqueInput[]
   }
 
+  export type CollaborationRoomCreateNestedManyWithoutOwnerInput = {
+    create?: XOR<CollaborationRoomCreateWithoutOwnerInput, CollaborationRoomUncheckedCreateWithoutOwnerInput> | CollaborationRoomCreateWithoutOwnerInput[] | CollaborationRoomUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: CollaborationRoomCreateOrConnectWithoutOwnerInput | CollaborationRoomCreateOrConnectWithoutOwnerInput[]
+    createMany?: CollaborationRoomCreateManyOwnerInputEnvelope
+    connect?: CollaborationRoomWhereUniqueInput | CollaborationRoomWhereUniqueInput[]
+  }
+
   export type SessionUncheckedCreateNestedManyWithoutUserInput = {
     create?: XOR<SessionCreateWithoutUserInput, SessionUncheckedCreateWithoutUserInput> | SessionCreateWithoutUserInput[] | SessionUncheckedCreateWithoutUserInput[]
     connectOrCreate?: SessionCreateOrConnectWithoutUserInput | SessionCreateOrConnectWithoutUserInput[]
@@ -13914,6 +15397,13 @@ export namespace Prisma {
     connectOrCreate?: ProjectCreateOrConnectWithoutUserInput | ProjectCreateOrConnectWithoutUserInput[]
     createMany?: ProjectCreateManyUserInputEnvelope
     connect?: ProjectWhereUniqueInput | ProjectWhereUniqueInput[]
+  }
+
+  export type CollaborationRoomUncheckedCreateNestedManyWithoutOwnerInput = {
+    create?: XOR<CollaborationRoomCreateWithoutOwnerInput, CollaborationRoomUncheckedCreateWithoutOwnerInput> | CollaborationRoomCreateWithoutOwnerInput[] | CollaborationRoomUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: CollaborationRoomCreateOrConnectWithoutOwnerInput | CollaborationRoomCreateOrConnectWithoutOwnerInput[]
+    createMany?: CollaborationRoomCreateManyOwnerInputEnvelope
+    connect?: CollaborationRoomWhereUniqueInput | CollaborationRoomWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -13952,6 +15442,20 @@ export namespace Prisma {
     deleteMany?: ProjectScalarWhereInput | ProjectScalarWhereInput[]
   }
 
+  export type CollaborationRoomUpdateManyWithoutOwnerNestedInput = {
+    create?: XOR<CollaborationRoomCreateWithoutOwnerInput, CollaborationRoomUncheckedCreateWithoutOwnerInput> | CollaborationRoomCreateWithoutOwnerInput[] | CollaborationRoomUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: CollaborationRoomCreateOrConnectWithoutOwnerInput | CollaborationRoomCreateOrConnectWithoutOwnerInput[]
+    upsert?: CollaborationRoomUpsertWithWhereUniqueWithoutOwnerInput | CollaborationRoomUpsertWithWhereUniqueWithoutOwnerInput[]
+    createMany?: CollaborationRoomCreateManyOwnerInputEnvelope
+    set?: CollaborationRoomWhereUniqueInput | CollaborationRoomWhereUniqueInput[]
+    disconnect?: CollaborationRoomWhereUniqueInput | CollaborationRoomWhereUniqueInput[]
+    delete?: CollaborationRoomWhereUniqueInput | CollaborationRoomWhereUniqueInput[]
+    connect?: CollaborationRoomWhereUniqueInput | CollaborationRoomWhereUniqueInput[]
+    update?: CollaborationRoomUpdateWithWhereUniqueWithoutOwnerInput | CollaborationRoomUpdateWithWhereUniqueWithoutOwnerInput[]
+    updateMany?: CollaborationRoomUpdateManyWithWhereWithoutOwnerInput | CollaborationRoomUpdateManyWithWhereWithoutOwnerInput[]
+    deleteMany?: CollaborationRoomScalarWhereInput | CollaborationRoomScalarWhereInput[]
+  }
+
   export type SessionUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<SessionCreateWithoutUserInput, SessionUncheckedCreateWithoutUserInput> | SessionCreateWithoutUserInput[] | SessionUncheckedCreateWithoutUserInput[]
     connectOrCreate?: SessionCreateOrConnectWithoutUserInput | SessionCreateOrConnectWithoutUserInput[]
@@ -13978,6 +15482,20 @@ export namespace Prisma {
     update?: ProjectUpdateWithWhereUniqueWithoutUserInput | ProjectUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: ProjectUpdateManyWithWhereWithoutUserInput | ProjectUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: ProjectScalarWhereInput | ProjectScalarWhereInput[]
+  }
+
+  export type CollaborationRoomUncheckedUpdateManyWithoutOwnerNestedInput = {
+    create?: XOR<CollaborationRoomCreateWithoutOwnerInput, CollaborationRoomUncheckedCreateWithoutOwnerInput> | CollaborationRoomCreateWithoutOwnerInput[] | CollaborationRoomUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: CollaborationRoomCreateOrConnectWithoutOwnerInput | CollaborationRoomCreateOrConnectWithoutOwnerInput[]
+    upsert?: CollaborationRoomUpsertWithWhereUniqueWithoutOwnerInput | CollaborationRoomUpsertWithWhereUniqueWithoutOwnerInput[]
+    createMany?: CollaborationRoomCreateManyOwnerInputEnvelope
+    set?: CollaborationRoomWhereUniqueInput | CollaborationRoomWhereUniqueInput[]
+    disconnect?: CollaborationRoomWhereUniqueInput | CollaborationRoomWhereUniqueInput[]
+    delete?: CollaborationRoomWhereUniqueInput | CollaborationRoomWhereUniqueInput[]
+    connect?: CollaborationRoomWhereUniqueInput | CollaborationRoomWhereUniqueInput[]
+    update?: CollaborationRoomUpdateWithWhereUniqueWithoutOwnerInput | CollaborationRoomUpdateWithWhereUniqueWithoutOwnerInput[]
+    updateMany?: CollaborationRoomUpdateManyWithWhereWithoutOwnerInput | CollaborationRoomUpdateManyWithWhereWithoutOwnerInput[]
+    deleteMany?: CollaborationRoomScalarWhereInput | CollaborationRoomScalarWhereInput[]
   }
 
   export type UserCreateNestedOneWithoutSessionsInput = {
@@ -14025,6 +15543,12 @@ export namespace Prisma {
     connect?: ConversationWhereUniqueInput | ConversationWhereUniqueInput[]
   }
 
+  export type CollaborationRoomCreateNestedOneWithoutProjectInput = {
+    create?: XOR<CollaborationRoomCreateWithoutProjectInput, CollaborationRoomUncheckedCreateWithoutProjectInput>
+    connectOrCreate?: CollaborationRoomCreateOrConnectWithoutProjectInput
+    connect?: CollaborationRoomWhereUniqueInput
+  }
+
   export type ProjectFolderUncheckedCreateNestedManyWithoutProjectInput = {
     create?: XOR<ProjectFolderCreateWithoutProjectInput, ProjectFolderUncheckedCreateWithoutProjectInput> | ProjectFolderCreateWithoutProjectInput[] | ProjectFolderUncheckedCreateWithoutProjectInput[]
     connectOrCreate?: ProjectFolderCreateOrConnectWithoutProjectInput | ProjectFolderCreateOrConnectWithoutProjectInput[]
@@ -14044,6 +15568,12 @@ export namespace Prisma {
     connectOrCreate?: ConversationCreateOrConnectWithoutProjectInput | ConversationCreateOrConnectWithoutProjectInput[]
     createMany?: ConversationCreateManyProjectInputEnvelope
     connect?: ConversationWhereUniqueInput | ConversationWhereUniqueInput[]
+  }
+
+  export type CollaborationRoomUncheckedCreateNestedOneWithoutProjectInput = {
+    create?: XOR<CollaborationRoomCreateWithoutProjectInput, CollaborationRoomUncheckedCreateWithoutProjectInput>
+    connectOrCreate?: CollaborationRoomCreateOrConnectWithoutProjectInput
+    connect?: CollaborationRoomWhereUniqueInput
   }
 
   export type NullableStringFieldUpdateOperationsInput = {
@@ -14100,6 +15630,16 @@ export namespace Prisma {
     deleteMany?: ConversationScalarWhereInput | ConversationScalarWhereInput[]
   }
 
+  export type CollaborationRoomUpdateOneWithoutProjectNestedInput = {
+    create?: XOR<CollaborationRoomCreateWithoutProjectInput, CollaborationRoomUncheckedCreateWithoutProjectInput>
+    connectOrCreate?: CollaborationRoomCreateOrConnectWithoutProjectInput
+    upsert?: CollaborationRoomUpsertWithoutProjectInput
+    disconnect?: CollaborationRoomWhereInput | boolean
+    delete?: CollaborationRoomWhereInput | boolean
+    connect?: CollaborationRoomWhereUniqueInput
+    update?: XOR<XOR<CollaborationRoomUpdateToOneWithWhereWithoutProjectInput, CollaborationRoomUpdateWithoutProjectInput>, CollaborationRoomUncheckedUpdateWithoutProjectInput>
+  }
+
   export type ProjectFolderUncheckedUpdateManyWithoutProjectNestedInput = {
     create?: XOR<ProjectFolderCreateWithoutProjectInput, ProjectFolderUncheckedCreateWithoutProjectInput> | ProjectFolderCreateWithoutProjectInput[] | ProjectFolderUncheckedCreateWithoutProjectInput[]
     connectOrCreate?: ProjectFolderCreateOrConnectWithoutProjectInput | ProjectFolderCreateOrConnectWithoutProjectInput[]
@@ -14140,6 +15680,48 @@ export namespace Prisma {
     update?: ConversationUpdateWithWhereUniqueWithoutProjectInput | ConversationUpdateWithWhereUniqueWithoutProjectInput[]
     updateMany?: ConversationUpdateManyWithWhereWithoutProjectInput | ConversationUpdateManyWithWhereWithoutProjectInput[]
     deleteMany?: ConversationScalarWhereInput | ConversationScalarWhereInput[]
+  }
+
+  export type CollaborationRoomUncheckedUpdateOneWithoutProjectNestedInput = {
+    create?: XOR<CollaborationRoomCreateWithoutProjectInput, CollaborationRoomUncheckedCreateWithoutProjectInput>
+    connectOrCreate?: CollaborationRoomCreateOrConnectWithoutProjectInput
+    upsert?: CollaborationRoomUpsertWithoutProjectInput
+    disconnect?: CollaborationRoomWhereInput | boolean
+    delete?: CollaborationRoomWhereInput | boolean
+    connect?: CollaborationRoomWhereUniqueInput
+    update?: XOR<XOR<CollaborationRoomUpdateToOneWithWhereWithoutProjectInput, CollaborationRoomUpdateWithoutProjectInput>, CollaborationRoomUncheckedUpdateWithoutProjectInput>
+  }
+
+  export type ProjectCreateNestedOneWithoutCollaborationRoomInput = {
+    create?: XOR<ProjectCreateWithoutCollaborationRoomInput, ProjectUncheckedCreateWithoutCollaborationRoomInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutCollaborationRoomInput
+    connect?: ProjectWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutCollaborationRoomsInput = {
+    create?: XOR<UserCreateWithoutCollaborationRoomsInput, UserUncheckedCreateWithoutCollaborationRoomsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutCollaborationRoomsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
+  export type ProjectUpdateOneRequiredWithoutCollaborationRoomNestedInput = {
+    create?: XOR<ProjectCreateWithoutCollaborationRoomInput, ProjectUncheckedCreateWithoutCollaborationRoomInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutCollaborationRoomInput
+    upsert?: ProjectUpsertWithoutCollaborationRoomInput
+    connect?: ProjectWhereUniqueInput
+    update?: XOR<XOR<ProjectUpdateToOneWithWhereWithoutCollaborationRoomInput, ProjectUpdateWithoutCollaborationRoomInput>, ProjectUncheckedUpdateWithoutCollaborationRoomInput>
+  }
+
+  export type UserUpdateOneRequiredWithoutCollaborationRoomsNestedInput = {
+    create?: XOR<UserCreateWithoutCollaborationRoomsInput, UserUncheckedCreateWithoutCollaborationRoomsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutCollaborationRoomsInput
+    upsert?: UserUpsertWithoutCollaborationRoomsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutCollaborationRoomsInput, UserUpdateWithoutCollaborationRoomsInput>, UserUncheckedUpdateWithoutCollaborationRoomsInput>
   }
 
   export type ProjectCreateNestedOneWithoutFoldersInput = {
@@ -14493,6 +16075,19 @@ export namespace Prisma {
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
   }
+
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
   export type NestedJsonNullableFilter<$PrismaModel = never> =
     | PatchUndefined<
         Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
@@ -14579,6 +16174,7 @@ export namespace Prisma {
     folders?: ProjectFolderCreateNestedManyWithoutProjectInput
     files?: ProjectFileCreateNestedManyWithoutProjectInput
     conversations?: ConversationCreateNestedManyWithoutProjectInput
+    collaborationRoom?: CollaborationRoomCreateNestedOneWithoutProjectInput
   }
 
   export type ProjectUncheckedCreateWithoutUserInput = {
@@ -14590,6 +16186,7 @@ export namespace Prisma {
     folders?: ProjectFolderUncheckedCreateNestedManyWithoutProjectInput
     files?: ProjectFileUncheckedCreateNestedManyWithoutProjectInput
     conversations?: ConversationUncheckedCreateNestedManyWithoutProjectInput
+    collaborationRoom?: CollaborationRoomUncheckedCreateNestedOneWithoutProjectInput
   }
 
   export type ProjectCreateOrConnectWithoutUserInput = {
@@ -14599,6 +16196,34 @@ export namespace Prisma {
 
   export type ProjectCreateManyUserInputEnvelope = {
     data: ProjectCreateManyUserInput | ProjectCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type CollaborationRoomCreateWithoutOwnerInput = {
+    id?: string
+    shareToken: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    project: ProjectCreateNestedOneWithoutCollaborationRoomInput
+  }
+
+  export type CollaborationRoomUncheckedCreateWithoutOwnerInput = {
+    id?: string
+    projectId: string
+    shareToken: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CollaborationRoomCreateOrConnectWithoutOwnerInput = {
+    where: CollaborationRoomWhereUniqueInput
+    create: XOR<CollaborationRoomCreateWithoutOwnerInput, CollaborationRoomUncheckedCreateWithoutOwnerInput>
+  }
+
+  export type CollaborationRoomCreateManyOwnerInputEnvelope = {
+    data: CollaborationRoomCreateManyOwnerInput | CollaborationRoomCreateManyOwnerInput[]
     skipDuplicates?: boolean
   }
 
@@ -14658,6 +16283,35 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Project"> | Date | string
   }
 
+  export type CollaborationRoomUpsertWithWhereUniqueWithoutOwnerInput = {
+    where: CollaborationRoomWhereUniqueInput
+    update: XOR<CollaborationRoomUpdateWithoutOwnerInput, CollaborationRoomUncheckedUpdateWithoutOwnerInput>
+    create: XOR<CollaborationRoomCreateWithoutOwnerInput, CollaborationRoomUncheckedCreateWithoutOwnerInput>
+  }
+
+  export type CollaborationRoomUpdateWithWhereUniqueWithoutOwnerInput = {
+    where: CollaborationRoomWhereUniqueInput
+    data: XOR<CollaborationRoomUpdateWithoutOwnerInput, CollaborationRoomUncheckedUpdateWithoutOwnerInput>
+  }
+
+  export type CollaborationRoomUpdateManyWithWhereWithoutOwnerInput = {
+    where: CollaborationRoomScalarWhereInput
+    data: XOR<CollaborationRoomUpdateManyMutationInput, CollaborationRoomUncheckedUpdateManyWithoutOwnerInput>
+  }
+
+  export type CollaborationRoomScalarWhereInput = {
+    AND?: CollaborationRoomScalarWhereInput | CollaborationRoomScalarWhereInput[]
+    OR?: CollaborationRoomScalarWhereInput[]
+    NOT?: CollaborationRoomScalarWhereInput | CollaborationRoomScalarWhereInput[]
+    id?: StringFilter<"CollaborationRoom"> | string
+    projectId?: StringFilter<"CollaborationRoom"> | string
+    ownerId?: StringFilter<"CollaborationRoom"> | string
+    shareToken?: StringFilter<"CollaborationRoom"> | string
+    isActive?: BoolFilter<"CollaborationRoom"> | boolean
+    createdAt?: DateTimeFilter<"CollaborationRoom"> | Date | string
+    updatedAt?: DateTimeFilter<"CollaborationRoom"> | Date | string
+  }
+
   export type UserCreateWithoutSessionsInput = {
     id?: string
     name: string
@@ -14666,6 +16320,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     projects?: ProjectCreateNestedManyWithoutUserInput
+    collaborationRooms?: CollaborationRoomCreateNestedManyWithoutOwnerInput
   }
 
   export type UserUncheckedCreateWithoutSessionsInput = {
@@ -14676,6 +16331,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     projects?: ProjectUncheckedCreateNestedManyWithoutUserInput
+    collaborationRooms?: CollaborationRoomUncheckedCreateNestedManyWithoutOwnerInput
   }
 
   export type UserCreateOrConnectWithoutSessionsInput = {
@@ -14702,6 +16358,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     projects?: ProjectUpdateManyWithoutUserNestedInput
+    collaborationRooms?: CollaborationRoomUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -14712,6 +16369,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     projects?: ProjectUncheckedUpdateManyWithoutUserNestedInput
+    collaborationRooms?: CollaborationRoomUncheckedUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserCreateWithoutProjectsInput = {
@@ -14722,6 +16380,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     sessions?: SessionCreateNestedManyWithoutUserInput
+    collaborationRooms?: CollaborationRoomCreateNestedManyWithoutOwnerInput
   }
 
   export type UserUncheckedCreateWithoutProjectsInput = {
@@ -14732,6 +16391,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    collaborationRooms?: CollaborationRoomUncheckedCreateNestedManyWithoutOwnerInput
   }
 
   export type UserCreateOrConnectWithoutProjectsInput = {
@@ -14817,6 +16477,29 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type CollaborationRoomCreateWithoutProjectInput = {
+    id?: string
+    shareToken: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    owner: UserCreateNestedOneWithoutCollaborationRoomsInput
+  }
+
+  export type CollaborationRoomUncheckedCreateWithoutProjectInput = {
+    id?: string
+    ownerId: string
+    shareToken: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CollaborationRoomCreateOrConnectWithoutProjectInput = {
+    where: CollaborationRoomWhereUniqueInput
+    create: XOR<CollaborationRoomCreateWithoutProjectInput, CollaborationRoomUncheckedCreateWithoutProjectInput>
+  }
+
   export type UserUpsertWithoutProjectsInput = {
     update: XOR<UserUpdateWithoutProjectsInput, UserUncheckedUpdateWithoutProjectsInput>
     create: XOR<UserCreateWithoutProjectsInput, UserUncheckedCreateWithoutProjectsInput>
@@ -14836,6 +16519,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sessions?: SessionUpdateManyWithoutUserNestedInput
+    collaborationRooms?: CollaborationRoomUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserUncheckedUpdateWithoutProjectsInput = {
@@ -14846,6 +16530,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    collaborationRooms?: CollaborationRoomUncheckedUpdateManyWithoutOwnerNestedInput
   }
 
   export type ProjectFolderUpsertWithWhereUniqueWithoutProjectInput = {
@@ -14930,6 +16615,159 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Conversation"> | Date | string
   }
 
+  export type CollaborationRoomUpsertWithoutProjectInput = {
+    update: XOR<CollaborationRoomUpdateWithoutProjectInput, CollaborationRoomUncheckedUpdateWithoutProjectInput>
+    create: XOR<CollaborationRoomCreateWithoutProjectInput, CollaborationRoomUncheckedCreateWithoutProjectInput>
+    where?: CollaborationRoomWhereInput
+  }
+
+  export type CollaborationRoomUpdateToOneWithWhereWithoutProjectInput = {
+    where?: CollaborationRoomWhereInput
+    data: XOR<CollaborationRoomUpdateWithoutProjectInput, CollaborationRoomUncheckedUpdateWithoutProjectInput>
+  }
+
+  export type CollaborationRoomUpdateWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    shareToken?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    owner?: UserUpdateOneRequiredWithoutCollaborationRoomsNestedInput
+  }
+
+  export type CollaborationRoomUncheckedUpdateWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ownerId?: StringFieldUpdateOperationsInput | string
+    shareToken?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectCreateWithoutCollaborationRoomInput = {
+    id?: string
+    name: string
+    description?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutProjectsInput
+    folders?: ProjectFolderCreateNestedManyWithoutProjectInput
+    files?: ProjectFileCreateNestedManyWithoutProjectInput
+    conversations?: ConversationCreateNestedManyWithoutProjectInput
+  }
+
+  export type ProjectUncheckedCreateWithoutCollaborationRoomInput = {
+    id?: string
+    name: string
+    description?: string | null
+    userId: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    folders?: ProjectFolderUncheckedCreateNestedManyWithoutProjectInput
+    files?: ProjectFileUncheckedCreateNestedManyWithoutProjectInput
+    conversations?: ConversationUncheckedCreateNestedManyWithoutProjectInput
+  }
+
+  export type ProjectCreateOrConnectWithoutCollaborationRoomInput = {
+    where: ProjectWhereUniqueInput
+    create: XOR<ProjectCreateWithoutCollaborationRoomInput, ProjectUncheckedCreateWithoutCollaborationRoomInput>
+  }
+
+  export type UserCreateWithoutCollaborationRoomsInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    sessions?: SessionCreateNestedManyWithoutUserInput
+    projects?: ProjectCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutCollaborationRoomsInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    projects?: ProjectUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutCollaborationRoomsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutCollaborationRoomsInput, UserUncheckedCreateWithoutCollaborationRoomsInput>
+  }
+
+  export type ProjectUpsertWithoutCollaborationRoomInput = {
+    update: XOR<ProjectUpdateWithoutCollaborationRoomInput, ProjectUncheckedUpdateWithoutCollaborationRoomInput>
+    create: XOR<ProjectCreateWithoutCollaborationRoomInput, ProjectUncheckedCreateWithoutCollaborationRoomInput>
+    where?: ProjectWhereInput
+  }
+
+  export type ProjectUpdateToOneWithWhereWithoutCollaborationRoomInput = {
+    where?: ProjectWhereInput
+    data: XOR<ProjectUpdateWithoutCollaborationRoomInput, ProjectUncheckedUpdateWithoutCollaborationRoomInput>
+  }
+
+  export type ProjectUpdateWithoutCollaborationRoomInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutProjectsNestedInput
+    folders?: ProjectFolderUpdateManyWithoutProjectNestedInput
+    files?: ProjectFileUpdateManyWithoutProjectNestedInput
+    conversations?: ConversationUpdateManyWithoutProjectNestedInput
+  }
+
+  export type ProjectUncheckedUpdateWithoutCollaborationRoomInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    userId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    folders?: ProjectFolderUncheckedUpdateManyWithoutProjectNestedInput
+    files?: ProjectFileUncheckedUpdateManyWithoutProjectNestedInput
+    conversations?: ConversationUncheckedUpdateManyWithoutProjectNestedInput
+  }
+
+  export type UserUpsertWithoutCollaborationRoomsInput = {
+    update: XOR<UserUpdateWithoutCollaborationRoomsInput, UserUncheckedUpdateWithoutCollaborationRoomsInput>
+    create: XOR<UserCreateWithoutCollaborationRoomsInput, UserUncheckedCreateWithoutCollaborationRoomsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutCollaborationRoomsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutCollaborationRoomsInput, UserUncheckedUpdateWithoutCollaborationRoomsInput>
+  }
+
+  export type UserUpdateWithoutCollaborationRoomsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sessions?: SessionUpdateManyWithoutUserNestedInput
+    projects?: ProjectUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutCollaborationRoomsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    projects?: ProjectUncheckedUpdateManyWithoutUserNestedInput
+  }
+
   export type ProjectCreateWithoutFoldersInput = {
     id?: string
     name: string
@@ -14939,6 +16777,7 @@ export namespace Prisma {
     user: UserCreateNestedOneWithoutProjectsInput
     files?: ProjectFileCreateNestedManyWithoutProjectInput
     conversations?: ConversationCreateNestedManyWithoutProjectInput
+    collaborationRoom?: CollaborationRoomCreateNestedOneWithoutProjectInput
   }
 
   export type ProjectUncheckedCreateWithoutFoldersInput = {
@@ -14950,6 +16789,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     files?: ProjectFileUncheckedCreateNestedManyWithoutProjectInput
     conversations?: ConversationUncheckedCreateNestedManyWithoutProjectInput
+    collaborationRoom?: CollaborationRoomUncheckedCreateNestedOneWithoutProjectInput
   }
 
   export type ProjectCreateOrConnectWithoutFoldersInput = {
@@ -14977,6 +16817,7 @@ export namespace Prisma {
     user?: UserUpdateOneRequiredWithoutProjectsNestedInput
     files?: ProjectFileUpdateManyWithoutProjectNestedInput
     conversations?: ConversationUpdateManyWithoutProjectNestedInput
+    collaborationRoom?: CollaborationRoomUpdateOneWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutFoldersInput = {
@@ -14988,6 +16829,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     files?: ProjectFileUncheckedUpdateManyWithoutProjectNestedInput
     conversations?: ConversationUncheckedUpdateManyWithoutProjectNestedInput
+    collaborationRoom?: CollaborationRoomUncheckedUpdateOneWithoutProjectNestedInput
   }
 
   export type ProjectCreateWithoutFilesInput = {
@@ -14999,6 +16841,7 @@ export namespace Prisma {
     user: UserCreateNestedOneWithoutProjectsInput
     folders?: ProjectFolderCreateNestedManyWithoutProjectInput
     conversations?: ConversationCreateNestedManyWithoutProjectInput
+    collaborationRoom?: CollaborationRoomCreateNestedOneWithoutProjectInput
   }
 
   export type ProjectUncheckedCreateWithoutFilesInput = {
@@ -15010,6 +16853,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     folders?: ProjectFolderUncheckedCreateNestedManyWithoutProjectInput
     conversations?: ConversationUncheckedCreateNestedManyWithoutProjectInput
+    collaborationRoom?: CollaborationRoomUncheckedCreateNestedOneWithoutProjectInput
   }
 
   export type ProjectCreateOrConnectWithoutFilesInput = {
@@ -15037,6 +16881,7 @@ export namespace Prisma {
     user?: UserUpdateOneRequiredWithoutProjectsNestedInput
     folders?: ProjectFolderUpdateManyWithoutProjectNestedInput
     conversations?: ConversationUpdateManyWithoutProjectNestedInput
+    collaborationRoom?: CollaborationRoomUpdateOneWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutFilesInput = {
@@ -15048,6 +16893,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     folders?: ProjectFolderUncheckedUpdateManyWithoutProjectNestedInput
     conversations?: ConversationUncheckedUpdateManyWithoutProjectNestedInput
+    collaborationRoom?: CollaborationRoomUncheckedUpdateOneWithoutProjectNestedInput
   }
 
   export type ProjectCreateWithoutConversationsInput = {
@@ -15059,6 +16905,7 @@ export namespace Prisma {
     user: UserCreateNestedOneWithoutProjectsInput
     folders?: ProjectFolderCreateNestedManyWithoutProjectInput
     files?: ProjectFileCreateNestedManyWithoutProjectInput
+    collaborationRoom?: CollaborationRoomCreateNestedOneWithoutProjectInput
   }
 
   export type ProjectUncheckedCreateWithoutConversationsInput = {
@@ -15070,6 +16917,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     folders?: ProjectFolderUncheckedCreateNestedManyWithoutProjectInput
     files?: ProjectFileUncheckedCreateNestedManyWithoutProjectInput
+    collaborationRoom?: CollaborationRoomUncheckedCreateNestedOneWithoutProjectInput
   }
 
   export type ProjectCreateOrConnectWithoutConversationsInput = {
@@ -15171,6 +17019,7 @@ export namespace Prisma {
     user?: UserUpdateOneRequiredWithoutProjectsNestedInput
     folders?: ProjectFolderUpdateManyWithoutProjectNestedInput
     files?: ProjectFileUpdateManyWithoutProjectNestedInput
+    collaborationRoom?: CollaborationRoomUpdateOneWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutConversationsInput = {
@@ -15182,6 +17031,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     folders?: ProjectFolderUncheckedUpdateManyWithoutProjectNestedInput
     files?: ProjectFileUncheckedUpdateManyWithoutProjectNestedInput
+    collaborationRoom?: CollaborationRoomUncheckedUpdateOneWithoutProjectNestedInput
   }
 
   export type MessageUpsertWithWhereUniqueWithoutConversationInput = {
@@ -15504,6 +17354,15 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type CollaborationRoomCreateManyOwnerInput = {
+    id?: string
+    projectId: string
+    shareToken: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type SessionUpdateWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
     tokenHash?: StringFieldUpdateOperationsInput | string
@@ -15537,6 +17396,7 @@ export namespace Prisma {
     folders?: ProjectFolderUpdateManyWithoutProjectNestedInput
     files?: ProjectFileUpdateManyWithoutProjectNestedInput
     conversations?: ConversationUpdateManyWithoutProjectNestedInput
+    collaborationRoom?: CollaborationRoomUpdateOneWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutUserInput = {
@@ -15548,12 +17408,40 @@ export namespace Prisma {
     folders?: ProjectFolderUncheckedUpdateManyWithoutProjectNestedInput
     files?: ProjectFileUncheckedUpdateManyWithoutProjectNestedInput
     conversations?: ConversationUncheckedUpdateManyWithoutProjectNestedInput
+    collaborationRoom?: CollaborationRoomUncheckedUpdateOneWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateManyWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CollaborationRoomUpdateWithoutOwnerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    shareToken?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    project?: ProjectUpdateOneRequiredWithoutCollaborationRoomNestedInput
+  }
+
+  export type CollaborationRoomUncheckedUpdateWithoutOwnerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    shareToken?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CollaborationRoomUncheckedUpdateManyWithoutOwnerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    shareToken?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

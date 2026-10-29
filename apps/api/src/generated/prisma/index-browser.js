@@ -147,6 +147,16 @@ exports.Prisma.ProjectScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.CollaborationRoomScalarFieldEnum = {
+  id: 'id',
+  projectId: 'projectId',
+  ownerId: 'ownerId',
+  shareToken: 'shareToken',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.ProjectFolderScalarFieldEnum = {
   id: 'id',
   projectId: 'projectId',
@@ -240,6 +250,7 @@ exports.Prisma.ModelName = {
   User: 'User',
   Session: 'Session',
   Project: 'Project',
+  CollaborationRoom: 'CollaborationRoom',
   ProjectFolder: 'ProjectFolder',
   ProjectFile: 'ProjectFile',
   Conversation: 'Conversation',
