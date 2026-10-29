@@ -10,6 +10,13 @@ import {
     getCollaborationRoomByToken
 } from "../services/CollaborationService.js";
 
+import {
+    joinRoom,
+    leaveRoom,
+    getRoomSize,
+    broadcastToRoom
+} from "./collaborationRoomManager.js";
+
 const COLLABORATION_PATH =
     "/ws/collaboration";
 
@@ -19,143 +26,413 @@ export function createCollaborationServer(server) {
         path: COLLABORATION_PATH
     });
 
-    wss.on("connection", async (socket, request) => {
-        try {
-            const requestUrl = new URL(
-                request.url,
-                `http://${request.headers.host}`
-            );
+    wss.on(
+        "connection",
+        async (socket, request) => {
+            try {
+                /*
+                 * --------------------------------
+                 * 1. Read share token
+                 * --------------------------------
+                 */
 
-            const shareToken =
-                requestUrl.searchParams.get(
-                    "shareToken"
+                const requestUrl = new URL(
+                    request.url,
+                    `http://${request.headers.host}`
                 );
 
-            if (!shareToken) {
-                socket.close(
-                    1008,
-                    "Collaboration share token is required"
+                const shareToken =
+                    requestUrl.searchParams.get(
+                        "shareToken"
+                    );
+
+                if (!shareToken) {
+                    socket.close(
+                        1008,
+                        "Collaboration share token is required"
+                    );
+
+                    return;
+                }
+
+                /*
+                 * --------------------------------
+                 * 2. Authenticate user
+                 * --------------------------------
+                 */
+
+                const authentication =
+                    await authenticateCollaborationRequest(
+                        request
+                    );
+
+                if (
+                    !authentication.authenticated
+                ) {
+                    logger.warn(
+                        {
+                            code:
+                                authentication.code
+                        },
+                        "Collaboration WebSocket authentication failed"
+                    );
+
+                    socket.close(
+                        1008,
+                        authentication.message
+                    );
+
+                    return;
+                }
+
+                /*
+                 * --------------------------------
+                 * 3. Resolve collaboration room
+                 * --------------------------------
+                 */
+
+                const room =
+                    await getCollaborationRoomByToken(
+                        shareToken
+                    );
+
+                if (!room) {
+                    logger.warn(
+                        "Invalid or inactive collaboration room"
+                    );
+
+                    socket.close(
+                        1008,
+                        "Invalid collaboration link"
+                    );
+
+                    return;
+                }
+
+                /*
+                 * --------------------------------
+                 * 4. Attach collaboration metadata
+                 * --------------------------------
+                 */
+
+                socket.collaboration = {
+                    userId:
+                        authentication.user.id,
+
+                    user:
+                        authentication.user,
+
+                    roomId:
+                        room.id,
+
+                    projectId:
+                        room.projectId
+                };
+
+                /*
+                 * --------------------------------
+                 * 5. Join room
+                 * --------------------------------
+                 */
+
+                const roomSize = joinRoom(
+                    room.id,
+                    socket
                 );
 
-                return;
-            }
-
-            const authentication =
-                await authenticateCollaborationRequest(
-                    request
-                );
-
-            if (!authentication.authenticated) {
-                logger.warn(
-                    {
-                        code: authentication.code
-                    },
-                    "Collaboration WebSocket authentication failed"
-                );
-
-                socket.close(
-                    1008,
-                    authentication.message
-                );
-
-                return;
-            }
-
-            const room =
-                await getCollaborationRoomByToken(
-                    shareToken
-                );
-
-            if (!room) {
-                logger.warn(
-                    "Invalid or inactive collaboration room"
-                );
-
-                socket.close(
-                    1008,
-                    "Invalid collaboration link"
-                );
-
-                return;
-            }
-
-            socket.collaboration = {
-                userId: authentication.user.id,
-                user: authentication.user,
-                roomId: room.id,
-                projectId: room.projectId
-            };
-
-            logger.info(
-                {
-                    userId: authentication.user.id,
-                    roomId: room.id,
-                    projectId: room.projectId
-                },
-                "Authenticated collaboration WebSocket connected"
-            );
-
-            socket.send(
-                JSON.stringify({
-                    type: "collaboration.authenticated",
-                    user: {
-                        id: authentication.user.id,
-                        name: authentication.user.name
-                    },
-                    room: {
-                        id: room.id,
-                        projectId: room.projectId
-                    }
-                })
-            );
-        } catch (error) {
-            logger.error(
-                {
-                    error: error.message
-                },
-                "Collaboration WebSocket authentication error"
-            );
-
-            socket.close(
-                1011,
-                "Collaboration authentication failed"
-            );
-        }
-
-        socket.on("close", () => {
-            if (socket.collaboration) {
                 logger.info(
                     {
                         userId:
-                            socket.collaboration.userId,
-                        roomId:
-                            socket.collaboration.roomId,
-                        projectId:
-                            socket.collaboration.projectId
-                    },
-                    "Collaboration WebSocket disconnected"
-                );
-            }
-        });
+                            authentication.user.id,
 
-        socket.on("error", (error) => {
-            logger.warn(
-                {
-                    error: error.message
-                },
-                "Collaboration WebSocket error"
+                        roomId:
+                            room.id,
+
+                        projectId:
+                            room.projectId,
+
+                        roomSize
+                    },
+                    "Authenticated collaboration WebSocket connected"
+                );
+
+                /*
+                 * --------------------------------
+                 * 6. Tell client authentication
+                 * succeeded
+                 * --------------------------------
+                 */
+
+                socket.send(
+                    JSON.stringify({
+                        type:
+                            "collaboration.authenticated",
+
+                        user: {
+                            id:
+                                authentication.user
+                                    .id,
+
+                            name:
+                                authentication.user
+                                    .name
+                        },
+
+                        room: {
+                            id:
+                                room.id,
+
+                            projectId:
+                                room.projectId
+                        },
+
+                        roomSize
+                    })
+                );
+
+                /*
+                 * --------------------------------
+                 * 7. Notify other users
+                 * --------------------------------
+                 */
+
+                broadcastToRoom(
+                    room.id,
+                    {
+                        type:
+                            "collaboration.user_joined",
+
+                        user: {
+                            id:
+                                authentication.user
+                                    .id,
+
+                            name:
+                                authentication.user
+                                    .name
+                        },
+
+                        roomSize
+                    },
+                    socket
+                );
+
+                /*
+                 * --------------------------------
+                 * 8. Handle incoming messages
+                 * --------------------------------
+                 */
+
+                socket.on(
+                    "message",
+                    (rawMessage) => {
+                        handleRoomMessage(
+                            socket,
+                            rawMessage
+                        );
+                    }
+                );
+            } catch (error) {
+                logger.error(
+                    {
+                        error:
+                            error.message
+                    },
+                    "Collaboration WebSocket authentication error"
+                );
+
+                socket.close(
+                    1011,
+                    "Collaboration authentication failed"
+                );
+
+                return;
+            }
+
+            /*
+             * --------------------------------
+             * 9. Handle disconnect
+             * --------------------------------
+             */
+
+            socket.on(
+                "close",
+                () => {
+                    handleSocketClose(socket);
+                }
             );
-        });
-    });
+
+            /*
+             * --------------------------------
+             * 10. Handle socket errors
+             * --------------------------------
+             */
+
+            socket.on(
+                "error",
+                (error) => {
+                    logger.warn(
+                        {
+                            userId:
+                                socket
+                                    .collaboration
+                                    ?.userId,
+
+                            roomId:
+                                socket
+                                    .collaboration
+                                    ?.roomId,
+
+                            error:
+                                error.message
+                        },
+                        "Collaboration WebSocket error"
+                    );
+                }
+            );
+        }
+    );
 
     logger.info(
         {
-            path: COLLABORATION_PATH
+            path:
+                COLLABORATION_PATH
         },
         "ForgeAI collaboration WebSocket server initialized"
     );
 
     return wss;
+}
+
+function handleRoomMessage(
+    socket,
+    rawMessage
+) {
+    if (!socket.collaboration) {
+        return;
+    }
+
+    const roomId =
+        socket.collaboration.roomId;
+
+    let message;
+
+    try {
+        message = JSON.parse(
+            rawMessage.toString()
+        );
+    } catch {
+        socket.send(
+            JSON.stringify({
+                type:
+                    "collaboration.error",
+
+                code:
+                    "INVALID_MESSAGE",
+
+                message:
+                    "Message must be valid JSON"
+            })
+        );
+
+        return;
+    }
+
+    if (
+        !message ||
+        typeof message.type !== "string"
+    ) {
+        socket.send(
+            JSON.stringify({
+                type:
+                    "collaboration.error",
+
+                code:
+                    "INVALID_MESSAGE",
+
+                message:
+                    "Message type is required"
+            })
+        );
+
+        return;
+    }
+
+    /*
+     * For now we simply relay supported
+     * collaboration messages.
+     *
+     * Yjs will use this path in the next step.
+     */
+
+    broadcastToRoom(
+        roomId,
+        {
+            type:
+                message.type,
+
+            payload:
+                message.payload ?? null,
+
+            sender: {
+                id:
+                    socket.collaboration.userId,
+
+                name:
+                    socket.collaboration.user
+                        .name
+            }
+        },
+        socket
+    );
+}
+
+function handleSocketClose(socket) {
+    if (!socket.collaboration) {
+        return;
+    }
+
+    const {
+        userId,
+        user,
+        roomId
+    } = socket.collaboration;
+
+    const roomSize = leaveRoom(
+        roomId,
+        socket
+    );
+
+    logger.info(
+        {
+            userId,
+            roomId,
+            roomSize
+        },
+        "Collaboration WebSocket disconnected"
+    );
+
+    /*
+     * Notify remaining users.
+     */
+
+    broadcastToRoom(
+        roomId,
+        {
+            type:
+                "collaboration.user_left",
+
+            user: {
+                id:
+                    userId,
+
+                name:
+                    user.name
+            },
+
+            roomSize
+        }
+    );
 }
 
 export {
