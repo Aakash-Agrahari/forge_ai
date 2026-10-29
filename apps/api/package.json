@@ -11,6 +11,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "cookie-parser": "^1.4.7"
+    "cookie-parser": "^1.4.7",
+    "ws": "^8.22.0"
   }
 }
