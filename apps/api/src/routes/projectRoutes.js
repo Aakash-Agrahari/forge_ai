@@ -12,8 +12,11 @@ import {
     getUserProjects,
     getProjectById,
     updateProject,
-    deleteProject
+    deleteProject,
+    createOrGetCollaborationRoom,
+    deactivateCollaborationRoom
 } from "../services/projectService.js";
+
 
 const router = Router();
 
@@ -47,6 +50,65 @@ router.post("/", async (req, res, next) => {
         return res.status(201).json({
             success: true,
             project
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Create or get collaboration share link
+router.post("/:id/collaboration", async (req, res, next) => {
+    try {
+        const room = await createOrGetCollaborationRoom({
+            projectId: req.params.id,
+            ownerId: req.user.id
+        });
+
+        if (!room) {
+            return res.status(404).json({
+                success: false,
+                error: {
+                    code: "PROJECT_NOT_FOUND",
+                    message: "Project not found"
+                }
+            });
+        }
+
+        return res.status(201).json({
+            success: true,
+            collaboration: {
+                roomId: room.id,
+                projectId: room.projectId,
+                shareToken: room.shareToken,
+                isActive: room.isActive
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Disable collaboration
+router.delete("/:id/collaboration", async (req, res, next) => {
+    try {
+        const room = await deactivateCollaborationRoom({
+            projectId: req.params.id,
+            ownerId: req.user.id
+        });
+
+        if (!room) {
+            return res.status(404).json({
+                success: false,
+                error: {
+                    code: "COLLABORATION_NOT_FOUND",
+                    message: "Collaboration room not found"
+                }
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Collaboration disabled successfully"
         });
     } catch (error) {
         next(error);
