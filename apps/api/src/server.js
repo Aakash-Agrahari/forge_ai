@@ -3,6 +3,7 @@ import env from "./config/env.js";
 import logger from "./utils/logger.js";
 import { discoverAllModels } from "./llm/discoveryManager.js";
 import { registerAgentTools } from "./agent/tools/index.js";
+import { createCollaborationServer } from "./collaboration/collaborationServer.js";
 
 registerAgentTools();
 
@@ -44,18 +45,22 @@ const startServer = async () => {
         }
     );
 
+    const collaborationServer = createCollaborationServer(server);
+
     const shutdown = (signal) => {
         logger.info(
             { signal },
             "Shutdown signal received"
         );
 
-        server.close(() => {
-            logger.info(
-                "HTTP server closed"
-            );
+        collaborationServer.close(() => {
+            server.close(() => {
+                logger.info(
+                    "HTTP server closed"
+                );
 
-            process.exit(0);
+                process.exit(0);
+            });
         });
     };
 
