@@ -17,7 +17,7 @@ import conversationRoutes from "./routes/conversationRoutes.js";
 import agentRunRoutes from "./routes/agentRunRoutes.js";
 import modelRoutes from "./routes/modelRoutes.js";
 import projectArchiveRoutes from "./routes/projectArchiveRoutes.js";
-
+import collaborationRoutes from "./routes/collaborationRoutes.js";
 
 const app = express();
 
@@ -76,6 +76,9 @@ app.use("/api/v1/models", modelRoutes);
 
 //Project archive routes
 app.use("/api/v1/projects", projectArchiveRoutes);
+
+//Collaboration routes
+app.use("/api/v1/collaboration", collaborationRoutes);
 
 //404 handler
 app.use(notFound);
