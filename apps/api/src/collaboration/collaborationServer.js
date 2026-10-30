@@ -377,7 +377,7 @@ function handleRoomMessage(
         message.type ===
         "yjs.sync.request"
     ) {
-        handleYjsSyncRequest(
+        void handleYjsSyncRequest(
             socket,
             message
         );
@@ -389,7 +389,7 @@ function handleRoomMessage(
         message.type ===
         "yjs.update"
     ) {
-        handleYjsUpdate(
+        void handleYjsUpdate(
             socket,
             message
         );
@@ -468,102 +468,76 @@ async function handleYjsSyncRequest(socket, message) {
     }
 }
 
-function handleYjsUpdate(
-    socket,
-    message
-) {
-    if (!socket.collaboration) {
-        return;
-    }
+async function handleYjsUpdate(socket, message) {
+    if (!socket.collaboration) return;
 
-    const {
-        projectId
-    } = socket.collaboration;
+    const { projectId } = socket.collaboration;
 
-    const fileId =
-        message.payload?.fileId;
-
-    const encodedUpdate =
-        message.payload?.update;
+    const fileId = message.payload?.fileId;
+    const encodedUpdate = message.payload?.update;
 
     if (!fileId) {
-        socket.send(
-            JSON.stringify({
-                type:
-                    "collaboration.error",
-
-                code:
-                    "FILE_ID_REQUIRED",
-
-                message:
-                    "fileId is required"
-            })
-        );
-
+        socket.send(JSON.stringify({
+            type: "collaboration.error",
+            code: "FILE_ID_REQUIRED",
+            message: "fileId is required"
+        }));
         return;
     }
 
-    if (
-        typeof encodedUpdate !==
-        "string"
-    ) {
-        socket.send(
-            JSON.stringify({
-                type:
-                    "collaboration.error",
-
-                code:
-                    "YJS_UPDATE_REQUIRED",
-
-                message:
-                    "Yjs update is required"
-            })
-        );
-
+    if (typeof encodedUpdate !== "string") {
+        socket.send(JSON.stringify({
+            type: "collaboration.error",
+            code: "YJS_UPDATE_REQUIRED",
+            message: "Yjs update is required"
+        }));
         return;
     }
 
-    const document =
-        getOrCreateDocument(
+    try {
+        const result = await loadFileIntoYjs(
             projectId,
             fileId
         );
 
-    const update =
-        decodeDocumentUpdate(
-            encodedUpdate
+        if (!result) {
+            socket.send(JSON.stringify({
+                type: "collaboration.error",
+                code: "FILE_NOT_FOUND",
+                message: "File does not belong to this project"
+            }));
+            return;
+        }
+
+        const update = decodeDocumentUpdate(encodedUpdate);
+
+        applyDocumentUpdate(
+            result.document,
+            update
         );
 
-    applyDocumentUpdate(
-        document,
-        update
-    );
-
-    broadcastToRoom(
-        socket.collaboration.roomId,
-        {
-            type:
-                "yjs.update",
-
-            payload: {
-                fileId,
-
-                update:
-                    encodedUpdate
+        broadcastToRoom(
+            socket.collaboration.roomId,
+            {
+                type: "yjs.update",
+                payload: {
+                    fileId,
+                    update: encodedUpdate
+                },
+                sender: {
+                    id: socket.collaboration.userId,
+                    name: socket.collaboration.user.name
+                }
             },
-
-            sender: {
-                id:
-                    socket.collaboration
-                        .userId,
-
-                name:
-                    socket.collaboration
-                        .user.name
-            }
-        },
-        socket
-    );
+            socket
+        );
+    } catch (error) {
+        socket.send(JSON.stringify({
+            type: "collaboration.error",
+            code: "YJS_UPDATE_FAILED",
+            message: "Failed to apply Yjs update"
+        }));
+    }
 }
 
 function handleSocketClose(socket) {
