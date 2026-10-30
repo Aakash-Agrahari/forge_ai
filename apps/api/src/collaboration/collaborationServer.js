@@ -416,6 +416,66 @@ function handleRoomMessage(
     );
 }
 
+function handleYjsSyncRequest(
+    socket,
+    message
+) {
+    if (!socket.collaboration) {
+        return;
+    }
+
+    const {
+        projectId
+    } = socket.collaboration;
+
+    const fileId =
+        message.payload?.fileId;
+
+    if (!fileId) {
+        socket.send(
+            JSON.stringify({
+                type:
+                    "collaboration.error",
+
+                code:
+                    "FILE_ID_REQUIRED",
+
+                message:
+                    "fileId is required"
+            })
+        );
+
+        return;
+    }
+
+    const document =
+        getOrCreateDocument(
+            projectId,
+            fileId
+        );
+
+    const state =
+        encodeDocumentState(
+            document
+        );
+
+    socket.send(
+        JSON.stringify({
+            type:
+                "yjs.sync.state",
+
+            payload: {
+                fileId,
+
+                state:
+                    encodeDocumentUpdate(
+                        state
+                    )
+            }
+        })
+    );
+}
+
 function handleSocketClose(socket) {
     if (!socket.collaboration) {
         return;
