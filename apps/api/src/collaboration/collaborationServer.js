@@ -476,6 +476,104 @@ function handleYjsSyncRequest(
     );
 }
 
+function handleYjsUpdate(
+    socket,
+    message
+) {
+    if (!socket.collaboration) {
+        return;
+    }
+
+    const {
+        projectId
+    } = socket.collaboration;
+
+    const fileId =
+        message.payload?.fileId;
+
+    const encodedUpdate =
+        message.payload?.update;
+
+    if (!fileId) {
+        socket.send(
+            JSON.stringify({
+                type:
+                    "collaboration.error",
+
+                code:
+                    "FILE_ID_REQUIRED",
+
+                message:
+                    "fileId is required"
+            })
+        );
+
+        return;
+    }
+
+    if (
+        typeof encodedUpdate !==
+        "string"
+    ) {
+        socket.send(
+            JSON.stringify({
+                type:
+                    "collaboration.error",
+
+                code:
+                    "YJS_UPDATE_REQUIRED",
+
+                message:
+                    "Yjs update is required"
+            })
+        );
+
+        return;
+    }
+
+    const document =
+        getOrCreateDocument(
+            projectId,
+            fileId
+        );
+
+    const update =
+        decodeDocumentUpdate(
+            encodedUpdate
+        );
+
+    applyDocumentUpdate(
+        document,
+        update
+    );
+
+    broadcastToRoom(
+        socket.collaboration.roomId,
+        {
+            type:
+                "yjs.update",
+
+            payload: {
+                fileId,
+
+                update:
+                    encodedUpdate
+            },
+
+            sender: {
+                id:
+                    socket.collaboration
+                        .userId,
+
+                name:
+                    socket.collaboration
+                        .user.name
+            }
+        },
+        socket
+    );
+}
+
 function handleSocketClose(socket) {
     if (!socket.collaboration) {
         return;
