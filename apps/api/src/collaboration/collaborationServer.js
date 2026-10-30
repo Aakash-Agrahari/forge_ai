@@ -22,6 +22,10 @@ import {
 } from "./yjsDocumentManager.js";
 
 import {
+    loadFileIntoYjs
+} from "./yjsFileService.js";
+
+import {
     encodeDocumentState,
     applyDocumentUpdate,
     encodeDocumentUpdate,
@@ -416,64 +420,52 @@ function handleRoomMessage(
     );
 }
 
-function handleYjsSyncRequest(
-    socket,
-    message
-) {
-    if (!socket.collaboration) {
-        return;
-    }
+async function handleYjsSyncRequest(socket, message) {
+    if (!socket.collaboration) return;
 
-    const {
-        projectId
-    } = socket.collaboration;
-
-    const fileId =
-        message.payload?.fileId;
+    const { projectId } = socket.collaboration;
+    const fileId = message.payload?.fileId;
 
     if (!fileId) {
-        socket.send(
-            JSON.stringify({
-                type:
-                    "collaboration.error",
-
-                code:
-                    "FILE_ID_REQUIRED",
-
-                message:
-                    "fileId is required"
-            })
-        );
-
+        socket.send(JSON.stringify({
+            type: "collaboration.error",
+            code: "FILE_ID_REQUIRED",
+            message: "fileId is required"
+        }));
         return;
     }
 
-    const document =
-        getOrCreateDocument(
+    try {
+        const result = await loadFileIntoYjs(
             projectId,
             fileId
         );
 
-    const state =
-        encodeDocumentState(
-            document
-        );
+        if (!result) {
+            socket.send(JSON.stringify({
+                type: "collaboration.error",
+                code: "FILE_NOT_FOUND",
+                message: "File does not belong to this project"
+            }));
+            return;
+        }
 
-    socket.send(
-        JSON.stringify({
-            type:
-                "yjs.sync.state",
+        const state = encodeDocumentState(result.document);
 
+        socket.send(JSON.stringify({
+            type: "yjs.sync.state",
             payload: {
                 fileId,
-
-                state:
-                    encodeDocumentUpdate(
-                        state
-                    )
+                state: encodeDocumentUpdate(state)
             }
-        })
-    );
+        }));
+    } catch (error) {
+        socket.send(JSON.stringify({
+            type: "collaboration.error",
+            code: "YJS_SYNC_FAILED",
+            message: "Failed to synchronize file"
+        }));
+    }
 }
 
 function handleYjsUpdate(
