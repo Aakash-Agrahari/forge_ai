@@ -17,6 +17,17 @@ import {
     broadcastToRoom
 } from "./collaborationRoomManager.js";
 
+import {
+    getOrCreateDocument
+} from "./yjsDocumentManager.js";
+
+import {
+    encodeDocumentState,
+    applyDocumentUpdate,
+    encodeDocumentUpdate,
+    decodeDocumentUpdate
+} from "./yjsSync.js";
+
 const COLLABORATION_PATH =
     "/ws/collaboration";
 
@@ -358,12 +369,29 @@ function handleRoomMessage(
         return;
     }
 
-    /*
-     * For now we simply relay supported
-     * collaboration messages.
-     *
-     * Yjs will use this path in the next step.
-     */
+    if (
+        message.type ===
+        "yjs.sync.request"
+    ) {
+        handleYjsSyncRequest(
+            socket,
+            message
+        );
+
+        return;
+    }
+
+    if (
+        message.type ===
+        "yjs.update"
+    ) {
+        handleYjsUpdate(
+            socket,
+            message
+        );
+
+        return;
+    }
 
     broadcastToRoom(
         roomId,
@@ -376,11 +404,12 @@ function handleRoomMessage(
 
             sender: {
                 id:
-                    socket.collaboration.userId,
+                    socket.collaboration
+                        .userId,
 
                 name:
-                    socket.collaboration.user
-                        .name
+                    socket.collaboration
+                        .user.name
             }
         },
         socket
