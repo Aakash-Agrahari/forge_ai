@@ -16,8 +16,6 @@ import {
     renameFolderSchema
 } from "../validators/folderValidator.js";
 
-/*import { getProjectById } from "../services/projectService.js";*/
-
 const router = express.Router();
 
 router.use(requireAuth);
@@ -252,27 +250,13 @@ router.patch(
  */
 router.delete(
     "/:projectId/folders/:folderId",
+    requireProjectAccess,
     async (req, res) => {
         try {
             const {
                 projectId,
                 folderId
             } = req.params;
-
-            const project = await verifyProjectOwnership(
-                projectId,
-                req.user.id
-            );
-
-            if (!project) {
-                return res.status(404).json({
-                    success: false,
-                    error: {
-                        code: "PROJECT_NOT_FOUND",
-                        message: "Project not found"
-                    }
-                });
-            }
 
             const result = await deleteProjectFolder({
                 projectId,
