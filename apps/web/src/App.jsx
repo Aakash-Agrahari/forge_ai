@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import Editor from "@monaco-editor/react";
+import { CollaborationClient } from "./collaboration/collaborationClient";
 import "./App.css";
 
 import {
@@ -871,11 +872,60 @@ function Workspace({
     const [fileContent, setFileContent] = useState("");
     const [originalContent, setOriginalContent] = useState("");
 
+    const collaborationClientRef = useRef(null);
+    const collaborationRemoteUpdateRef = useRef(false);
+
+    const [collaborationConnected, setCollaborationConnected] =
+        useState(false);
+
+    const collaborationShareToken =
+        new URLSearchParams(window.location.search)
+            .get("shareToken");
+
+    const activeFileIdRef = useRef(null);
+    
+    useEffect(() => {
+        activeFileIdRef.current = activeFileId;
+    }, [activeFileId]);
+
     const hasUnsavedChanges = fileContent !== originalContent;
 
     useEffect(() => {
         openTabsRef.current = openTabs;
     }, [openTabs]);
+
+    useEffect(() => {
+        if (!collaborationShareToken) {
+            return;
+        }
+
+        const client = new CollaborationClient({
+            shareToken: collaborationShareToken,
+
+            onConnectionChange: (connected) => {
+                setCollaborationConnected(connected);
+            },
+
+            onRemoteUpdate: (fileId, content) => {
+                if (fileId !== activeFileIdRef.current) {
+                    return;
+                }
+
+                collaborationRemoteUpdateRef.current = true;
+
+                setFileContent(content);
+            },
+        });
+
+        collaborationClientRef.current = client;
+
+        client.connect();
+
+        return () => {
+            client.disconnect();
+            collaborationClientRef.current = null;
+        };
+    }, [collaborationShareToken]);
 
     const [loadingFiles, setLoadingFiles] = useState(true);
     const [loadingFile, setLoadingFile] = useState(false);
@@ -1953,6 +2003,12 @@ useEffect(() => {
         setError("");
 
         setActiveFileId(file.id);
+
+        if (collaborationClientRef.current) {
+            collaborationClientRef.current.openFile(
+                file.id
+            );
+        }
     }
 
     function handleCloseTab(tabId) {
@@ -2302,6 +2358,14 @@ useEffect(() => {
                 setActiveFile(file);
                 setFileContent(content);
                 setOriginalContent(content);
+
+                if (collaborationClientRef.current) {
+                    collaborationClientRef.current.openFile(
+                        file.id
+                    );
+                }
+
+
 
                 /*
                 * Add the newly opened file as a tab.
@@ -4061,9 +4125,27 @@ useEffect(() => {
                                   )}
                                   path={activeFile.path}
                                   value={fileContent}
-                                  onChange={(value) =>
-                                      setFileContent(value ?? "")
-                                  }
+                                  onChange={(value) => {
+                                        const nextContent = value ?? "";
+
+                                        if (collaborationRemoteUpdateRef.current) {
+                                            collaborationRemoteUpdateRef.current = false;
+                                            setFileContent(nextContent);
+                                            return;
+                                        }
+
+                                        setFileContent(nextContent);
+
+                                        if (
+                                            collaborationClientRef.current &&
+                                            activeFileId
+                                        ) {
+                                            collaborationClientRef.current.updateFileContent(
+                                                activeFileId,
+                                                nextContent
+                                            );
+                                        }
+                                    }}
                                   onMount={(editor, monaco) => {
                                     editor.addAction({
                                         id: "forgeai-save-file",
