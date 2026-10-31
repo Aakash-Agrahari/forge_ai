@@ -57,27 +57,15 @@ router.get(
 /*
  * POST /projects/:projectId/folders
  */
-router.post("/:projectId/folders", async (req, res) => {
-    try {
-        const { projectId } = req.params;
+router.post(
+    "/:projectId/folders",
+    requireProjectAccess,
+    async (req, res) => {
+        try {
+            const { projectId } = req.params;
 
-        const project = await verifyProjectOwnership(
-            projectId,
-            req.user.id
-        );
-
-        if (!project) {
-            return res.status(404).json({
-                success: false,
-                error: {
-                    code: "PROJECT_NOT_FOUND",
-                    message: "Project not found"
-                }
-            });
-        }
-
-        const validation =
-            createFolderSchema.safeParse(req.body);
+            const validation =
+                createFolderSchema.safeParse(req.body);
 
         if (!validation.success) {
             return res.status(400).json({
@@ -133,27 +121,13 @@ router.post("/:projectId/folders", async (req, res) => {
  */
 router.get(
     "/:projectId/folders/:folderId",
+    requireProjectAccess,
     async (req, res) => {
         try {
             const {
                 projectId,
                 folderId
             } = req.params;
-
-            const project = await verifyProjectOwnership(
-                projectId,
-                req.user.id
-            );
-
-            if (!project) {
-                return res.status(404).json({
-                    success: false,
-                    error: {
-                        code: "PROJECT_NOT_FOUND",
-                        message: "Project not found"
-                    }
-                });
-            }
 
             const folder = await getProjectFolder({
                 projectId,
@@ -196,27 +170,13 @@ router.get(
  */
 router.patch(
     "/:projectId/folders/:folderId",
+    requireProjectAccess,
     async (req, res) => {
         try {
             const {
                 projectId,
                 folderId
             } = req.params;
-
-            const project = await verifyProjectOwnership(
-                projectId,
-                req.user.id
-            );
-
-            if (!project) {
-                return res.status(404).json({
-                    success: false,
-                    error: {
-                        code: "PROJECT_NOT_FOUND",
-                        message: "Project not found"
-                    }
-                });
-            }
 
             const validation =
                 renameFolderSchema.safeParse(req.body);
