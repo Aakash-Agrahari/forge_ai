@@ -124,3 +124,29 @@ export async function deactivateCollaborationRoom({
         }
     });
 }
+
+export async function getCollaborationAccess({
+    projectId,
+    shareToken,
+}) {
+    if (!projectId || !shareToken) {
+        return null;
+    }
+
+    const room = await prisma.collaborationRoom.findFirst({
+        where: {
+            projectId,
+            shareToken,
+            isActive: true,
+        },
+        select: {
+            id: true,
+            projectId: true,
+            ownerId: true,
+            shareToken: true,
+            isActive: true,
+        },
+    });
+
+    return room;
+}
