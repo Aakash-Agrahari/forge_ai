@@ -4337,6 +4337,14 @@ useEffect(() => {
                             LF
                         </span>
 
+                        {collaborationShareToken && (
+                            <span>
+                                {collaborationConnected
+                                    ? "● Collaborating"
+                                    : "○ Connecting..."}
+                            </span>
+                        )}
+
                     </div>
 
                 </section>
