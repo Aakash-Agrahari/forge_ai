@@ -38,7 +38,14 @@ export class CollaborationClient {
 
         this.socket.addEventListener("open", () => {
             this.connected = true;
+
             this.onConnectionChange?.(true);
+
+            // Request synchronization for files
+            // that were opened before the socket connected.
+            for (const fileId of this.documents.keys()) {
+                this.requestSync(fileId);
+            }
         });
 
         this.socket.addEventListener("close", () => {
