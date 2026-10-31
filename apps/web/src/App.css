@@ -2512,3 +2512,28 @@ button {
 .editor-tab .tab-close {
     flex-shrink: 0;
 }
+
+.collaboration-share-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #252525;
+    background: #111111;
+}
+
+.collaboration-share-box input {
+    flex: 1;
+    min-width: 0;
+    padding: 7px 10px;
+    border: 1px solid #333;
+    border-radius: 6px;
+    background: #181818;
+    color: #d4d4d4;
+    font-size: 12px;
+    outline: none;
+}
+
+.collaboration-share-box input:focus {
+    border-color: #555;
+}
