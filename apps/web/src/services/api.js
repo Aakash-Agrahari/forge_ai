@@ -436,3 +436,48 @@ export async function getAgentRun(
         `/projects/${projectId}/conversations/${conversationId}/runs/${runId}`
     );
 }
+
+export async function createCollaborationRoom(projectId) {
+    const response = await fetch(
+        `/api/v1/projects/${projectId}/collaboration`,
+        {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(
+            data?.error?.message ||
+            "Failed to create collaboration room"
+        );
+    }
+
+    return data.collaboration;
+}
+
+export async function getCollaborationByToken(shareToken) {
+    const response = await fetch(
+        `/api/v1/collaboration/${encodeURIComponent(shareToken)}`,
+        {
+            method: "GET",
+            credentials: "include",
+        }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(
+            data?.error?.message ||
+            "Failed to load collaboration"
+        );
+    }
+
+    return data.collaboration;
+}
