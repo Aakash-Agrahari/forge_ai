@@ -1,6 +1,11 @@
 const API_BASE_URL = "/api/v1";
 
 async function apiRequest(endpoint, options = {}) {
+
+    const collaborationShareToken =
+        new URLSearchParams(window.location.search)
+            .get("shareToken");
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         credentials: "include",
 
