@@ -1,6 +1,7 @@
 import express from "express";
 
 import requireAuth from "../middleware/auth.js";
+import {requireProjectAccess} from "../middleware/projectAccess.js";
 
 import {
     createProjectFolder,
@@ -15,42 +16,23 @@ import {
     renameFolderSchema
 } from "../validators/folderValidator.js";
 
-import { getProjectById } from "../services/projectService.js";
+/*import { getProjectById } from "../services/projectService.js";*/
 
 const router = express.Router();
 
 router.use(requireAuth);
 
-async function verifyProjectOwnership(projectId, userId) {
-    return getProjectById({
-        projectId,
-        userId
-    });
-}
-
 /*
  * GET /projects/:projectId/folders
  */
-router.get("/:projectId/folders", async (req, res) => {
-    try {
-        const { projectId } = req.params;
+router.get(
+    "/:projectId/folders",
+    requireProjectAccess,
+    async (req, res) => {
+        try {
+            const { projectId } = req.params;
 
-        const project = await verifyProjectOwnership(
-            projectId,
-            req.user.id
-        );
-
-        if (!project) {
-            return res.status(404).json({
-                success: false,
-                error: {
-                    code: "PROJECT_NOT_FOUND",
-                    message: "Project not found"
-                }
-            });
-        }
-
-        const folders = await getProjectFolders(projectId);
+            const folders = await getProjectFolders(projectId);
 
         return res.json({
             success: true,
