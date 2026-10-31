@@ -87,24 +87,12 @@ router.get(
 });
 
 // Get single file
-router.get("/:projectId/files/:fileId", async (req, res, next) => {
-    try {
-        const project = await getProjectById({
-            projectId: req.params.projectId,
-            userId: req.user.id
-        });
-
-        if (!project) {
-            return res.status(404).json({
-                success: false,
-                error: {
-                    code: "PROJECT_NOT_FOUND",
-                    message: "Project not found"
-                }
-            });
-        }
-
-        const file = await getProjectFile({
+router.get(
+    "/:projectId/files/:fileId",
+    requireProjectAccess,
+    async (req, res, next) => {
+        try {
+            const file = await getProjectFile({
             projectId: req.params.projectId,
             fileId: req.params.fileId
         });
@@ -192,25 +180,13 @@ router.post(
 );
 
 // Update file
-router.patch("/:projectId/files/:fileId", async (req, res, next) => {
-    try {
-        const project = await getProjectById({
-            projectId: req.params.projectId,
-            userId: req.user.id
-        });
-
-        if (!project) {
-            return res.status(404).json({
-                success: false,
-                error: {
-                    code: "PROJECT_NOT_FOUND",
-                    message: "Project not found"
-                }
-            });
-        }
-
-        const validationResult =
-            updateFileSchema.safeParse(req.body);
+router.patch(
+    "/:projectId/files/:fileId",
+    requireProjectAccess,
+    async (req, res, next) => {
+        try {
+            const validationResult =
+                updateFileSchema.safeParse(req.body);
 
         if (!validationResult.success) {
             return res.status(400).json({
@@ -252,24 +228,12 @@ router.patch("/:projectId/files/:fileId", async (req, res, next) => {
 });
 
 // Delete file
-router.delete("/:projectId/files/:fileId", async (req, res, next) => {
-    try {
-        const project = await getProjectById({
-            projectId: req.params.projectId,
-            userId: req.user.id
-        });
-
-        if (!project) {
-            return res.status(404).json({
-                success: false,
-                error: {
-                    code: "PROJECT_NOT_FOUND",
-                    message: "Project not found"
-                }
-            });
-        }
-
-        const deleted = await deleteProjectFile({
+router.delete(
+    "/:projectId/files/:fileId",
+    requireProjectAccess,
+    async (req, res, next) => {
+        try {
+            const deleted = await deleteProjectFile({
             projectId: req.params.projectId,
             fileId: req.params.fileId
         });
