@@ -4887,7 +4887,7 @@ function App() {
         }
     }
 
-    function handleAuthenticated(response) {
+    async function handleAuthenticated(response) {
         const authenticatedUser =
             response?.user ||
             response?.data?.user ||
@@ -4895,6 +4895,32 @@ function App() {
             response;
 
         setUser(authenticatedUser);
+
+        if (collaborationShareToken) {
+            try {
+                const collaboration =
+                    await getCollaborationByToken(
+                        collaborationShareToken
+                    );
+
+                const sharedProject =
+                    collaboration?.project || null;
+
+                if (sharedProject) {
+                    setProject(sharedProject);
+
+                    window.sessionStorage.setItem(
+                        "forgeai_active_project_id",
+                        sharedProject.id
+                    );
+                }
+            } catch (requestError) {
+                console.error(
+                    "Failed to load shared project after login:",
+                    requestError
+                );
+            }
+        }
     }
 
     function handleOpenProject(selectedProject) {
