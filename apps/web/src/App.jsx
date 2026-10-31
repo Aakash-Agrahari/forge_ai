@@ -4785,6 +4785,10 @@ function App() {
     const [user, setUser] = useState(null);
     const [project, setProject] = useState(null);
 
+    const collaborationShareToken =
+        new URLSearchParams(window.location.search)
+            .get("shareToken");
+
     const [loading, setLoading] =
         useState(true);
 
@@ -4802,37 +4806,63 @@ function App() {
 
                 setUser(authenticatedUser);
 
-                const savedProjectId =
-                    window.sessionStorage.getItem(
-                        "forgeai_active_project_id"
-                    );
-
-                if (savedProjectId) {
+                if (collaborationShareToken) {
                     try {
-                        const projectsResponse =
-                            await getProjects();
-
-                        const savedProject =
-                            (
-                                projectsResponse?.projects ||
-                                []
-                            ).find(
-                                (item) =>
-                                    item.id ===
-                                    savedProjectId
+                        const collaboration =
+                            await getCollaborationByToken(
+                                collaborationShareToken
                             );
 
-                        if (savedProject) {
-                            setProject(savedProject);
-                        } else {
+                        const sharedProject =
+                            collaboration?.project || null;
+
+                        if (sharedProject) {
+                            setProject(sharedProject);
+
+                            window.sessionStorage.setItem(
+                                "forgeai_active_project_id",
+                                sharedProject.id
+                            );
+                        }
+                    } catch (requestError) {
+                        console.error(
+                            "Failed to load shared project:",
+                            requestError
+                        );
+                    }
+                } else {
+                    const savedProjectId =
+                        window.sessionStorage.getItem(
+                            "forgeai_active_project_id"
+                        );
+
+                    if (savedProjectId) {
+                        try {
+                            const projectsResponse =
+                                await getProjects();
+
+                            const savedProject =
+                                (
+                                    projectsResponse?.projects ||
+                                    []
+                                ).find(
+                                    (item) =>
+                                        item.id ===
+                                        savedProjectId
+                                );
+
+                            if (savedProject) {
+                                setProject(savedProject);
+                            } else {
+                                window.sessionStorage.removeItem(
+                                    "forgeai_active_project_id"
+                                );
+                            }
+                        } catch {
                             window.sessionStorage.removeItem(
                                 "forgeai_active_project_id"
                             );
                         }
-                    } catch {
-                        window.sessionStorage.removeItem(
-                            "forgeai_active_project_id"
-                        );
                     }
                 }
             } catch {
