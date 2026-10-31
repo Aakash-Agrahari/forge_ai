@@ -7,9 +7,9 @@ import {
     updateFileSchema
 } from "../validators/fileValidator.js";
 
-import {
+/*import {
     getProjectById
-} from "../services/projectService.js";
+} from "../services/projectService.js";*/
 
 import {
     createProjectFile,
@@ -23,30 +23,22 @@ import {
     executeCode
 } from "../execution/codeExecutionService.js";
 
+import {
+    requireProjectAccess,
+} from "../middleware/projectAccess.js";
+
 const router = Router();
 
 router.use(requireAuth);
 
 // Create file
-router.post("/:projectId/files", async (req, res, next) => {
-    try {
-        const project = await getProjectById({
-            projectId: req.params.projectId,
-            userId: req.user.id
-        });
-
-        if (!project) {
-            return res.status(404).json({
-                success: false,
-                error: {
-                    code: "PROJECT_NOT_FOUND",
-                    message: "Project not found"
-                }
-            });
-        }
-
-        const validationResult =
-            createFileSchema.safeParse(req.body);
+router.post(
+    "/:projectId/files",
+    requireProjectAccess,
+    async (req, res, next) => {
+        try {
+            const validationResult =
+                createFileSchema.safeParse(req.body);
 
         if (!validationResult.success) {
             return res.status(400).json({
@@ -77,24 +69,13 @@ router.post("/:projectId/files", async (req, res, next) => {
 });
 
 // List project files
-router.get("/:projectId/files", async (req, res, next) => {
-    try {
-        const project = await getProjectById({
-            projectId: req.params.projectId,
-            userId: req.user.id
-        });
-
-        if (!project) {
-            return res.status(404).json({
-                success: false,
-                error: {
-                    code: "PROJECT_NOT_FOUND",
-                    message: "Project not found"
-                }
-            });
-        }
-
-        const files = await getProjectFiles(req.params.projectId);
+router.get(
+    "/:projectId/files",
+    requireProjectAccess,
+    async (req, res, next) => {
+        try {
+            const files =
+                await getProjectFiles(req.params.projectId);
 
         return res.status(200).json({
             success: true,
