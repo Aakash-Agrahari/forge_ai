@@ -4042,12 +4042,9 @@ useEffect(() => {
                     <div className="editor-toolbar">
 
                         <div className="breadcrumb">
-
                             <span>
                                 {activeFile
-                                    ? getDirectory(
-                                          activeFile.path
-                                      )
+                                    ? getDirectory(activeFile.path)
                                     : "root"}
                             </span>
 
@@ -4055,12 +4052,9 @@ useEffect(() => {
 
                             <strong>
                                 {activeFile
-                                    ? getFileName(
-                                          activeFile.path
-                                      )
+                                    ? getFileName(activeFile.path)
                                     : "No file"}
                             </strong>
-
                         </div>
 
                         <div className="editor-actions">
@@ -4082,6 +4076,15 @@ useEffect(() => {
 
                             <button
                                 className="editor-action"
+                                onClick={handleShareProject}
+                                disabled={sharing}
+                                title="Share this project"
+                            >
+                                {sharing ? "Creating link..." : "Share"}
+                            </button>
+
+                            <button
+                                className="editor-action"
                                 onClick={handleRunFile}
                                 disabled={
                                     !activeFile ||
@@ -4094,9 +4097,7 @@ useEffect(() => {
 
                             <button
                                 className="editor-action primary"
-                                onClick={
-                                    handleSaveFile
-                                }
+                                onClick={handleSaveFile}
                                 disabled={
                                     !activeFile ||
                                     saving ||
@@ -4113,6 +4114,27 @@ useEffect(() => {
                         </div>
 
                     </div>
+
+                    {shareLink && (
+                        <div className="collaboration-share-box">
+                            <input
+                                type="text"
+                                value={shareLink}
+                                readOnly
+                                onFocus={(event) => event.target.select()}
+                            />
+
+                            <button
+                                type="button"
+                                className="editor-action"
+                                onClick={() =>
+                                    navigator.clipboard.writeText(shareLink)
+                                }
+                            >
+                                Copy
+                            </button>
+                        </div>
+                    )}
 
                     {error && (
                         <div className="editor-error">
