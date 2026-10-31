@@ -80,6 +80,8 @@ import {
     createConversationMessage,
     startAgentRun,
     getAgentRun,
+    createCollaborationRoom,
+    getCollaborationByToken,
 } from "./services/api";
 
 /* =========================
@@ -881,6 +883,9 @@ function Workspace({
     const collaborationShareToken =
         new URLSearchParams(window.location.search)
             .get("shareToken");
+
+    const [shareLink, setShareLink] = useState("");
+    const [sharing, setSharing] = useState(false);
 
     const activeFileIdRef = useRef(null);
     
@@ -2156,6 +2161,31 @@ useEffect(() => {
             setOriginalContent(latestContent);
         }
     }
+
+    const handleShareProject = async () => {
+        if (!project?.id || sharing) return;
+
+        try {
+            setSharing(true);
+
+            const collaboration =
+                await createCollaborationRoom(project.id);
+
+            const link =
+                `${window.location.origin}/?shareToken=${encodeURIComponent(
+                    collaboration.shareToken
+                )}`;
+
+            setShareLink(link);
+
+            await navigator.clipboard.writeText(link);
+        } catch (error) {
+            console.error("Failed to create collaboration link:", error);
+            alert(error.message || "Failed to create collaboration link");
+        } finally {
+            setSharing(false);
+        }
+    };
 
 
     /*
