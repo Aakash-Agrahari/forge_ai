@@ -8,8 +8,12 @@ import {
 } from "../validators/conversationValidator.js";
 
 import {
+    requireProjectAccess
+} from "../middleware/projectAccess.js";
+
+/*import {
     getProjectById
-} from "../services/projectService.js";
+} from "../services/projectService.js";*/
 
 import {
     createConversation,
@@ -23,24 +27,11 @@ const router = Router();
 
 router.use(requireAuth);
 
+router.use("/:projectId", requireProjectAccess);
+
 // Create conversation
 router.post("/:projectId/conversations", async (req, res, next) => {
     try {
-        const project = await getProjectById({
-            projectId: req.params.projectId,
-            userId: req.user.id
-        });
-
-        if (!project) {
-            return res.status(404).json({
-                success: false,
-                error: {
-                    code: "PROJECT_NOT_FOUND",
-                    message: "Project not found"
-                }
-            });
-        }
-
         const validationResult =
             createConversationSchema.safeParse(req.body);
 
@@ -75,21 +66,6 @@ router.post("/:projectId/conversations", async (req, res, next) => {
 // List conversations
 router.get("/:projectId/conversations", async (req, res, next) => {
     try {
-        const project = await getProjectById({
-            projectId: req.params.projectId,
-            userId: req.user.id
-        });
-
-        if (!project) {
-            return res.status(404).json({
-                success: false,
-                error: {
-                    code: "PROJECT_NOT_FOUND",
-                    message: "Project not found"
-                }
-            });
-        }
-
         const conversations =
             await getProjectConversations(req.params.projectId);
 
@@ -107,21 +83,6 @@ router.get(
     "/:projectId/conversations/:conversationId",
     async (req, res, next) => {
         try {
-            const project = await getProjectById({
-                projectId: req.params.projectId,
-                userId: req.user.id
-            });
-
-            if (!project) {
-                return res.status(404).json({
-                    success: false,
-                    error: {
-                        code: "PROJECT_NOT_FOUND",
-                        message: "Project not found"
-                    }
-                });
-            }
-
             const conversation = await getConversation({
                 conversationId: req.params.conversationId,
                 projectId: req.params.projectId
@@ -152,21 +113,6 @@ router.post(
     "/:projectId/conversations/:conversationId/messages",
     async (req, res, next) => {
         try {
-            const project = await getProjectById({
-                projectId: req.params.projectId,
-                userId: req.user.id
-            });
-
-            if (!project) {
-                return res.status(404).json({
-                    success: false,
-                    error: {
-                        code: "PROJECT_NOT_FOUND",
-                        message: "Project not found"
-                    }
-                });
-            }
-
             const conversation = await getConversation({
                 conversationId: req.params.conversationId,
                 projectId: req.params.projectId
@@ -221,21 +167,6 @@ router.get(
     "/:projectId/conversations/:conversationId/messages",
     async (req, res, next) => {
         try {
-            const project = await getProjectById({
-                projectId: req.params.projectId,
-                userId: req.user.id
-            });
-
-            if (!project) {
-                return res.status(404).json({
-                    success: false,
-                    error: {
-                        code: "PROJECT_NOT_FOUND",
-                        message: "Project not found"
-                    }
-                });
-            }
-
             const conversation = await getConversation({
                 conversationId: req.params.conversationId,
                 projectId: req.params.projectId
