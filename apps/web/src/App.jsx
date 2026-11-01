@@ -4158,17 +4158,33 @@ useEffect(() => {
                                 type="text"
                                 value={shareLink}
                                 readOnly
-                                onFocus={(event) => event.target.select()}
+                                onFocus={(event) =>
+                                    event.target.select()
+                                }
                             />
 
                             <button
                                 type="button"
                                 className="editor-action"
                                 onClick={() =>
-                                    navigator.clipboard.writeText(shareLink)
+                                    navigator.clipboard.writeText(
+                                        shareLink
+                                    )
                                 }
                             >
                                 Copy
+                            </button>
+
+                            <button
+                                type="button"
+                                className="collaboration-share-close"
+                                onClick={() =>
+                                    setShareLink("")
+                                }
+                                title="Close"
+                                aria-label="Close share link"
+                            >
+                                ×
                             </button>
                         </div>
                     )}
