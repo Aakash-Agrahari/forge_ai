@@ -2,13 +2,9 @@ import { Router } from "express";
 
 import requireAuth from "../middleware/auth.js";
 
-import {
-    getProjectById
-} from "../services/projectService.js";
+import {requireProjectAccess} from "../middleware/projectAccess.js";
 
-import {
-    getConversation
-} from "../services/conversationService.js";
+import {getConversation} from "../services/conversationService.js";
 
 import {
     createAgentRun,
@@ -18,9 +14,7 @@ import {
     cancelAgentRun
 } from "../services/agentRunService.js";
 
-import {
-    getConversationMessages
-} from "../services/messageService.js";
+import {getConversationMessages} from "../services/messageService.js";
 
 import { runAgent } from "../agent/agentOrchestrator.js";
 
@@ -28,6 +22,7 @@ const router = Router();
 
 router.use(requireAuth);
 
+router.use("/:projectId", requireProjectAccess);
 
 // ============================================================
 // CREATE AND EXECUTE AGENT RUN
