@@ -1,10 +1,14 @@
-//this file implements a client for collaborative editing using Yjs. It manages WebSocket connections, Yjs documents, and text synchronization with a server.
 import * as Y from "yjs";
 
 export class CollaborationClient {
-    constructor({ shareToken, onConnectionChange, onRemoteUpdate }) {
+    constructor({
+        shareToken,
+        onConnectionChange,
+        onRemoteUpdate,
+    }) {
         this.shareToken = shareToken;
-        this.onConnectionChange = onConnectionChange;
+        this.onConnectionChange =
+            onConnectionChange;
         this.onRemoteUpdate = onRemoteUpdate;
 
         this.socket = null;
@@ -14,6 +18,26 @@ export class CollaborationClient {
 
         // fileId -> Y.Text
         this.texts = new Map();
+
+        // fileId -> Monaco editor
+        this.editors = new Map();
+
+        // fileId -> Monaco change subscription
+        this.editorSubscriptions = new Map();
+
+        // Files for which the initial Yjs state
+        // has already been received.
+        this.syncedFiles = new Set();
+
+        // Prevent Monaco changes caused by
+        // remote Yjs updates from being sent
+        // back into Yjs.
+        this.applyingRemoteChange = new Set();
+
+        // Used only during the initial sync.
+        // We don't want the initial Yjs state
+        // to be treated as an incremental editor change.
+        this.suppressRemoteObserver = new Set();
 
         this.connected = false;
     }
@@ -36,39 +60,66 @@ export class CollaborationClient {
 
         this.socket = new WebSocket(wsUrl);
 
-        this.socket.addEventListener("open", () => {
-            this.connected = true;
+        this.socket.addEventListener(
+            "open",
+            () => {
+                this.connected = true;
 
-            this.onConnectionChange?.(true);
+                this.onConnectionChange?.(
+                    true
+                );
 
-            // Request synchronization for files
-            // that were opened before the socket connected.
-            for (const fileId of this.documents.keys()) {
-                this.requestSync(fileId);
+                /*
+                 * Request synchronization for any
+                 * files that were opened before the
+                 * WebSocket connection was ready.
+                 */
+                for (const fileId of this.documents.keys()) {
+                    this.requestSync(fileId);
+                }
             }
-        });
+        );
 
-        this.socket.addEventListener("close", () => {
-            this.connected = false;
-            this.onConnectionChange?.(false);
-            this.socket = null;
-        });
+        this.socket.addEventListener(
+            "close",
+            () => {
+                this.connected = false;
 
-        this.socket.addEventListener("error", () => {
-            this.connected = false;
-            this.onConnectionChange?.(false);
-        });
+                this.onConnectionChange?.(
+                    false
+                );
 
-        this.socket.addEventListener("message", (event) => {
-            this.handleMessage(event.data);
-        });
+                this.socket = null;
+            }
+        );
+
+        this.socket.addEventListener(
+            "error",
+            () => {
+                this.connected = false;
+
+                this.onConnectionChange?.(
+                    false
+                );
+            }
+        );
+
+        this.socket.addEventListener(
+            "message",
+            (event) => {
+                this.handleMessage(
+                    event.data
+                );
+            }
+        );
     }
 
     handleMessage(rawMessage) {
         let message;
 
         try {
-            message = JSON.parse(rawMessage);
+            message =
+                JSON.parse(rawMessage);
         } catch {
             return;
         }
@@ -78,11 +129,15 @@ export class CollaborationClient {
                 break;
 
             case "yjs.sync.state":
-                this.handleSyncState(message);
+                this.handleSyncState(
+                    message
+                );
                 break;
 
             case "yjs.update":
-                this.handleRemoteUpdate(message);
+                this.handleRemoteUpdate(
+                    message
+                );
                 break;
 
             default:
@@ -95,25 +150,80 @@ export class CollaborationClient {
             return null;
         }
 
-        let document = this.documents.get(fileId);
+        let document =
+            this.documents.get(fileId);
 
         if (!document) {
             document = new Y.Doc();
 
-            const text = document.getText("content");
+            const text =
+                document.getText("content");
 
-            document.on("update", (update, origin) => {
-                // Do not send updates received from the server
-                // back to the server.
-                if (origin === "remote") {
+            /*
+             * Yjs -> Monaco observer.
+             */
+            text.observe((event) => {
+                /*
+                 * Changes generated by Monaco itself
+                 * have already been applied to Monaco.
+                 */
+                if (
+                    event.transaction.origin ===
+                    "monaco"
+                ) {
                     return;
                 }
 
-                this.sendUpdate(fileId, update);
+                /*
+                 * During the initial sync we will
+                 * replace Monaco with the complete
+                 * synchronized content separately.
+                 */
+                if (
+                    this.suppressRemoteObserver.has(
+                        fileId
+                    )
+                ) {
+                    return;
+                }
+
+                this.applyYjsDeltaToEditor(
+                    fileId,
+                    event.delta
+                );
             });
 
-            this.documents.set(fileId, document);
-            this.texts.set(fileId, text);
+            /*
+             * Yjs document -> WebSocket.
+             */
+            document.on(
+                "update",
+                (update, origin) => {
+                    /*
+                     * Remote updates came from the
+                     * collaboration server and must
+                     * not be sent back.
+                     */
+                    if (origin === "remote") {
+                        return;
+                    }
+
+                    this.sendUpdate(
+                        fileId,
+                        update
+                    );
+                }
+            );
+
+            this.documents.set(
+                fileId,
+                document
+            );
+
+            this.texts.set(
+                fileId,
+                text
+            );
 
             this.requestSync(fileId);
         }
@@ -121,14 +231,159 @@ export class CollaborationClient {
         return document;
     }
 
+    bindEditor(fileId, editor) {
+        if (!fileId || !editor) {
+            return;
+        }
+
+        this.openFile(fileId);
+
+        /*
+         * If this Monaco editor was previously
+         * associated with another file, remove
+         * that old binding.
+         */
+        for (const [
+            boundFileId,
+            boundEditor
+        ] of this.editors.entries()) {
+            if (
+                boundEditor === editor &&
+                boundFileId !== fileId
+            ) {
+                this.unbindEditor(
+                    boundFileId
+                );
+            }
+        }
+
+        /*
+         * Remove an existing binding for
+         * this file before creating a new one.
+         */
+        this.unbindEditor(fileId);
+
+        this.editors.set(
+            fileId,
+            editor
+        );
+
+        const subscription =
+            editor.onDidChangeModelContent(
+                (event) => {
+                    /*
+                     * This change was caused by
+                     * applying a remote Yjs update.
+                     */
+                    if (
+                        this.applyingRemoteChange.has(
+                            fileId
+                        )
+                    ) {
+                        return;
+                    }
+
+                    const text =
+                        this.texts.get(fileId);
+
+                    if (!text) {
+                        return;
+                    }
+
+                    /*
+                     * Monaco gives us offsets based on
+                     * the document before the changes.
+                     *
+                     * Apply changes from the end of
+                     * the document toward the beginning
+                     * so offsets remain valid.
+                     */
+                    const changes = [
+                        ...event.changes
+                    ].sort(
+                        (a, b) =>
+                            b.rangeOffset -
+                            a.rangeOffset
+                    );
+
+                    text.doc?.transact(
+                        () => {
+                            for (
+                                const change of changes
+                            ) {
+                                if (
+                                    change.rangeLength >
+                                    0
+                                ) {
+                                    text.delete(
+                                        change.rangeOffset,
+                                        change.rangeLength
+                                    );
+                                }
+
+                                if (
+                                    change.text
+                                ) {
+                                    text.insert(
+                                        change.rangeOffset,
+                                        change.text
+                                    );
+                                }
+                            }
+                        },
+                        "monaco"
+                    );
+                }
+            );
+
+        this.editorSubscriptions.set(
+            fileId,
+            subscription
+        );
+
+        /*
+         * If this file has already received its
+         * Yjs state, immediately synchronize
+         * Monaco with it.
+         */
+        if (
+            this.syncedFiles.has(fileId)
+        ) {
+            this.setEditorContentFromYjs(
+                fileId
+            );
+        }
+    }
+
+    unbindEditor(fileId) {
+        const subscription =
+            this.editorSubscriptions.get(
+                fileId
+            );
+
+        if (subscription) {
+            subscription.dispose();
+        }
+
+        this.editorSubscriptions.delete(
+            fileId
+        );
+
+        this.editors.delete(fileId);
+    }
+
     getText(fileId) {
-        return this.texts.get(fileId) ?? null;
+        return (
+            this.texts.get(fileId) ??
+            null
+        );
     }
 
     requestSync(fileId) {
         if (
             !this.socket ||
-            this.socket.readyState !== WebSocket.OPEN
+            this.socket.readyState !==
+                WebSocket.OPEN
         ) {
             return;
         }
@@ -146,13 +401,16 @@ export class CollaborationClient {
     sendUpdate(fileId, update) {
         if (
             !this.socket ||
-            this.socket.readyState !== WebSocket.OPEN
+            this.socket.readyState !==
+                WebSocket.OPEN
         ) {
             return;
         }
 
         const base64Update =
-            this.uint8ArrayToBase64(update);
+            this.uint8ArrayToBase64(
+                update
+            );
 
         this.socket.send(
             JSON.stringify({
@@ -168,52 +426,92 @@ export class CollaborationClient {
     handleSyncState(message) {
         const {
             fileId,
-            state
+            state,
         } = message;
 
         if (!fileId || !state) {
             return;
         }
 
-        const document = this.documents.get(fileId);
+        const document =
+            this.documents.get(fileId);
 
         if (!document) {
             return;
         }
 
-        const update = this.base64ToUint8Array(state);
+        const update =
+            this.base64ToUint8Array(
+                state
+            );
 
-        Y.applyUpdate(
-            document,
-            update,
-            "remote"
+        /*
+         * Initial state is special.
+         *
+         * We don't want the initial Yjs state
+         * to be interpreted as an incremental
+         * Monaco edit.
+         */
+        this.suppressRemoteObserver.add(
+            fileId
+        );
+
+        try {
+            Y.applyUpdate(
+                document,
+                update,
+                "remote"
+            );
+        } finally {
+            this.suppressRemoteObserver.delete(
+                fileId
+            );
+        }
+
+        this.syncedFiles.add(fileId);
+
+        /*
+         * Now that the initial Yjs state is
+         * available, make Monaco exactly match it.
+         */
+        this.setEditorContentFromYjs(
+            fileId
         );
 
         this.onRemoteUpdate?.(
             fileId,
-            this.texts.get(fileId)?.toString() ?? ""
+            this.texts
+                .get(fileId)
+                ?.toString() ?? ""
         );
     }
 
     handleRemoteUpdate(message) {
         const {
             fileId,
-            update
+            update,
         } = message;
 
         if (!fileId || !update) {
             return;
         }
 
-        const document = this.documents.get(fileId);
+        const document =
+            this.documents.get(fileId);
 
         if (!document) {
             return;
         }
 
         const decodedUpdate =
-            this.base64ToUint8Array(update);
+            this.base64ToUint8Array(
+                update
+            );
 
+        /*
+         * The Y.Text observer will apply the
+         * incremental delta directly to Monaco.
+         */
         Y.applyUpdate(
             document,
             decodedUpdate,
@@ -222,34 +520,209 @@ export class CollaborationClient {
 
         this.onRemoteUpdate?.(
             fileId,
-            this.texts.get(fileId)?.toString() ?? ""
+            this.texts
+                .get(fileId)
+                ?.toString() ?? ""
         );
     }
 
-    updateFileContent(fileId, content) {
-        const text = this.texts.get(fileId);
+    setEditorContentFromYjs(fileId) {
+        const editor =
+            this.editors.get(fileId);
+
+        const text =
+            this.texts.get(fileId);
+
+        if (!editor || !text) {
+            return;
+        }
+
+        const content =
+            text.toString();
+
+        if (
+            editor.getValue() ===
+            content
+        ) {
+            return;
+        }
+
+        this.applyingRemoteChange.add(
+            fileId
+        );
+
+        try {
+            editor.setValue(
+                content
+            );
+        } finally {
+            this.applyingRemoteChange.delete(
+                fileId
+            );
+        }
+    }
+
+    applyYjsDeltaToEditor(
+        fileId,
+        delta
+    ) {
+        const editor =
+            this.editors.get(fileId);
+
+        if (!editor) {
+            return;
+        }
+
+        const model =
+            editor.getModel();
+
+        if (!model) {
+            return;
+        }
+
+        const edits = [];
+
+        let offset = 0;
+
+        for (const operation of delta) {
+            if (
+                typeof operation.retain ===
+                "number"
+            ) {
+                offset +=
+                    operation.retain;
+            }
+
+            if (
+                typeof operation.insert ===
+                "string"
+            ) {
+                const position =
+                    model.getPositionAt(
+                        offset
+                    );
+
+                edits.push({
+                    range: {
+                        startLineNumber:
+                            position.lineNumber,
+                        startColumn:
+                            position.column,
+                        endLineNumber:
+                            position.lineNumber,
+                        endColumn:
+                            position.column,
+                    },
+                    text: operation.insert,
+                    forceMoveMarkers: true,
+                });
+
+                offset +=
+                    operation.insert.length;
+            }
+
+            if (
+                typeof operation.delete ===
+                "number"
+            ) {
+                const startPosition =
+                    model.getPositionAt(
+                        offset
+                    );
+
+                const endPosition =
+                    model.getPositionAt(
+                        offset +
+                            operation.delete
+                    );
+
+                edits.push({
+                    range: {
+                        startLineNumber:
+                            startPosition.lineNumber,
+                        startColumn:
+                            startPosition.column,
+                        endLineNumber:
+                            endPosition.lineNumber,
+                        endColumn:
+                            endPosition.column,
+                    },
+                    text: "",
+                    forceMoveMarkers: true,
+                });
+            }
+        }
+
+        if (edits.length === 0) {
+            return;
+        }
+
+        this.applyingRemoteChange.add(
+            fileId
+        );
+
+        try {
+            editor.executeEdits(
+                "forgeai-collaboration",
+                edits
+            );
+        } finally {
+            this.applyingRemoteChange.delete(
+                fileId
+            );
+        }
+    }
+
+    /*
+     * Kept for compatibility.
+     *
+     * The main Monaco collaboration path now
+     * uses bindEditor() instead.
+     */
+    updateFileContent(
+        fileId,
+        content
+    ) {
+        const text =
+            this.texts.get(fileId);
 
         if (!text) {
             return;
         }
 
-        const currentContent = text.toString();
+        const currentContent =
+            text.toString();
 
-        if (currentContent === content) {
+        if (
+            currentContent ===
+            content
+        ) {
             return;
         }
 
-        text.doc?.transact(() => {
-            text.delete(0, text.length);
+        text.doc?.transact(
+            () => {
+                text.delete(
+                    0,
+                    text.length
+                );
 
-            if (content.length > 0) {
-                text.insert(0, content);
-            }
-        });
+                if (content.length > 0) {
+                    text.insert(
+                        0,
+                        content
+                    );
+                }
+            },
+            "api"
+        );
     }
 
     closeFile(fileId) {
-        const document = this.documents.get(fileId);
+        this.unbindEditor(fileId);
+
+        const document =
+            this.documents.get(fileId);
 
         if (!document) {
             return;
@@ -257,17 +730,47 @@ export class CollaborationClient {
 
         document.destroy();
 
-        this.documents.delete(fileId);
-        this.texts.delete(fileId);
+        this.documents.delete(
+            fileId
+        );
+
+        this.texts.delete(
+            fileId
+        );
+
+        this.syncedFiles.delete(
+            fileId
+        );
+
+        this.applyingRemoteChange.delete(
+            fileId
+        );
+
+        this.suppressRemoteObserver.delete(
+            fileId
+        );
     }
 
     disconnect() {
-        for (const document of this.documents.values()) {
+        for (
+            const fileId of this.editors.keys()
+        ) {
+            this.unbindEditor(fileId);
+        }
+
+        for (
+            const document of this.documents.values()
+        ) {
             document.destroy();
         }
 
         this.documents.clear();
         this.texts.clear();
+        this.editors.clear();
+        this.editorSubscriptions.clear();
+        this.syncedFiles.clear();
+        this.applyingRemoteChange.clear();
+        this.suppressRemoteObserver.clear();
 
         if (this.socket) {
             this.socket.close();
@@ -275,10 +778,15 @@ export class CollaborationClient {
         }
 
         this.connected = false;
-        this.onConnectionChange?.(false);
+
+        this.onConnectionChange?.(
+            false
+        );
     }
 
-    uint8ArrayToBase64(uint8Array) {
+    uint8ArrayToBase64(
+        uint8Array
+    ) {
         let binary = "";
 
         const chunkSize = 0x8000;
@@ -302,12 +810,24 @@ export class CollaborationClient {
         return btoa(binary);
     }
 
-    base64ToUint8Array(base64) {
-        const binary = atob(base64);
-        const bytes = new Uint8Array(binary.length);
+    base64ToUint8Array(
+        base64
+    ) {
+        const binary =
+            atob(base64);
 
-        for (let i = 0; i < binary.length; i++) {
-            bytes[i] = binary.charCodeAt(i);
+        const bytes =
+            new Uint8Array(
+                binary.length
+            );
+
+        for (
+            let i = 0;
+            i < binary.length;
+            i++
+        ) {
+            bytes[i] =
+                binary.charCodeAt(i);
         }
 
         return bytes;
