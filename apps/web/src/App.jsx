@@ -875,7 +875,7 @@ function Workspace({
     const [originalContent, setOriginalContent] = useState("");
 
     const collaborationClientRef = useRef(null);
-    const collaborationRemoteUpdateRef = useRef(false);
+    const editorRef = useRef(null);
 
     const [collaborationConnected, setCollaborationConnected] =
         useState(false);
@@ -916,8 +916,6 @@ function Workspace({
                     return;
                 }
 
-                collaborationRemoteUpdateRef.current = true;
-
                 setFileContent(content);
             },
         });
@@ -931,6 +929,45 @@ function Workspace({
             collaborationClientRef.current = null;
         };
     }, [collaborationShareToken]);
+
+    useEffect(() => {
+        if (
+            !collaborationShareToken ||
+            !activeFileId ||
+            !editorRef.current ||
+            !collaborationClientRef.current
+        ) {
+            return;
+        }
+
+        const frameId =
+            window.requestAnimationFrame(() => {
+                if (
+                    !collaborationClientRef.current ||
+                    !editorRef.current
+                ) {
+                    return;
+                }
+
+                collaborationClientRef.current.openFile(
+                    activeFileId
+                );
+
+                collaborationClientRef.current.bindEditor(
+                    activeFileId,
+                    editorRef.current
+                );
+            });
+
+        return () => {
+            window.cancelAnimationFrame(
+                frameId
+            );
+        };
+    }, [
+        activeFileId,
+        collaborationShareToken
+    ]);
 
     const [loadingFiles, setLoadingFiles] = useState(true);
     const [loadingFile, setLoadingFile] = useState(false);
@@ -4178,39 +4215,37 @@ useEffect(() => {
                                   path={activeFile.path}
                                   value={fileContent}
                                   onChange={(value) => {
-                                        const nextContent = value ?? "";
-
-                                        if (collaborationRemoteUpdateRef.current) {
-                                            collaborationRemoteUpdateRef.current = false;
-                                            setFileContent(nextContent);
-                                            return;
-                                        }
-
-                                        setFileContent(nextContent);
+                                        setFileContent(value ?? "");
+                                    }}
+                                  onMount={(editor, monaco) => {
+                                        editorRef.current = editor;
 
                                         if (
                                             collaborationClientRef.current &&
                                             activeFileId
                                         ) {
-                                            collaborationClientRef.current.updateFileContent(
+                                            collaborationClientRef.current.openFile(
+                                                activeFileId
+                                            );
+
+                                            collaborationClientRef.current.bindEditor(
                                                 activeFileId,
-                                                nextContent
+                                                editor
                                             );
                                         }
+
+                                        editor.addAction({
+                                            id: "forgeai-save-file",
+                                            label: "Save File",
+                                            keybindings: [
+                                                monaco.KeyMod.CtrlCmd |
+                                                    monaco.KeyCode.KeyS,
+                                            ],
+                                            run: () => {
+                                                saveFileRef.current?.();
+                                            },
+                                        });
                                     }}
-                                  onMount={(editor, monaco) => {
-                                    editor.addAction({
-                                        id: "forgeai-save-file",
-                                        label: "Save File",
-                                        keybindings: [
-                                            monaco.KeyMod.CtrlCmd |
-                                                monaco.KeyCode.KeyS,
-                                        ],
-                                        run: () => {
-                                            saveFileRef.current?.();
-                                        },
-                                    });
-                                }}
                                   options={{
                                       automaticLayout: true,
                                       fontSize: 13,
