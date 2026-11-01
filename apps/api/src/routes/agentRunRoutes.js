@@ -1,10 +1,9 @@
 import { Router } from "express";
 
 import requireAuth from "../middleware/auth.js";
+import { requireProjectAccess } from "../middleware/projectAccess.js";
 
-import {requireProjectAccess} from "../middleware/projectAccess.js";
-
-import {getConversation} from "../services/conversationService.js";
+import { getConversation } from "../services/conversationService.js";
 
 import {
     createAgentRun,
@@ -14,39 +13,20 @@ import {
     cancelAgentRun
 } from "../services/agentRunService.js";
 
-import {getConversationMessages} from "../services/messageService.js";
+import { getConversationMessages } from "../services/messageService.js";
 
 import { runAgent } from "../agent/agentOrchestrator.js";
 
 const router = Router();
 
 router.use(requireAuth);
-
 router.use("/:projectId", requireProjectAccess);
 
-// ============================================================
 // CREATE AND EXECUTE AGENT RUN
-// ============================================================
-
 router.post(
     "/:projectId/conversations/:conversationId/runs",
     async (req, res, next) => {
         try {
-            const project = await getProjectById({
-                projectId: req.params.projectId,
-                userId: req.user.id
-            });
-
-            if (!project) {
-                return res.status(404).json({
-                    success: false,
-                    error: {
-                        code: "PROJECT_NOT_FOUND",
-                        message: "Project not found"
-                    }
-                });
-            }
-
             const conversation = await getConversation({
                 conversationId: req.params.conversationId,
                 projectId: req.params.projectId
@@ -129,30 +109,11 @@ router.post(
     }
 );
 
-
-// ============================================================
 // LIST AGENT RUNS
-// ============================================================
-
 router.get(
     "/:projectId/conversations/:conversationId/runs",
     async (req, res, next) => {
         try {
-            const project = await getProjectById({
-                projectId: req.params.projectId,
-                userId: req.user.id
-            });
-
-            if (!project) {
-                return res.status(404).json({
-                    success: false,
-                    error: {
-                        code: "PROJECT_NOT_FOUND",
-                        message: "Project not found"
-                    }
-                });
-            }
-
             const conversation = await getConversation({
                 conversationId: req.params.conversationId,
                 projectId: req.params.projectId
@@ -182,30 +143,11 @@ router.get(
     }
 );
 
-
-// ============================================================
 // GET ONE AGENT RUN
-// ============================================================
-
 router.get(
     "/:projectId/conversations/:conversationId/runs/:runId",
     async (req, res, next) => {
         try {
-            const project = await getProjectById({
-                projectId: req.params.projectId,
-                userId: req.user.id
-            });
-
-            if (!project) {
-                return res.status(404).json({
-                    success: false,
-                    error: {
-                        code: "PROJECT_NOT_FOUND",
-                        message: "Project not found"
-                    }
-                });
-            }
-
             const conversation = await getConversation({
                 conversationId: req.params.conversationId,
                 projectId: req.params.projectId
@@ -243,30 +185,11 @@ router.get(
     }
 );
 
-
-// ============================================================
 // GET AGENT RUN EVENTS
-// ============================================================
-
 router.get(
     "/:projectId/conversations/:conversationId/runs/:runId/events",
     async (req, res, next) => {
         try {
-            const project = await getProjectById({
-                projectId: req.params.projectId,
-                userId: req.user.id
-            });
-
-            if (!project) {
-                return res.status(404).json({
-                    success: false,
-                    error: {
-                        code: "PROJECT_NOT_FOUND",
-                        message: "Project not found"
-                    }
-                });
-            }
-
             const conversation = await getConversation({
                 conversationId: req.params.conversationId,
                 projectId: req.params.projectId
@@ -294,7 +217,9 @@ router.get(
                 });
             }
 
-            const events = await getAgentRunEvents(req.params.runId);
+            const events = await getAgentRunEvents(
+                req.params.runId
+            );
 
             return res.status(200).json({
                 success: true,
@@ -307,30 +232,11 @@ router.get(
     }
 );
 
-
-// ============================================================
 // CANCEL AGENT RUN
-// ============================================================
-
 router.post(
     "/:projectId/conversations/:conversationId/runs/:runId/cancel",
     async (req, res, next) => {
         try {
-            const project = await getProjectById({
-                projectId: req.params.projectId,
-                userId: req.user.id
-            });
-
-            if (!project) {
-                return res.status(404).json({
-                    success: false,
-                    error: {
-                        code: "PROJECT_NOT_FOUND",
-                        message: "Project not found"
-                    }
-                });
-            }
-
             const conversation = await getConversation({
                 conversationId: req.params.conversationId,
                 projectId: req.params.projectId
@@ -371,6 +277,5 @@ router.post(
         }
     }
 );
-
 
 export default router;
