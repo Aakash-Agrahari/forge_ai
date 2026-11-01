@@ -126,14 +126,19 @@ export class CollaborationClient {
     }
 
     requestSync(fileId) {
-        if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+        if (
+            !this.socket ||
+            this.socket.readyState !== WebSocket.OPEN
+        ) {
             return;
         }
 
         this.socket.send(
             JSON.stringify({
                 type: "yjs.sync.request",
-                fileId
+                payload: {
+                    fileId,
+                },
             })
         );
     }
