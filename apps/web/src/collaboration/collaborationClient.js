@@ -151,13 +151,16 @@ export class CollaborationClient {
             return;
         }
 
-        const base64Update = this.uint8ArrayToBase64(update);
+        const base64Update =
+            this.uint8ArrayToBase64(update);
 
         this.socket.send(
             JSON.stringify({
                 type: "yjs.update",
-                fileId,
-                update: base64Update
+                payload: {
+                    fileId,
+                    update: base64Update,
+                },
             })
         );
     }
