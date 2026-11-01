@@ -391,9 +391,7 @@ export class CollaborationClient {
         this.socket.send(
             JSON.stringify({
                 type: "yjs.sync.request",
-                payload: {
-                    fileId,
-                },
+                fileId,
             })
         );
     }
@@ -415,10 +413,8 @@ export class CollaborationClient {
         this.socket.send(
             JSON.stringify({
                 type: "yjs.update",
-                payload: {
-                    fileId,
-                    update: base64Update,
-                },
+                fileId,
+                update: base64Update,
             })
         );
     }
