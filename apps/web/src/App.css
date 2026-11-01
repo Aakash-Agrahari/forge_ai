@@ -2537,3 +2537,38 @@ button {
 .collaboration-share-box input:focus {
     border-color: #555;
 }
+
+.collaboration-share-close {
+    width: 28px;
+    height: 28px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    padding: 0;
+
+    border: 1px solid #333;
+    border-radius: 6px;
+
+    background: transparent;
+    color: #6f7885;
+
+    font-size: 17px;
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition:
+        background 0.15s ease,
+        color 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.collaboration-share-close:hover {
+    background: #252b34;
+    border-color: #444c57;
+    color: #ffffff;
+}
