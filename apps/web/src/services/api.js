@@ -1,25 +1,33 @@
 const API_BASE_URL = "/api/v1";
 
 async function apiRequest(endpoint, options = {}) {
-
     const collaborationShareToken =
         new URLSearchParams(window.location.search)
             .get("shareToken");
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        credentials: "include",
+    const headers = {
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+    };
 
-        headers: {
-            "Content-Type": "application/json",
-            ...(options.headers || {}),
-        },
+    if (collaborationShareToken) {
+        headers["X-Collaboration-Token"] =
+            collaborationShareToken;
+    }
 
-        ...options,
-    });
+    const response = await fetch(
+        `${API_BASE_URL}${endpoint}`,
+        {
+            ...options,
+            credentials: "include",
+            headers,
+        }
+    );
 
     let data = null;
 
-    const contentType = response.headers.get("content-type");
+    const contentType =
+        response.headers.get("content-type");
 
     if (contentType?.includes("application/json")) {
         data = await response.json();
