@@ -423,7 +423,7 @@ export class CollaborationClient {
         const {
             fileId,
             state,
-        } = message;
+        } = message.payload ?? {};
 
         if (!fileId || !state) {
             return;
@@ -486,7 +486,7 @@ export class CollaborationClient {
         const {
             fileId,
             update,
-        } = message;
+        } = message.payload ?? {};
 
         if (!fileId || !update) {
             return;
