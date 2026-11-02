@@ -400,25 +400,24 @@ export class CollaborationClient {
     sendUpdate(fileId, update) {
         if (
             !this.socket ||
-            this.socket.readyState !==
-                WebSocket.OPEN
+            this.socket.readyState !== WebSocket.OPEN
         ) {
             return;
         }
 
         const base64Update =
-            this.uint8ArrayToBase64(
-                update
-            );
+            this.uint8ArrayToBase64(update);
 
         this.socket.send(
             JSON.stringify({
                 type: "yjs.update",
-                fileId,
-                update: base64Update,
+                payload: {
+                    fileId,
+                    update: base64Update,
+                },
             })
         );
-    }
+}
 
     handleSyncState(message) {
         const {
