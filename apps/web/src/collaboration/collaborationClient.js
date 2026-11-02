@@ -40,11 +40,15 @@ export class CollaborationClient {
         this.suppressRemoteObserver = new Set();
 
         this.connected = false;
+        this.shouldReconnect = true;
+        this.reconnectTimer = null;
     }
 
 
 
     connect() {
+        this.shouldReconnect = true;
+
         if (
             this.socket &&
             (
@@ -66,11 +70,21 @@ export class CollaborationClient {
                 this.shareToken
             )}`;
 
-        this.socket = new WebSocket(wsUrl);
+        const socket = new WebSocket(wsUrl);
 
-        this.socket.addEventListener(
+        this.socket = socket;
+
+        socket.addEventListener(
             "open",
             () => {
+                /*
+                * Ignore this event if this socket is no
+                * longer the active socket.
+                */
+                if (this.socket !== socket) {
+                    return;
+                }
+
                 this.connected = true;
 
                 this.onConnectionChange?.(
@@ -78,19 +92,28 @@ export class CollaborationClient {
                 );
 
                 /*
-                 * Request synchronization for any
-                 * files that were opened before the
-                 * WebSocket connection was ready.
-                 */
-                for (const fileId of this.documents.keys()) {
+                * Re-sync every file that already has
+                * a Yjs document.
+                */
+                for (
+                    const fileId of this.documents.keys()
+                ) {
                     this.requestSync(fileId);
                 }
             }
         );
 
-        this.socket.addEventListener(
+        socket.addEventListener(
             "close",
             () => {
+                /*
+                * Ignore an old socket closing after a
+                * newer socket has already been created.
+                */
+                if (this.socket !== socket) {
+                    return;
+                }
+
                 this.connected = false;
 
                 this.onConnectionChange?.(
@@ -98,12 +121,41 @@ export class CollaborationClient {
                 );
 
                 this.socket = null;
+
+                /*
+                * Reconnect automatically if this client
+                * is still supposed to be active.
+                */
+                if (
+                    this.shouldReconnect &&
+                    !this.reconnectTimer
+                ) {
+                    this.reconnectTimer =
+                        window.setTimeout(() => {
+                            this.reconnectTimer = null;
+
+                            if (
+                                this.shouldReconnect
+                            ) {
+                                this.connect();
+                            }
+                        }, 1000);
+                }
             }
         );
 
-        this.socket.addEventListener(
+        socket.addEventListener(
             "error",
             () => {
+                /*
+                * The close event will normally follow.
+                * Reconnection is handled there so that
+                * we don't create two reconnect attempts.
+                */
+                if (this.socket !== socket) {
+                    return;
+                }
+
                 this.connected = false;
 
                 this.onConnectionChange?.(
@@ -112,9 +164,13 @@ export class CollaborationClient {
             }
         );
 
-        this.socket.addEventListener(
+        socket.addEventListener(
             "message",
             (event) => {
+                if (this.socket !== socket) {
+                    return;
+                }
+
                 this.handleMessage(
                     event.data
                 );
@@ -781,11 +837,22 @@ export class CollaborationClient {
     }
 
     disconnect() {
-        for (const fileId of this.editorSubscriptions.keys()) {
+        this.shouldReconnect = false;
+
+        if (this.reconnectTimer) {
+            window.clearTimeout(
+                this.reconnectTimer
+            );
+
+            this.reconnectTimer = null;
+        }
+
+        for (
+            const fileId of this.editorSubscriptions.keys()
+        ) {
             this.unbindEditor(fileId);
         }
 
-        this.syncedFiles.clear();
         this.syncedFiles.clear();
 
         for (const document of this.documents.values()) {
