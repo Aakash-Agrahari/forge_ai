@@ -781,16 +781,11 @@ export class CollaborationClient {
     }
 
     disconnect() {
-        for (const editor of this.editors.values()) {
-            try {
-                editor.dispose?.();
-            } catch {
-                // Ignore editor cleanup errors.
-            }
+        for (const fileId of this.editorSubscriptions.keys()) {
+            this.unbindEditor(fileId);
         }
 
-        this.editors.clear();
-        this.editorSubscriptions.clear();
+        this.syncedFiles.clear();
         this.syncedFiles.clear();
 
         for (const document of this.documents.values()) {
