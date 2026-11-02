@@ -47,7 +47,15 @@ const startServer = async () => {
 
     const collaborationServer = createCollaborationServer(server);
 
+    let shuttingDown = false;
+
     const shutdown = (signal) => {
+        if (shuttingDown) {
+            return;
+        }
+
+        shuttingDown = true;
+
         logger.info(
             { signal },
             "Shutdown signal received"
@@ -64,9 +72,15 @@ const startServer = async () => {
         });
     };
 
-    process.on("SIGTERM", () => shutdown("SIGTERM"));
+    process.once(
+        "SIGTERM",
+        () => shutdown("SIGTERM")
+    );
 
-    process.on("SIGINT",() => shutdown("SIGINT"));
+    process.once(
+        "SIGINT",
+        () => shutdown("SIGINT")
+    );
 };
 
 startServer();
