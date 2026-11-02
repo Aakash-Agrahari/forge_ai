@@ -382,8 +382,7 @@ export class CollaborationClient {
     requestSync(fileId) {
         if (
             !this.socket ||
-            this.socket.readyState !==
-                WebSocket.OPEN
+            this.socket.readyState !== WebSocket.OPEN
         ) {
             return;
         }
@@ -391,7 +390,9 @@ export class CollaborationClient {
         this.socket.send(
             JSON.stringify({
                 type: "yjs.sync.request",
-                fileId,
+                payload: {
+                    fileId,
+                },
             })
         );
     }
