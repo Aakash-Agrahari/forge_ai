@@ -4229,7 +4229,7 @@ useEffect(() => {
                                       activeFile.path
                                   )}
                                   path={activeFile.path}
-                                  value={fileContent}
+                                  defaultValue={fileContent}
                                   onChange={(value) => {
                                         setFileContent(value ?? "");
                                     }}
