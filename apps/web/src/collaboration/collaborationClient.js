@@ -42,8 +42,16 @@ export class CollaborationClient {
         this.connected = false;
     }
 
+
+
     connect() {
-        if (this.socket) {
+        if (
+            this.socket &&
+            (
+                this.socket.readyState === WebSocket.OPEN ||
+                this.socket.readyState === WebSocket.CONNECTING
+            )
+        ) {
             return;
         }
 
@@ -773,36 +781,42 @@ export class CollaborationClient {
     }
 
     disconnect() {
-        for (
-            const fileId of this.editors.keys()
-        ) {
-            this.unbindEditor(fileId);
+        for (const editor of this.editors.values()) {
+            try {
+                editor.dispose?.();
+            } catch {
+                // Ignore editor cleanup errors.
+            }
         }
 
-        for (
-            const document of this.documents.values()
-        ) {
+        this.editors.clear();
+        this.editorSubscriptions.clear();
+        this.syncedFiles.clear();
+
+        for (const document of this.documents.values()) {
             document.destroy();
         }
 
         this.documents.clear();
         this.texts.clear();
-        this.editors.clear();
-        this.editorSubscriptions.clear();
-        this.syncedFiles.clear();
-        this.applyingRemoteChange.clear();
-        this.suppressRemoteObserver.clear();
 
         if (this.socket) {
-            this.socket.close();
+            this.socket.onopen = null;
+            this.socket.onmessage = null;
+            this.socket.onerror = null;
+            this.socket.onclose = null;
+
+            if (
+                this.socket.readyState === WebSocket.OPEN ||
+                this.socket.readyState === WebSocket.CONNECTING
+            ) {
+                this.socket.close();
+            }
+
             this.socket = null;
         }
 
         this.connected = false;
-
-        this.onConnectionChange?.(
-            false
-        );
     }
 
     uint8ArrayToBase64(
