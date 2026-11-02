@@ -500,25 +500,57 @@ export class CollaborationClient {
         }
 
         const decodedUpdate =
-            this.base64ToUint8Array(
-                update
-            );
+            this.base64ToUint8Array(update);
 
-        /*
-         * The Y.Text observer will apply the
-         * incremental delta directly to Monaco.
-         */
         Y.applyUpdate(
             document,
             decodedUpdate,
             "remote"
         );
 
+        const editor =
+            this.editors.get(fileId);
+
+        const text =
+            this.texts.get(fileId);
+
+        if (!editor || !text) {
+            return;
+        }
+
+        const content =
+            text.toString();
+
+        if (editor.getValue() === content) {
+            return;
+        }
+
+        this.applyingRemoteChange.add(fileId);
+
+        try {
+            const model = editor.getModel();
+
+            if (!model) {
+                return;
+            }
+
+            model.pushEditOperations(
+                [],
+                [
+                    {
+                        range: model.getFullModelRange(),
+                        text: content,
+                    },
+                ],
+                () => null
+            );
+        } finally {
+            this.applyingRemoteChange.delete(fileId);
+        }
+
         this.onRemoteUpdate?.(
             fileId,
-            this.texts
-                .get(fileId)
-                ?.toString() ?? ""
+            content
         );
     }
 
