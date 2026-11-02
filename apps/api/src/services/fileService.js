@@ -1,4 +1,5 @@
 import prisma from "../config/prisma.js";
+import {getOrCreateDocument} from "../collaboration/yjsDocumentManager.js";
 
 export async function createProjectFile({
     projectId,
@@ -66,33 +67,74 @@ export async function updateProjectFile({
     fileId,
     content
 }) {
-    const existingFile = await prisma.projectFile.findFirst({
-        where: {
-            id: fileId,
-            projectId
-        }
-    });
+    const existingFile =
+        await prisma.projectFile.findFirst({
+            where: {
+                id: fileId,
+                projectId
+            }
+        });
 
     if (!existingFile) {
         return null;
     }
 
-    return prisma.projectFile.update({
-        where: {
-            id: fileId
-        },
-        data: {
-            content
-        },
-        select: {
-            id: true,
-            projectId: true,
-            path: true,
-            content: true,
-            createdAt: true,
-            updatedAt: true
-        }
-    });
+    const updatedFile =
+        await prisma.projectFile.update({
+            where: {
+                id: fileId
+            },
+            data: {
+                content
+            },
+            select: {
+                id: true,
+                projectId: true,
+                path: true,
+                content: true,
+                createdAt: true,
+                updatedAt: true
+            }
+        });
+
+    /*
+     * Keep the in-memory Yjs document aligned
+     * with the persisted file.
+     */
+    const document =
+        getOrCreateDocument(
+            projectId,
+            fileId
+        );
+
+    const yText =
+        document.getText("content");
+
+    const currentYjsContent =
+        yText.toString();
+
+    if (currentYjsContent !== content) {
+        document.transact(
+            () => {
+                if (yText.length > 0) {
+                    yText.delete(
+                        0,
+                        yText.length
+                    );
+                }
+
+                if (content) {
+                    yText.insert(
+                        0,
+                        content
+                    );
+                }
+            },
+            "database"
+        );
+    }
+
+    return updatedFile;
 }
 
 export async function renameProjectFile({
