@@ -468,11 +468,23 @@ export class CollaborationClient {
             !this.socket ||
             this.socket.readyState !== WebSocket.OPEN
         ) {
+            console.log(
+                "[Collaboration] Cannot send update - socket not open",
+                fileId
+            );
             return;
         }
 
         const base64Update =
             this.uint8ArrayToBase64(update);
+
+        console.log(
+            "[Collaboration] Sending yjs.update",
+            {
+                fileId,
+                updateBytes: update.length,
+            }
+        );
 
         this.socket.send(
             JSON.stringify({
@@ -483,7 +495,7 @@ export class CollaborationClient {
                 },
             })
         );
-}
+    }
 
     handleSyncState(message) {
         const {
