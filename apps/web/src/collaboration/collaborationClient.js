@@ -503,6 +503,14 @@ export class CollaborationClient {
             state,
         } = message.payload ?? {};
 
+        console.log(
+            "[Collaboration] Received yjs.sync.state",
+            {
+                fileId,
+                stateBytes: state?.length ?? 0,
+            }
+        );
+
         if (!fileId || !state) {
             return;
         }
@@ -565,6 +573,14 @@ export class CollaborationClient {
             fileId,
             update,
         } = message.payload ?? {};
+
+        console.log(
+            "[Collaboration] Received yjs.update",
+            {
+                fileId,
+                updateBytes: update?.length ?? 0,
+            }
+        );
 
         if (!fileId || !update) {
             return;
