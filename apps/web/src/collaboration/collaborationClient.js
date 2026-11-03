@@ -441,8 +441,17 @@ export class CollaborationClient {
             !this.socket ||
             this.socket.readyState !== WebSocket.OPEN
         ) {
+            console.log(
+                "[Collaboration] Cannot request sync - socket not open",
+                fileId
+            );
             return;
         }
+
+        console.log(
+            "[Collaboration] Sending yjs.sync.request",
+            fileId
+        );
 
         this.socket.send(
             JSON.stringify({
