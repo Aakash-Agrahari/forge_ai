@@ -70,6 +70,30 @@ export async function createOrGetCollaborationRoom({
     });
 }
 
+/*
+ * Returns the project's ACTIVE collaboration room for its owner (or null).
+ * Used so the owner's own session can join the realtime room as soon as
+ * sharing is enabled, without needing the share link in the URL.
+ */
+export async function getActiveCollaborationRoomForOwner({
+    projectId,
+    ownerId
+}) {
+    return prisma.collaborationRoom.findFirst({
+        where: {
+            projectId,
+            ownerId,
+            isActive: true
+        },
+        select: {
+            id: true,
+            projectId: true,
+            shareToken: true,
+            isActive: true
+        }
+    });
+}
+
 export async function getCollaborationRoomByToken(
     shareToken
 ) {
