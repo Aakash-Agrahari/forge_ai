@@ -474,6 +474,31 @@ export async function createCollaborationRoom(projectId) {
     return data.collaboration;
 }
 
+/*
+ * Returns the project's ACTIVE collaboration room for its owner,
+ * or null when the project is not currently shared.
+ */
+export async function getCollaborationRoom(projectId) {
+    const response = await fetch(
+        `/api/v1/projects/${projectId}/collaboration`,
+        {
+            method: "GET",
+            credentials: "include",
+        }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(
+            data?.error?.message ||
+            "Failed to load collaboration room"
+        );
+    }
+
+    return data.collaboration;
+}
+
 export async function getCollaborationByToken(shareToken) {
     const response = await fetch(
         `/api/v1/collaboration/${encodeURIComponent(shareToken)}`,
