@@ -15,7 +15,11 @@ import {
     deleteProject
 } from "../services/projectService.js";
 
-import {createOrGetCollaborationRoom, deactivateCollaborationRoom} from "../services/CollaborationService.js";
+import {
+    createOrGetCollaborationRoom,
+    deactivateCollaborationRoom,
+    getActiveCollaborationRoomForOwner
+} from "../services/CollaborationService.js";
 
 const router = Router();
 
@@ -49,6 +53,30 @@ router.post("/", async (req, res, next) => {
         return res.status(201).json({
             success: true,
             project
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Get the active collaboration room (if any) for the project owner
+router.get("/:id/collaboration", async (req, res, next) => {
+    try {
+        const room = await getActiveCollaborationRoomForOwner({
+            projectId: req.params.id,
+            ownerId: req.user.id
+        });
+
+        return res.status(200).json({
+            success: true,
+            collaboration: room
+                ? {
+                    roomId: room.id,
+                    projectId: room.projectId,
+                    shareToken: room.shareToken,
+                    isActive: room.isActive
+                }
+                : null
         });
     } catch (error) {
         next(error);
