@@ -44,12 +44,7 @@ export function leaveRoom(roomId, socket) {
     if (room.size === 0) {
         rooms.delete(roomId);
 
-        logger.info(
-            {
-                roomId
-            },
-            "Collaboration room removed"
-        );
+        logger.info({ roomId }, "Collaboration room removed");
 
         return 0;
     }
@@ -82,23 +77,13 @@ export function getRoomSockets(roomId) {
     return [...room];
 }
 
-export function broadcastToRoom(
-    roomId,
-    message,
-    excludeSocket = null
-) {
-    const room = rooms.get(roomId);
-
-    if (!room) {
-        return;
-    }
-
+function sendToSockets(sockets, message, excludeSocket, logContext) {
     const payload =
         typeof message === "string"
             ? message
             : JSON.stringify(message);
 
-    for (const socket of room) {
+    for (const socket of sockets) {
         if (socket === excludeSocket) {
             continue;
         }
@@ -112,13 +97,41 @@ export function broadcastToRoom(
         } catch (error) {
             logger.warn(
                 {
-                    roomId,
-                    userId:
-                        socket.collaboration?.userId,
+                    ...logContext,
+                    userId: socket.collaboration?.userId,
                     error: error.message
                 },
                 "Failed to broadcast collaboration message"
             );
+        }
+    }
+}
+
+export function broadcastToRoom(roomId, message, excludeSocket = null) {
+    const room = rooms.get(roomId);
+
+    if (!room) {
+        return;
+    }
+
+    sendToSockets(room, message, excludeSocket, { roomId });
+}
+
+/*
+ * Broadcast to every connected collaborator of a project.
+ *
+ * Used for changes that did not originate from a WebSocket client
+ * (for example a REST "save" or an AI-agent file edit) so that
+ * everybody's editor is updated live.
+ */
+export function broadcastToProject(projectId, message, excludeSocket = null) {
+    for (const room of rooms.values()) {
+        const sockets = [...room].filter(
+            (socket) => socket.collaboration?.projectId === projectId
+        );
+
+        if (sockets.length > 0) {
+            sendToSockets(sockets, message, excludeSocket, { projectId });
         }
     }
 }
