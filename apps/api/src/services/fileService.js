@@ -1,5 +1,8 @@
 import prisma from "../config/prisma.js";
-import {getOrCreateDocument} from "../collaboration/yjsDocumentManager.js";
+import {
+    syncLiveDocumentFromDatabase,
+    unloadFileFromYjs
+} from "../collaboration/yjsFileService.js";
 
 export async function createProjectFile({
     projectId,
@@ -98,41 +101,19 @@ export async function updateProjectFile({
         });
 
     /*
-     * Keep the in-memory Yjs document aligned
-     * with the persisted file.
+     * Keep the live Yjs document aligned with the persisted file.
+     *
+     * Only the changed region is applied (minimal diff) and the change
+     * is BROADCAST to every connected collaborator by the document's
+     * update listener. Previously the document was rewritten on the
+     * server only, which forked the server state from the clients'
+     * state after every "Save" and made collaborators go out of sync.
      */
-    const document =
-        getOrCreateDocument(
-            projectId,
-            fileId
-        );
-
-    const yText =
-        document.getText("content");
-
-    const currentYjsContent =
-        yText.toString();
-
-    if (currentYjsContent !== content) {
-        document.transact(
-            () => {
-                if (yText.length > 0) {
-                    yText.delete(
-                        0,
-                        yText.length
-                    );
-                }
-
-                if (content) {
-                    yText.insert(
-                        0,
-                        content
-                    );
-                }
-            },
-            "database"
-        );
-    }
+    syncLiveDocumentFromDatabase(
+        projectId,
+        fileId,
+        content
+    );
 
     return updatedFile;
 }
@@ -192,13 +173,15 @@ export async function deleteProjectFile({
         }
     });
 
+    unloadFileFromYjs(projectId, fileId);
+
     return true;
 }
 
 export async function upsertProjectFile({
     projectId, path, content
 }) {
-    return prisma.projectFile.upsert({
+    const file = await prisma.projectFile.upsert({
         where: {
             projectId_path: {
                 projectId, path
@@ -219,4 +202,9 @@ export async function upsertProjectFile({
             updatedAt: true
         }
     });
+
+    // AI-agent / archive writes must show up live for collaborators too.
+    syncLiveDocumentFromDatabase(projectId, file.id, content);
+
+    return file;
 }
