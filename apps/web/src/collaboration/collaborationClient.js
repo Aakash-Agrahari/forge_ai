@@ -325,9 +325,25 @@ export class CollaborationClient {
             editor
         );
 
+        console.log(
+            "[Collaboration] Binding Monaco editor",
+            {
+                fileId,
+                editorValueLength: editor.getValue().length,
+            }
+        );
+
         const subscription =
             editor.onDidChangeModelContent(
                 (event) => {
+
+                    console.log(
+                        "[Collaboration] Monaco change detected",
+                        {
+                            fileId,
+                            changeCount: event.changes.length,
+                        }
+                    );
                     /*
                      * This change was caused by
                      * applying a remote Yjs update.
