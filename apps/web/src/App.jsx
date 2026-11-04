@@ -81,6 +81,7 @@ import {
     startAgentRun,
     getAgentRun,
     createCollaborationRoom,
+    getCollaborationRoom,
     getCollaborationByToken,
 } from "./services/api";
 
@@ -880,9 +881,24 @@ function Workspace({
     const [collaborationConnected, setCollaborationConnected] =
         useState(false);
 
-    const collaborationShareToken =
+    /*
+     * Who joins the realtime room?
+     *
+     *  - User B opens the share link -> token comes from the URL.
+     *  - User A (the owner) has a normal URL with NO token. The owner
+     *    must join the SAME room, otherwise the two users are never
+     *    connected to each other. So the owner's token comes from the
+     *    project's active collaboration room (loaded below, or set the
+     *    moment the owner clicks "Share").
+     */
+    const urlShareToken =
         new URLSearchParams(window.location.search)
             .get("shareToken");
+
+    const [ownerShareToken, setOwnerShareToken] = useState(null);
+
+    const collaborationShareToken =
+        urlShareToken || ownerShareToken;
 
     const [shareLink, setShareLink] = useState("");
     const [sharing, setSharing] = useState(false);
@@ -898,6 +914,37 @@ function Workspace({
     useEffect(() => {
         openTabsRef.current = openTabs;
     }, [openTabs]);
+
+    useEffect(() => {
+        if (urlShareToken || !project?.id) {
+            return;
+        }
+
+        let cancelled = false;
+
+        getCollaborationRoom(project.id)
+            .then((room) => {
+                if (cancelled) {
+                    return;
+                }
+
+                setOwnerShareToken(
+                    room?.isActive && room.shareToken
+                        ? room.shareToken
+                        : null
+                );
+            })
+            .catch((requestError) => {
+                console.error(
+                    "Failed to load collaboration room:",
+                    requestError
+                );
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [project?.id, urlShareToken]);
 
     useEffect(() => {
         if (!collaborationShareToken) {
@@ -930,47 +977,54 @@ function Workspace({
         };
     }, [collaborationShareToken]);
 
-    useEffect(() => {
-        if (
-            !collaborationShareToken ||
-            !activeFileId ||
-            !editorRef.current ||
-            !collaborationClientRef.current
-        ) {
+    const [loadingFiles, setLoadingFiles] = useState(true);
+    const [loadingFile, setLoadingFile] = useState(false);
+
+    /*
+     * Keep the Monaco editor bound to the collaboration client.
+     *
+     * Always binds the file that is REALLY shown in the editor
+     * (activeFile), never one that is still loading - binding an
+     * editor that still shows the previous file's model could write
+     * one file's content into another.
+     */
+    const activeFileRef = useRef(null);
+    activeFileRef.current = activeFile;
+
+    function bindActiveEditor(editor = editorRef.current) {
+        const client = collaborationClientRef.current;
+        const file = activeFileRef.current;
+
+        if (!client || !editor || !file?.id) {
             return;
         }
 
-        const frameId =
-            window.requestAnimationFrame(() => {
-                if (
-                    !collaborationClientRef.current ||
-                    !editorRef.current
-                ) {
-                    return;
-                }
+        if (file.id !== activeFileIdRef.current) {
+            return;
+        }
 
-                collaborationClientRef.current.openFile(
-                    activeFileId
-                );
+        client.openFile(file.id);
+        client.bindEditor(file.id, editor);
+    }
 
-                collaborationClientRef.current.bindEditor(
-                    activeFileId,
-                    editorRef.current
-                );
-            });
+    useEffect(() => {
+        if (loadingFile) {
+            // The <Editor> is unmounted while a file loads.
+            editorRef.current = null;
+            return;
+        }
 
-        return () => {
-            window.cancelAnimationFrame(
-                frameId
-            );
-        };
+        if (!collaborationShareToken) {
+            return;
+        }
+
+        bindActiveEditor();
     }, [
+        activeFile?.id,
         activeFileId,
+        loadingFile,
         collaborationShareToken
     ]);
-
-    const [loadingFiles, setLoadingFiles] = useState(true);
-    const [loadingFile, setLoadingFile] = useState(false);
     const [saving, setSaving] = useState(false);
     const [running, setRunning] = useState(false);
     const [executionResult, setExecutionResult] = useState(null);
@@ -2214,6 +2268,9 @@ useEffect(() => {
                 )}`;
 
             setShareLink(link);
+
+            // The owner joins the realtime room right away.
+            setOwnerShareToken(collaboration.shareToken);
 
             await navigator.clipboard.writeText(link);
         } catch (error) {
@@ -4236,19 +4293,7 @@ useEffect(() => {
                                   onMount={(editor, monaco) => {
                                         editorRef.current = editor;
 
-                                        if (
-                                            collaborationClientRef.current &&
-                                            activeFileId
-                                        ) {
-                                            collaborationClientRef.current.openFile(
-                                                activeFileId
-                                            );
-
-                                            collaborationClientRef.current.bindEditor(
-                                                activeFileId,
-                                                editor
-                                            );
-                                        }
+                                        bindActiveEditor(editor);
 
                                         editor.addAction({
                                             id: "forgeai-save-file",
