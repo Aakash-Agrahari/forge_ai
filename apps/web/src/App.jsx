@@ -100,7 +100,53 @@ function AuthScreen({ onAuthenticated }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
 
+        if (params.get("googleAuth") !== "failed") {
+            return;
+        }
+
+        const reason = params.get("reason");
+
+        const errorMessages = {
+            account_already_exists:
+                "An account with this email already exists. Please sign in using your email and password.",
+
+            google_account_already_linked:
+                "This Google account is already linked to another ForgeAI account.",
+
+            google_denied:
+                "Google sign-in was cancelled. Please try again.",
+
+            invalid_callback:
+                "Google sign-in could not be completed. Please try again.",
+
+            invalid_state:
+                "Your sign-in session expired or was invalid. Please try again.",
+
+            authentication_failed:
+                "Google authentication failed. Please try again."
+        };
+
+        setError(
+            errorMessages[reason] ||
+            "Google sign-in failed. Please try again."
+        );
+
+        // Remove OAuth error parameters while preserving shareToken.
+        params.delete("googleAuth");
+        params.delete("reason");
+
+        const remainingQuery = params.toString();
+
+        const cleanUrl =
+            window.location.pathname +
+            (remainingQuery ? `?${remainingQuery}` : "") +
+            window.location.hash;
+
+        window.history.replaceState({}, "", cleanUrl);
+    }, []);
 
     async function handleSubmit(event) {
         event.preventDefault();
