@@ -33,6 +33,10 @@ const env = {
 
     sessionSecret: process.env.SESSION_SECRET,
 
+    googleClientId: process.env.GOOGLE_CLIENT_ID || "",
+    googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    googleRedirectUri: process.env.GOOGLE_REDIRECT_URI || "",
+
     geminiApiKey: process.env.GEMINI_API_KEY || "",
     groqApiKey: process.env.GROQ_API_KEY || "",
     cerebrasApiKey: process.env.CEREBRAS_API_KEY || "",
