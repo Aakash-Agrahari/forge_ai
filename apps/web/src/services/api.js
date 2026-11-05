@@ -56,9 +56,23 @@ async function apiRequest(endpoint, options = {}) {
     return data;
 }
 
+
+
 /* =========================
    AUTH
 ========================= */
+
+export function startGoogleLogin() {
+    const returnTo =
+        window.location.pathname +
+        window.location.search +
+        window.location.hash;
+
+    const googleLoginUrl =
+        `${API_BASE_URL}/auth/google?returnTo=${encodeURIComponent(returnTo)}`;
+
+    window.location.assign(googleLoginUrl);
+}
 
 export async function getCurrentUser() {
     return apiRequest("/auth/me");
