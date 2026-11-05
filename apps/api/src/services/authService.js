@@ -68,10 +68,9 @@ export async function loginUser({email, password}){
         throw error;
     }
 
-    const passwordValid = await verifyPassword(
-        user.passwordHash,
-        password
-    );
+    const passwordValid = user.passwordHash
+            ? await verifyPassword(user.passwordHash, password)
+            : false;
 
     if(!passwordValid){
         const error = new Error("Invalid email or password");
@@ -85,6 +84,70 @@ export async function loginUser({email, password}){
     const expiresAt = getSessionExpiration();
 
     const session = await prisma.session.create({
+        data: {
+            tokenHash,
+            userId: user.id,
+            expiresAt
+        }
+    });
+
+    return {
+        user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            createdAt: user.createdAt
+        },
+        sessionToken
+    };
+}
+
+export async function loginOrRegisterGoogleUser({
+    googleId,
+    email,
+    name
+}) {
+    let user = await prisma.user.findUnique({
+        where: { googleId }
+    });
+
+    if (!user) {
+        user = await prisma.user.findUnique({
+            where: { email }
+        });
+
+        if (user) {
+            // Link Google to an existing account.
+            if (user.googleId && user.googleId !== googleId) {
+                const error = new Error("Google account is already linked to another user");
+                error.statusCode = 409;
+                error.code = "GOOGLE_ACCOUNT_ALREADY_LINKED";
+                throw error;
+            }
+
+            user = await prisma.user.update({
+                where: { id: user.id },
+                data: { googleId }
+            });
+        } else {
+            // Create a new Google-based account.
+            user = await prisma.user.create({
+                data: {
+                    name,
+                    email,
+                    googleId,
+                    passwordHash: null
+                }
+            });
+        }
+    }
+
+    // Create a ForgeAI session.
+    const sessionToken = generateSessionToken();
+    const tokenHash = hashSessionToken(sessionToken);
+    const expiresAt = getSessionExpiration();
+
+    await prisma.session.create({
         data: {
             tokenHash,
             userId: user.id,
