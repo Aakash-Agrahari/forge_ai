@@ -103,6 +103,169 @@ function verifySignedOAuthCookie(value) {
     }
 }
 
+const FRONTEND_URL = "http://localhost:5173" || "http://localhost:5174";
+
+// Google OAuth login route
+router.get("/google", (req, res, next) => {
+    try {
+        if (
+            !env.googleClientId ||
+            !env.googleClientSecret ||
+            !env.googleRedirectUri
+        ) {
+            return res.status(503).json({
+                success: false,
+                error: {
+                    code: "GOOGLE_OAUTH_NOT_CONFIGURED",
+                    message: "Google login is not configured"
+                }
+            });
+        }
+
+        const state = generateOAuthState();
+        const nonce = crypto.randomBytes(32).toString("base64url");
+        const codeVerifier = generateCodeVerifier();
+        const codeChallenge = generateCodeChallenge(codeVerifier);
+
+        // Only allow redirects back to this frontend.
+        let returnTo = "/";
+
+        if (typeof req.query.returnTo === "string") {
+            try {
+                const destination = new URL(
+                    req.query.returnTo,
+                    FRONTEND_URL
+                );
+
+                if (destination.origin === new URL(FRONTEND_URL).origin) {
+                    returnTo =
+                        destination.pathname +
+                        destination.search +
+                        destination.hash;
+                }
+            } catch {
+                returnTo = "/";
+            }
+        }
+
+        const oauthCookie = createSignedOAuthCookie({
+            state,
+            nonce,
+            codeVerifier,
+            returnTo,
+            expiresAt: Date.now() + 10 * 60 * 1000
+        });
+
+        res.cookie(
+            GOOGLE_OAUTH_COOKIE,
+            oauthCookie,
+            GOOGLE_OAUTH_COOKIE_OPTIONS
+        );
+
+        const authorizationUrl = getGoogleAuthorizationUrl({
+            state,
+            codeChallenge,
+            nonce
+        });
+
+        return res.redirect(302, authorizationUrl);
+    } catch (error) {
+        next(error);
+    }
+});
+
+//callback route for Google OAuth
+router.get("/google/callback", async (req, res, next) => {
+    try {
+        const { code, state, error: googleError } = req.query;
+
+        const oauthCookie = req.cookies?.[GOOGLE_OAUTH_COOKIE];
+
+        // Clear the temporary OAuth cookie immediately.
+        res.clearCookie(
+            GOOGLE_OAUTH_COOKIE,
+            {
+                ...GOOGLE_OAUTH_COOKIE_OPTIONS,
+                maxAge: undefined
+            }
+        );
+
+        if (googleError) {
+            return res.redirect(
+                `${FRONTEND_URL}/?googleAuth=failed&reason=google_denied`
+            );
+        }
+
+        if (
+            typeof code !== "string" ||
+            typeof state !== "string"
+        ) {
+            return res.redirect(
+                `${FRONTEND_URL}/?googleAuth=failed&reason=invalid_callback`
+            );
+        }
+
+        const oauthData = verifySignedOAuthCookie(oauthCookie);
+
+        if (!oauthData) {
+            return res.redirect(
+                `${FRONTEND_URL}/?googleAuth=failed&reason=invalid_state`
+            );
+        }
+
+        // Compare the returned state with the original state.
+        const expectedState = Buffer.from(oauthData.state);
+        const receivedState = Buffer.from(state);
+
+        if (
+            expectedState.length !== receivedState.length ||
+            !crypto.timingSafeEqual(expectedState, receivedState)
+        ) {
+            return res.redirect(
+                `${FRONTEND_URL}/?googleAuth=failed&reason=invalid_state`
+            );
+        }
+
+        // Exchange authorization code for Google tokens.
+        const tokens = await exchangeGoogleCode({
+            code,
+            codeVerifier: oauthData.codeVerifier
+        });
+
+        // Verify Google's ID token and nonce.
+        const googleUser = await verifyGoogleIdToken({
+            idToken: tokens.id_token,
+            expectedNonce: oauthData.nonce
+        });
+
+        // Find or create ForgeAI user and session.
+        const { user, sessionToken } =
+            await loginOrRegisterGoogleUser(googleUser);
+
+        // Establish the existing ForgeAI session.
+        res.cookie(
+            SESSION_COOKIE_NAME,
+            sessionToken,
+            getSessionCookieOptions()
+        );
+
+        // Return the user to the original frontend destination.
+        const destination = new URL(
+            oauthData.returnTo || "/",
+            FRONTEND_URL
+        );
+
+        return res.redirect(302, destination.toString());
+
+    } catch (error) {
+        console.error("Google OAuth callback failed:", error);
+
+        return res.redirect(
+            `${FRONTEND_URL}/?googleAuth=failed&reason=authentication_failed`
+        );
+    }
+});
+
 router.post("/register", authRateLimiter, async(req, res, next) => {
     try{
         const validationResult = registerSchema.safeParse(req.body);
