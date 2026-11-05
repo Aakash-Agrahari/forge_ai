@@ -54,6 +54,7 @@ import {
     loginUser,
     registerUser,
     logoutUser,
+    startGoogleLogin,
     getProjects,
     createProject,
     deleteProject,
@@ -270,6 +271,19 @@ function AuthScreen({ onAuthenticated }) {
                             : mode === "login"
                                 ? "Sign In"
                                 : "Create Account"}
+                    </button>
+
+                    <div className="auth-divider">
+                        <span>OR</span>
+                    </div>
+
+                    <button
+                        type="button"
+                        className="auth-google-button"
+                        onClick={startGoogleLogin}
+                    >
+                        <span className="google-icon">G</span>
+                        Continue with Google
                     </button>
 
                 </form>
