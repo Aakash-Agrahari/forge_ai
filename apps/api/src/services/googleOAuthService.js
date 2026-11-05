@@ -1,10 +1,11 @@
 
 import crypto from "node:crypto";
 import env from "../config/env.js";
+import { OAuth2Client } from "google-auth-library";
 
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
-const GOOGLE_USERINFO_URL = "https://openidconnect.googleapis.com/v1/userinfo";
+const googleClient = new OAuth2Client(env.googleClientId);
 
 // Generate a cryptographically secure random value.
 export function generateOAuthState() {
@@ -77,31 +78,42 @@ export async function exchangeGoogleCode({
     return tokens;
 }
 
-// Retrieve Google's authenticated user profile.
-export async function getGoogleUserProfile(accessToken) {
-    const response = await fetch(GOOGLE_USERINFO_URL, {
-        headers: {
-            Authorization: `Bearer ${accessToken}`
-        }
-    });
-
-    if (!response.ok) {
-        throw new Error("Failed to retrieve Google user profile");
+export async function verifyGoogleIdToken({
+    idToken,
+    expectedNonce
+}) {
+    if (!idToken || !expectedNonce) {
+        throw new Error("Missing Google ID token or nonce");
     }
 
-    const profile = await response.json();
+    const ticket = await googleClient.verifyIdToken({
+        idToken,
+        audience: env.googleClientId
+    });
 
+    const payload = ticket.getPayload();
+
+    if (!payload) {
+        throw new Error("Invalid Google ID token");
+    }
+
+    // Verify the nonce to protect against token replay.
+    if (payload.nonce !== expectedNonce) {
+        throw new Error("Google ID token nonce validation failed");
+    }
+
+    // Verify the user's identity information.
     if (
-        !profile.sub ||
-        !profile.email ||
-        profile.email_verified !== true
+        !payload.sub ||
+        !payload.email ||
+        payload.email_verified !== true
     ) {
         throw new Error("Google account identity could not be verified");
     }
 
     return {
-        googleId: profile.sub,
-        email: profile.email,
-        name: profile.name || profile.email.split("@")[0]
+        googleId: payload.sub,
+        email: payload.email,
+        name: payload.name || payload.email.split("@")[0]
     };
 }
