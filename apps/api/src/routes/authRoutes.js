@@ -1,12 +1,30 @@
-import {Router} from "express";
-import {registerSchema, loginSchema} from "../validators/authValidator.js";
-import {registerUser, loginUser} from "../services/authService.js";
+
+import { Router } from "express";
+import crypto from "node:crypto";
+
+import {
+    registerSchema,
+    loginSchema
+} from "../validators/authValidator.js";
+
+import {
+    registerUser,
+    loginUser,
+    loginOrRegisterGoogleUser
+} from "../services/authService.js";
+
 import requireAuth from "../middleware/auth.js";
 import prisma from "../config/prisma.js";
-import {SESSION_COOKIE_NAME, getSessionCookieOptions, getSessionClearCookieOptions} from "../config/auth.js";
-import {authRateLimiter} from "../middleware/rateLimiters.js";
-import crypto from "node:crypto";
+
+import {
+    SESSION_COOKIE_NAME,
+    getSessionCookieOptions,
+    getSessionClearCookieOptions
+} from "../config/auth.js";
+
+import { authRateLimiter } from "../middleware/rateLimiters.js";
 import env from "../config/env.js";
+
 import {
     generateOAuthState,
     generateCodeVerifier,
@@ -16,11 +34,12 @@ import {
     verifyGoogleIdToken
 } from "../services/googleOAuthService.js";
 
-import { loginOrRegisterGoogleUser } from "../services/authService.js";
-
 const router = Router();
 
+// Google OAuth configuration
 const GOOGLE_OAUTH_COOKIE = "forgeai_google_oauth";
+
+const FRONTEND_URL = "http://localhost:5173";
 
 const GOOGLE_OAUTH_COOKIE_OPTIONS = {
     httpOnly: true,
@@ -30,6 +49,7 @@ const GOOGLE_OAUTH_COOKIE_OPTIONS = {
     maxAge: 10 * 60 * 1000
 };
 
+// Create a signed OAuth cookie.
 function createSignedOAuthCookie(payload) {
     const encodedPayload = Buffer
         .from(JSON.stringify(payload))
@@ -43,6 +63,7 @@ function createSignedOAuthCookie(payload) {
     return `${encodedPayload}.${signature}`;
 }
 
+// Verify the signed OAuth cookie.
 function verifySignedOAuthCookie(value) {
     if (!value || typeof value !== "string") {
         return null;
@@ -103,9 +124,7 @@ function verifySignedOAuthCookie(value) {
     }
 }
 
-const FRONTEND_URL = "http://localhost:5173" || "http://localhost:5174";
-
-// Google OAuth login route
+// Start Google OAuth login.
 router.get("/google", (req, res, next) => {
     try {
         if (
@@ -123,11 +142,16 @@ router.get("/google", (req, res, next) => {
         }
 
         const state = generateOAuthState();
-        const nonce = crypto.randomBytes(32).toString("base64url");
+
+        const nonce = crypto
+            .randomBytes(32)
+            .toString("base64url");
+
         const codeVerifier = generateCodeVerifier();
+
         const codeChallenge = generateCodeChallenge(codeVerifier);
 
-        // Only allow redirects back to this frontend.
+        // Validate the requested frontend destination.
         let returnTo = "/";
 
         if (typeof req.query.returnTo === "string") {
@@ -137,7 +161,10 @@ router.get("/google", (req, res, next) => {
                     FRONTEND_URL
                 );
 
-                if (destination.origin === new URL(FRONTEND_URL).origin) {
+                if (
+                    destination.origin ===
+                    new URL(FRONTEND_URL).origin
+                ) {
                     returnTo =
                         destination.pathname +
                         destination.search +
@@ -148,6 +175,7 @@ router.get("/google", (req, res, next) => {
             }
         }
 
+        // Store temporary OAuth data in a signed cookie.
         const oauthCookie = createSignedOAuthCookie({
             state,
             nonce,
@@ -169,19 +197,24 @@ router.get("/google", (req, res, next) => {
         });
 
         return res.redirect(302, authorizationUrl);
+
     } catch (error) {
         next(error);
     }
 });
 
-//callback route for Google OAuth
-router.get("/google/callback", async (req, res, next) => {
+// Handle Google's OAuth callback.
+router.get("/google/callback", async (req, res) => {
     try {
-        const { code, state, error: googleError } = req.query;
+        const {
+            code,
+            state,
+            error: googleError
+        } = req.query;
 
         const oauthCookie = req.cookies?.[GOOGLE_OAUTH_COOKIE];
 
-        // Clear the temporary OAuth cookie immediately.
+        // Clear temporary OAuth cookie.
         res.clearCookie(
             GOOGLE_OAUTH_COOKIE,
             {
@@ -205,6 +238,7 @@ router.get("/google/callback", async (req, res, next) => {
             );
         }
 
+        // Verify signed OAuth cookie.
         const oauthData = verifySignedOAuthCookie(oauthCookie);
 
         if (!oauthData) {
@@ -213,13 +247,16 @@ router.get("/google/callback", async (req, res, next) => {
             );
         }
 
-        // Compare the returned state with the original state.
+        // Validate OAuth state.
         const expectedState = Buffer.from(oauthData.state);
         const receivedState = Buffer.from(state);
 
         if (
             expectedState.length !== receivedState.length ||
-            !crypto.timingSafeEqual(expectedState, receivedState)
+            !crypto.timingSafeEqual(
+                expectedState,
+                receivedState
+            )
         ) {
             return res.redirect(
                 `${FRONTEND_URL}/?googleAuth=failed&reason=invalid_state`
@@ -232,24 +269,24 @@ router.get("/google/callback", async (req, res, next) => {
             codeVerifier: oauthData.codeVerifier
         });
 
-        // Verify Google's ID token and nonce.
+        // Verify Google's ID token.
         const googleUser = await verifyGoogleIdToken({
             idToken: tokens.id_token,
             expectedNonce: oauthData.nonce
         });
 
-        // Find or create ForgeAI user and session.
+        // Create or retrieve ForgeAI user and session.
         const { user, sessionToken } =
             await loginOrRegisterGoogleUser(googleUser);
 
-        // Establish the existing ForgeAI session.
+        // Set ForgeAI's existing authentication cookie.
         res.cookie(
             SESSION_COOKIE_NAME,
             sessionToken,
             getSessionCookieOptions()
         );
 
-        // Return the user to the original frontend destination.
+        // Redirect user to the requested frontend destination.
         const destination = new URL(
             oauthData.returnTo || "/",
             FRONTEND_URL
@@ -260,17 +297,26 @@ router.get("/google/callback", async (req, res, next) => {
     } catch (error) {
         console.error("Google OAuth callback failed:", error);
 
+        let reason = "authentication_failed";
+
+        if (error.code === "ACCOUNT_ALREADY_EXISTS") {
+            reason = "account_already_exists";
+        } else if (error.code === "GOOGLE_ACCOUNT_ALREADY_LINKED") {
+            reason = "google_account_already_linked";
+        }
+
         return res.redirect(
-            `${FRONTEND_URL}/?googleAuth=failed&reason=authentication_failed`
+            `${FRONTEND_URL}/?googleAuth=failed&reason=${reason}`
         );
     }
 });
 
-router.post("/register", authRateLimiter, async(req, res, next) => {
-    try{
+// Register with email and password.
+router.post("/register", authRateLimiter, async (req, res, next) => {
+    try {
         const validationResult = registerSchema.safeParse(req.body);
 
-        if(!validationResult.success){
+        if (!validationResult.success) {
             return res.status(400).json({
                 success: false,
                 error: {
@@ -284,15 +330,13 @@ router.post("/register", authRateLimiter, async(req, res, next) => {
             });
         }
 
-        const {name, email, password} = validationResult.data;
+        const { name, email, password } = validationResult.data;
 
-        const {user, sessionToken} = await registerUser({
+        const { user, sessionToken } = await registerUser({
             name,
             email,
             password
         });
-
-        const isProduction = process.env.NODE_ENV === "production";
 
         res.cookie(
             SESSION_COOKIE_NAME,
@@ -305,12 +349,13 @@ router.post("/register", authRateLimiter, async(req, res, next) => {
             user
         });
 
-    } catch (error){
+    } catch (error) {
         next(error);
     }
 });
 
-router.post("/login", authRateLimiter, async(req, res, next) => {
+// Login with email and password.
+router.post("/login", authRateLimiter, async (req, res, next) => {
     try {
         const validationResult = loginSchema.safeParse(req.body);
 
@@ -335,8 +380,6 @@ router.post("/login", authRateLimiter, async(req, res, next) => {
             password
         });
 
-        const isProduction = process.env.NODE_ENV === "production";
-
         res.cookie(
             SESSION_COOKIE_NAME,
             sessionToken,
@@ -347,12 +390,13 @@ router.post("/login", authRateLimiter, async(req, res, next) => {
             success: true,
             user
         });
+
     } catch (error) {
         next(error);
     }
 });
 
-
+// Logout and revoke the current session.
 router.post("/logout", requireAuth, async (req, res, next) => {
     try {
         await prisma.session.update({
@@ -373,16 +417,18 @@ router.post("/logout", requireAuth, async (req, res, next) => {
             success: true,
             message: "Logged out successfully"
         });
+
     } catch (error) {
         next(error);
     }
 });
 
-router.get("/me", requireAuth, async(req,res) => {
+// Get the currently authenticated user.
+router.get("/me", requireAuth, async (req, res) => {
     return res.status(200).json({
         success: true,
         user: req.user
-    })
+    });
 });
 
 export default router;
