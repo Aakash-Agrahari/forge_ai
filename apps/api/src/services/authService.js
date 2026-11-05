@@ -102,44 +102,43 @@ export async function loginUser({email, password}){
     };
 }
 
+
 export async function loginOrRegisterGoogleUser({
     googleId,
     email,
     name
 }) {
+    // First, check whether this Google account already exists.
     let user = await prisma.user.findUnique({
         where: { googleId }
     });
 
     if (!user) {
-        user = await prisma.user.findUnique({
+        // Check whether the email belongs to an existing account.
+        const existingUser = await prisma.user.findUnique({
             where: { email }
         });
 
-        if (user) {
-            // Link Google to an existing account.
-            if (user.googleId && user.googleId !== googleId) {
-                const error = new Error("Google account is already linked to another user");
-                error.statusCode = 409;
-                error.code = "GOOGLE_ACCOUNT_ALREADY_LINKED";
-                throw error;
-            }
+        if (existingUser) {
+            const error = new Error(
+                "An account with this email already exists. Please log in using your password first."
+            );
 
-            user = await prisma.user.update({
-                where: { id: user.id },
-                data: { googleId }
-            });
-        } else {
-            // Create a new Google-based account.
-            user = await prisma.user.create({
-                data: {
-                    name,
-                    email,
-                    googleId,
-                    passwordHash: null
-                }
-            });
+            error.statusCode = 409;
+            error.code = "ACCOUNT_ALREADY_EXISTS";
+
+            throw error;
         }
+
+        // Create a new Google-based ForgeAI account.
+        user = await prisma.user.create({
+            data: {
+                name,
+                email,
+                googleId,
+                passwordHash: null
+            }
+        });
     }
 
     // Create a ForgeAI session.
