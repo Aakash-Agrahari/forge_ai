@@ -56,12 +56,7 @@ async function apiRequest(endpoint, options = {}) {
     return data;
 }
 
-
-
-/* =========================
-   AUTH
-========================= */
-
+//AUTH
 export function startGoogleLogin() {
     const returnTo =
         window.location.pathname +
@@ -114,10 +109,7 @@ export async function logoutUser() {
     });
 }
 
-/* =========================
-   PROJECTS
-========================= */
-
+//PROJECTS
 export async function getProjects() {
     return apiRequest("/projects");
 }
@@ -234,10 +226,7 @@ export async function exportProjectZip(projectId) {
     return response.blob();
 }
 
-/* =========================
-   PROJECT FILES
-========================= */
-
+//PROJECT FILES
 export async function getProjectFiles(projectId) {
     return apiRequest(`/projects/${projectId}/files`);
 }
@@ -324,9 +313,7 @@ export async function runProjectFile(
     );
 }
 
-/*===============================
- Project folders 
- ==============================*/
+//Project folders
 export async function getProjectFolders(projectId) {
     return apiRequest(`/projects/${projectId}/folders`);
 }
@@ -374,10 +361,7 @@ export async function deleteProjectFolder(
     );
 }
 
-/* =========================
-   CONVERSATIONS
-========================= */
-
+//CONVERSATIONS
 export async function createConversation(
     projectId,
     title
@@ -429,10 +413,7 @@ export async function createConversationMessage(
     );
 }
 
-/* =========================
-   AGENT RUNS
-========================= */
-
+//AGENT RUNS
 export async function startAgentRun(
     projectId,
     conversationId
