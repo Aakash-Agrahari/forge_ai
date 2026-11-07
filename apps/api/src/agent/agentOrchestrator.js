@@ -37,12 +37,8 @@ const MAX_REPEATED_TOOL_RECOVERIES = 2;
 const MAX_EARLY_COMPLETION_RETRIES = 2;
 const MAX_AUTONOMOUS_REPAIR_ATTEMPTS = 3;
 
-/*
- * ============================================================
- * TIMING HELPERS
- * ============================================================
- */
 
+//TIMING HELPERS
 function elapsedMs(startedAt) {
     return Date.now() - startedAt;
 }
@@ -61,12 +57,7 @@ function logAgentTiming(
     );
 }
 
-/*
- * ============================================================
- * TASK REQUIREMENTS
- * ============================================================
- */
-
+//TASK REQUIREMENTS
 function getTaskRequirements(messages) {
     const latestUserMessage = [...messages]
         .reverse()
@@ -153,16 +144,10 @@ function getTaskRequirements(messages) {
         userText.includes("should fail") ||
         userText.includes("should produce an error") ||
         userText.includes("must produce an error")
-    )
-};
+    )};
 }
 
-/*
- * ============================================================
- * VERIFICATION HELPERS
- * ============================================================
- */
-
+//VERIFICATION HELPERS
 function hasSuccessfulVerification(
     toolResults
 ) {
@@ -174,12 +159,7 @@ function hasSuccessfulVerification(
         const toolName =
             result.toolName;
 
-        /*
-         * ============================================================
-         * LANGUAGE-AWARE CODE EXECUTION
-         * ============================================================
-         */
-
+        //LANGUAGE-AWARE CODE EXECUTION
         if (
             toolName === "execute_code"
         ) {
@@ -219,12 +199,7 @@ function hasSuccessfulVerification(
             );
         }
 
-        /*
-         * ============================================================
-         * LEGACY / SPECIALIZED EXECUTION TOOLS
-         * ============================================================
-         */
-
+        //LEGACY / SPECIALIZED EXECUTION TOOLS
         if (
             toolName === "run_command" ||
             toolName === "execute_javascript" ||
@@ -444,12 +419,7 @@ function hasSuccessfulVerificationAfterFailure(
     return false;
 }
 
-/*
- * ============================================================
- * DETERMINISTIC COMPLETION GUARD
- * ============================================================
- */
-
+//DETERMINISTIC COMPLETION GUARD
 function isCompletionReady(
     taskRequirements,
     toolResults
@@ -496,12 +466,7 @@ function isCompletionReady(
     );
 }
 
-/*
- * ============================================================
- * JAVASCRIPT VERIFICATION FEEDBACK
- * ============================================================
- */
-
+//JAVASCRIPT VERIFICATION FEEDBACK
 function getJavaScriptVerificationStatus(
     toolResult
 ) {
@@ -578,12 +543,7 @@ function getJavaScriptVerificationStatus(
     }
 }
 
-/*
- * ============================================================
- * PHASE / RUN STATE HELPERS
- * ============================================================
- */
-
+//PHASE / RUN STATE HELPERS
 async function persistAgentPhase({
     state,
     runId,
@@ -693,12 +653,7 @@ async function handleCancellation({
     return true;
 }
 
-/*
- * ============================================================
- * AGENT
- * ============================================================
- */
-
+//AGENT RUN EXECUTION
 export async function runAgent({
     runId,
     projectId,
@@ -744,24 +699,14 @@ export async function runAgent({
             ? "PREPARE"
             : "NORMAL";
 
-    /*
-     * ============================================================
-     * SYSTEM PROMPT
-     * ============================================================
-     */
-
+    //SYSTEM PROMPT
     addMessage(state, {
         role: "system",
         content:
             AGENT_SYSTEM_PROMPT
     });
 
-    /*
-     * ============================================================
-     * ACTIVE TASK CONTEXT
-     * ============================================================
-     */
-
+    //ACTIVE TASK CONTEXT
     addMessage(state, {
         role: "system",
         content: [
@@ -891,12 +836,7 @@ export async function runAgent({
             })();
         }, 10000);
 
-        /*
-         * ========================================================
-         * FIND ACTIVE USER TASK
-         * ========================================================
-         */
-
+        //FIND ACTIVE USER TASK
         const latestUserMessage =
             [...messages]
                 .reverse()
@@ -929,12 +869,7 @@ export async function runAgent({
                 ""
         });
 
-        /*
-         * ========================================================
-         * UPDATE RUN STATUS
-         * ========================================================
-         */
-
+        //UPDATE RUN STATUS
         await updateAgentRun(runId, {
             status: "running",
             phase: "planning",
@@ -955,21 +890,11 @@ export async function runAgent({
 
         setAgentPhase(state, "planning");
 
-        /*
-         * ========================================================
-         * LOAD TOOLS
-         * ========================================================
-         */
-
+        //LOAD TOOLS
         const tools =
             getAgentTools();
 
-        /*
-         * ========================================================
-         * LOAD FREE TOOL-CALLING MODELS
-         * ========================================================
-         */
-
+        //LOAD FREE TOOL-CALLING MODELS
         const models =
             selectModelsForRequest({
                 task: "code",
@@ -993,12 +918,7 @@ export async function runAgent({
             throw error;
         }
 
-        /*
-         * ========================================================
-         * MAIN AGENT LOOP
-         * ========================================================
-         */
-
+        //MAIN AGENT LOOP
         while (
             state.iteration <
             MAX_ITERATIONS
@@ -1039,12 +959,7 @@ export async function runAgent({
                 `[ForgeAI Agent] Iteration ${state.iteration}/${MAX_ITERATIONS} started`
             );
 
-            /*
-             * ====================================================
-             * CREATE MODEL REQUEST
-             * ====================================================
-             */
-
+            //CREATE MODEL REQUEST
             const request =
                 createAgentModelRequest({
                     messages:
@@ -1058,12 +973,7 @@ export async function runAgent({
                         8192
                 });
 
-            /*
-             * ====================================================
-             * MODEL EXECUTION
-             * ====================================================
-             */
-
+            //MODEL EXECUTION
             await persistAgentPhase({
                 state,
                 runId,
@@ -1137,12 +1047,7 @@ export async function runAgent({
                 )
             );
 
-            /*
-             * ====================================================
-             * STORE MODEL MESSAGE IN MEMORY
-             * ====================================================
-             */
-
+            // STORE MODEL MESSAGE IN MEMORY
             addMessage(state, {
                 role: "assistant",
                 content:
@@ -1154,13 +1059,8 @@ export async function runAgent({
                 model:
                     result.model
             });
-
-            /*
-             * ====================================================
-             * MODEL WANTS TO FINISH WITHOUT TOOL
-             * ====================================================
-             */
-
+            
+            //MODEL WANTS TO FINISH WITHOUT TOOL
             if (
                 !result.toolCalls ||
                 result.toolCalls.length === 0
@@ -1253,12 +1153,7 @@ export async function runAgent({
                     continue;
                 }
 
-                /*
-                 * =================================================
-                 * NORMAL COMPLETION
-                 * =================================================
-                 */
-
+                //NORMAL COMPLETION
                 await createMessage({
                     conversationId,
                     role: "assistant",
@@ -1317,12 +1212,7 @@ export async function runAgent({
                 };
             }
 
-            /*
-             * ====================================================
-             * PERSIST MODEL TOOL CALLS
-             * ====================================================
-             */
-
+            //PERSIST MODEL TOOL CALLS
             for (
                 const toolCall
                 of result.toolCalls
@@ -1342,12 +1232,7 @@ export async function runAgent({
                 });
             }
 
-            /*
-             * ====================================================
-             * EXECUTE MODEL TOOLS
-             * ====================================================
-             */
-
+            //EXECUTE MODEL TOOLS
             await persistAgentPhase({
                 state,
                 runId,
@@ -1572,12 +1457,7 @@ export async function runAgent({
                     return { state, result: null, cancelled: true };
                 }
 
-                /*
-                 * =================================================
-                 * IDENTICAL TOOL CALL DETECTION
-                 * =================================================
-                 */
-
+                //IDENTICAL TOOL CALL DETECTION
                 console.log(
                     "[ForgeAI DEBUG] BEFORE REPEAT CHECK:",
                     JSON.stringify({
@@ -1611,12 +1491,7 @@ export async function runAgent({
                     currentCount
                 );
 
-                /*
-                 * =================================================
-                 * REPEATED TOOL CALL RECOVERY
-                 * =================================================
-                 */
-
+                //REPEATED TOOL CALL RECOVERY
                 const isExecutionTool =
                     validatedToolCall.name === "execute_code" ||
                     validatedToolCall.name === "execute_javascript" ||
@@ -1703,12 +1578,7 @@ export async function runAgent({
                     continue;
                 }
 
-                /*
-                 * ============================================================
-                 * FAILURE / REPAIR WORKFLOW GUARD
-                 * ============================================================
-                 */
-
+                //FAILURE / REPAIR WORKFLOW GUARD
                 if (taskRequirements.requiresFailureAndRepair) {
                     const toolName =
                         validatedToolCall.name;
@@ -1840,9 +1710,7 @@ export async function runAgent({
                 }
 
                 /*
-                * ============================================================
                 * AUTONOMOUS REPAIR WORKFLOW GUARD
-                * ============================================================
                 *
                 * This workflow applies ONLY to normal tasks.
                 *
@@ -1952,12 +1820,7 @@ export async function runAgent({
                     }
                 }
 
-                /*
-                 * =================================================
-                 * START REAL TOOL EXECUTION
-                 * =================================================
-                 */
-
+                //START REAL TOOL EXECUTION
                 setCurrentTool(
                     state,
                     validatedToolCall.name
@@ -1996,12 +1859,8 @@ export async function runAgent({
                     }
                 });
 
-                /*
-                 * =================================================
-                 * RECORD TOOL CALL
-                 * =================================================
-                 */
-
+                
+                //RECORD TOOL CALL
                 recordToolCall(
                     state,
                     {
@@ -2016,12 +1875,8 @@ export async function runAgent({
                     }
                 );
 
-                /*
-                 * =================================================
-                 * EXECUTE TOOL
-                 * =================================================
-                 */
-
+                
+                //EXECUTE TOOL
                 let toolResult;
 
                 const toolStartedAt =
@@ -2078,12 +1933,7 @@ export async function runAgent({
                     );
                 }
 
-                /*
-                 * =================================================
-                 * TOOL TIMING
-                 * =================================================
-                 */
-
+                //TOOL TIMING
                 logAgentTiming(
                     "tool execution",
                     toolStartedAt,
@@ -2103,12 +1953,6 @@ export async function runAgent({
                             null
                     }
                 );
-
-                /*
-                 * =================================================
-                 * JAVASCRIPT TEST FEEDBACK
-                 * =================================================
-                 */
 
                 if (
                     validatedToolCall.name ===
@@ -2176,12 +2020,6 @@ export async function runAgent({
                     );
                 }
 
-                /*
-                 * =================================================
-                 * LOG TOOL RESULT
-                 * =================================================
-                 */
-
                 console.log(
                     `[ForgeAI Agent] Tool result: ${validatedToolCall.name}`,
                     JSON.stringify(
@@ -2190,12 +2028,6 @@ export async function runAgent({
                         2
                     )
                 );
-
-                /*
-                 * =================================================
-                 * TRACK FILE CHANGES
-                 * =================================================
-                 */
 
                 if (
                     validatedToolCall.name ===
@@ -2209,12 +2041,6 @@ export async function runAgent({
                     );
                 }
 
-                /*
-                 * =================================================
-                 * TRACK VERIFICATION RESULTS
-                 * =================================================
-                 */
-
                 if (
                     validatedToolCall.name ===
                         "verify_javascript" ||
@@ -2226,12 +2052,6 @@ export async function runAgent({
                         toolResult
                     );
                 }
-
-                /*
-                 * =================================================
-                 * TRACK JAVASCRIPT EXECUTION
-                 * =================================================
-                 */
 
                 const postToolSystemMessages = [];
                 if (
@@ -2293,12 +2113,6 @@ export async function runAgent({
                     );
                 }
 
-                /*
-                 * =================================================
-                 * STORE TOOL RESULT IN MEMORY
-                 * =================================================
-                 */
-
                 toolResults.push({
                     ...toolResult,
                     toolName:
@@ -2306,9 +2120,7 @@ export async function runAgent({
                 });
 
                 /*
-                * ============================================================
                 * EXISTING SOURCE INSPECTION
-                * ============================================================
                 *
                 * If the requested source already existed, allow the agent to
                 * inspect it once during PREPARE.
@@ -2356,12 +2168,7 @@ export async function runAgent({
                     );
                 }
 
-                /*
-                 * ============================================================
-                 * FAILURE / REPAIR WORKFLOW STATE TRACKING
-                 * ============================================================
-                 */
-
+                //REPAIR WORKFLOW STATE TRACKING
                 if (
                     taskRequirements.requiresFailureAndRepair
                 ) {
@@ -2414,10 +2221,7 @@ export async function runAgent({
                             isInfrastructureFailureResult(toolResult);
 
                         /*
-                        * ============================================================
                         * FIRST EXECUTION
-                        * ============================================================
-                        *
                         * The first execution is expected to expose the intentional
                         * bug. A logic bug may still exit with code 0, so successful
                         * process execution is NOT considered task completion here.
@@ -2469,10 +2273,7 @@ export async function runAgent({
                         }
 
                         /*
-                        * ============================================================
                         * POST-REPAIR VERIFICATION
-                        * ============================================================
-                        *
                         * The source has already been repaired.
                         *
                         * If the repaired execution succeeds, the required
@@ -2524,9 +2325,7 @@ export async function runAgent({
                 }
 
                 /*
-                * ============================================================
                 * AUTONOMOUS REPAIR STATE TRACKING
-                * ============================================================
                 *
                 * Applies ONLY to normal tasks.
                 *
@@ -2552,12 +2351,6 @@ export async function runAgent({
                         toolName === "edit_file" ||
                         toolName === "replace_in_file";
 
-                    /*
-                    * ------------------------------------------------------------
-                    * SOURCE REPAIR
-                    * ------------------------------------------------------------
-                    */
-
                     if (
                         isSourceEditTool &&
                         toolResult?.success === true &&
@@ -2576,12 +2369,6 @@ export async function runAgent({
                             }
                         );
                     }
-
-                    /*
-                    * ------------------------------------------------------------
-                    * EXECUTION RESULT
-                    * ------------------------------------------------------------
-                    */
 
                     if (isExecutionTool) {
 
@@ -2609,10 +2396,8 @@ export async function runAgent({
                             );
 
                         }
-
-                        /*
-                        * A real source-level failure was observed.
-                        */
+                        
+                        //A real source-level failure was observed.
                         else if (repairableFailure) {
 
                             if (
@@ -2637,10 +2422,7 @@ export async function runAgent({
                                     }
                                 );
                             } else {
-
-                                /*
-                                * Do not allow endless automatic repair.
-                                */
+                                //Do not allow endless automatic repair.
                                 failureRepairPhase =
                                     "NORMAL";
 
@@ -2664,9 +2446,7 @@ export async function runAgent({
                             }
                         }
 
-                        /*
-                        * Successful verification after a repair.
-                        */
+                        //Successful verification after a repair.
                         else if (
                             !repairableFailure &&
                             failureRepairPhase === "VERIFY" &&
@@ -2699,12 +2479,7 @@ export async function runAgent({
                         true;
                 }
 
-                /*
-                 * =================================================
-                 * PERSIST TOOL RESULT
-                 * =================================================
-                 */
-
+                //PERSIST TOOL RESULT
                 const serializedToolResult =
                     JSON.stringify(
                         toolResult
@@ -2729,12 +2504,7 @@ export async function runAgent({
                     });
                 }
 
-                /*
-                 * =================================================
-                 * ADD TOOL RESULT TO AGENT MEMORY
-                 * =================================================
-                 */
-
+                //ADD TOOL RESULT TO AGENT MEMORY
                 addMessage(
                     state,
                     {
@@ -2782,12 +2552,7 @@ export async function runAgent({
                     runId
                 });
 
-                /*
-                 * =================================================
-                 * EXPLICIT TOOL STATUS
-                 * =================================================
-                 */
-
+                //EXPLICIT TOOL STATUS
                 let toolStatus;
 
                 if (
@@ -2845,12 +2610,7 @@ export async function runAgent({
                     }
                 );
 
-                /*
-                 * =================================================
-                 * DETERMINISTIC COMPLETION GUARD
-                 * =================================================
-                 */
-
+                //DETERMINISTIC COMPLETION GUARD
                 if (cancellationObserved || await handleCancellation({
                     state,
                     runId,
@@ -2983,12 +2743,7 @@ export async function runAgent({
             }
         }
 
-        /*
-         * ========================================================
-         * MAX ITERATION SAFETY LIMIT
-         * ========================================================
-         */
-
+        //MAX ITERATION SAFETY LIMIT
         const error =
             new Error(
                 `Agent exceeded maximum iterations (${MAX_ITERATIONS})`
@@ -3012,12 +2767,7 @@ export async function runAgent({
         throw error;
 
     } catch (error) {
-        /*
-         * ========================================================
-         * AGENT FAILURE
-         * ========================================================
-         */
-
+        // FAILURe
         recordError(
             state,
             error
