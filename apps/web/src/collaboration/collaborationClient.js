@@ -115,10 +115,7 @@ export class CollaborationClient {
         this.reconnectTimer = null;
     }
 
-    /* =========================
-       CONNECTION
-    ========================= */
-
+    //CONNECTION
     connect() {
         this.shouldReconnect = true;
 
@@ -244,10 +241,7 @@ export class CollaborationClient {
         }
     }
 
-    /* =========================
-       DOCUMENTS
-    ========================= */
-
+    //DOCUMENTS
     openFile(fileId) {
         if (!fileId) {
             return null;
@@ -324,9 +318,7 @@ export class CollaborationClient {
         return this.texts.get(fileId)?.toString() ?? "";
     }
 
-    /*
-     * Programmatically replace the file content (minimal diff).
-     */
+    //Programmatically replace the file content (minimal diff).
     updateFileContent(fileId, content) {
         const text = this.texts.get(fileId);
 
@@ -356,10 +348,7 @@ export class CollaborationClient {
         return true;
     }
 
-    /* =========================
-       EDITOR BINDING
-    ========================= */
-
+    //EDITOR BINDING
     bindEditor(fileId, editor) {
         if (!fileId || !editor) {
             return;
@@ -550,10 +539,7 @@ export class CollaborationClient {
         }
     }
 
-    /* =========================
-       NETWORK
-    ========================= */
-
+    //NETWORK
     send(message) {
         if (
             !this.authenticated ||
@@ -599,10 +585,7 @@ export class CollaborationClient {
         });
     }
 
-    /* =========================
-       INCOMING
-    ========================= */
-
+    //INCOMING
     // The server lost its in-memory state (e.g. restarted).
     serverLostHistory(document, serverStateVector) {
         const local = Y.decodeStateVector(Y.encodeStateVector(document));
@@ -716,10 +699,7 @@ export class CollaborationClient {
         this.onRemoteUpdate?.(fileId, content);
     }
 
-    /* =========================
-       YJS -> MONACO
-    ========================= */
-
+    //YJS -> MONACO
     setEditorContentFromYjs(fileId) {
         const text = this.texts.get(fileId);
 
@@ -835,10 +815,7 @@ export class CollaborationClient {
         }
     }
 
-    /* =========================
-       CLEANUP
-    ========================= */
-
+    //CLEANUP
     disconnect() {
         this.shouldReconnect = false;
 
