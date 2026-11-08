@@ -5,9 +5,7 @@ import {
 
 import { createSandboxResult } from "./sandboxResult.js";
 import { getExecutionBackend } from "./executionBackendFactory.js";
-import {
-    classifyExecutionResult
-} from "../execution/executionResultClassifier.js";
+import {classifyExecutionResult} from "../execution/executionResultClassifier.js";
 
 const DEFAULT_BACKEND = "local";
 
