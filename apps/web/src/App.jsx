@@ -88,10 +88,8 @@ import {
     getCollaborationByToken,
 } from "./services/api";
 
-/* =========================
-   AUTH SCREEN
-========================= */
 
+//AUTH SCREEN
 function AuthScreen({ onAuthenticated }) {
     const [mode, setMode] = useState("login");
 
@@ -378,10 +376,7 @@ function AuthScreen({ onAuthenticated }) {
     );
 }
 
-/* =========================
-   PROJECT DASHBOARD
-========================= */
-
+//PROJECT DASHBOARD
 function ProjectDashboard({
     user,
     onOpenProject,
@@ -912,10 +907,7 @@ function ProjectDashboard({
     );
 }
 
-/* =========================
-   WORKSPACE
-========================= */
-
+//WORKSPACE
 function Workspace({
     user,
     project,
@@ -2343,13 +2335,7 @@ useEffect(() => {
         }
     };
 
-
-    /*
-     * =========================
-     * LOAD PROJECT FILES
-     * =========================
-     */
-
+    //LOAD PROJECT FILES
     useEffect(() => {
         let cancelled = false;
 
@@ -2470,12 +2456,7 @@ useEffect(() => {
         };
     }, [project?.id]);
 
-    /*
-     * =========================
-     * LOAD ACTIVE FILE
-     * =========================
-     */
-
+    //LOAD ACTIVE FILE
     useEffect(() => {
         let cancelled = false;
 
@@ -2651,13 +2632,7 @@ useEffect(() => {
         originalContent
     ]);
 
-
-    /*
-     * =========================
-     * SAVE FILE
-     * =========================
-     */
-
+    // SAVE FILE
     async function handleSaveFile() {
         if (!project?.id || !activeFileId) {
             return;
@@ -2723,12 +2698,7 @@ useEffect(() => {
         }
     }
 
-    /*
-    * =========================
-    * RUN FILE
-    * =========================
-    */
-
+    //RUN FILE
     async function handleRunFile() {
         if (
             !project?.id ||
@@ -2839,12 +2809,7 @@ useEffect(() => {
 
     saveFileRef.current = handleSaveFile;
 
-    /*
-     * =========================
-     * KEYBOARD SAVE
-     * =========================
-     */
-
+    //KEYBOARD SAVE
     function handleEditorKeyDown(event) {
         if (
             (event.ctrlKey || event.metaKey) &&
@@ -2918,12 +2883,7 @@ useEffect(() => {
         };
     }, [hasUnsavedChanges]);
 
-    /*
-     * =========================
-     * FILE HELPERS
-     * =========================
-     */
-
+    //FILE HELPERS
     function getParentPath(path = "") {
         const normalized = path
             .replace(/\\/g, "/")
@@ -3099,10 +3059,7 @@ useEffect(() => {
                     />
                 );
 
-            // =========================================
             // JAVA / JVM
-            // =========================================
-
             case "java":
                 return (
                     <FaJava
@@ -3139,10 +3096,7 @@ useEffect(() => {
                     />
                 );
 
-            // =========================================
             // C / C++
-            // =========================================
-
             case "c":
             case "h":
                 return (
@@ -3165,10 +3119,7 @@ useEffect(() => {
                     />
                 );
 
-            // =========================================
             // C#
-            // =========================================
-
             case "cs":
                 return (
                     <Code2
@@ -3176,10 +3127,7 @@ useEffect(() => {
                     />
                 );
 
-            // =========================================
             // PYTHON
-            // =========================================
-
             case "py":
             case "pyw":
                 return (
@@ -3189,10 +3137,7 @@ useEffect(() => {
                     />
                 );
 
-            // =========================================
             // RUST
-            // =========================================
-
             case "rs":
                 return (
                     <SiRust
@@ -3201,10 +3146,7 @@ useEffect(() => {
                     />
                 );
 
-            // =========================================
             // GO
-            // =========================================
-
             case "go":
                 return (
                     <SiGo
@@ -3213,10 +3155,7 @@ useEffect(() => {
                     />
                 );
 
-            // =========================================
             // PHP
-            // =========================================
-
             case "php":
                 return (
                     <SiPhp
@@ -3225,10 +3164,7 @@ useEffect(() => {
                     />
                 );
 
-            // =========================================
             // RUBY
-            // =========================================
-
             case "rb":
             case "rake":
                 return (
@@ -3250,10 +3186,7 @@ useEffect(() => {
                     />
                 );
 
-            // =========================================
             // DART / FLUTTER
-            // =========================================
-
             case "dart":
                 return (
                     <SiDart
@@ -3262,10 +3195,7 @@ useEffect(() => {
                     />
                 );
 
-            // =========================================
             // WEB
-            // =========================================
-
             case "html":
             case "htm":
                 return (
@@ -3292,10 +3222,7 @@ useEffect(() => {
                     />
                 );
 
-            // =========================================
             // JSON / CONFIG
-            // =========================================
-
             case "json":
             case "jsonc":
                 return (
@@ -3329,10 +3256,7 @@ useEffect(() => {
                     />
                 );
 
-            // =========================================
             // DATABASE
-            // =========================================
-
             case "sql":
                 return (
                     <Database
@@ -3340,10 +3264,7 @@ useEffect(() => {
                     />
                 );
 
-            // =========================================
             // SHELL
-            // =========================================
-
             case "sh":
             case "bash":
             case "zsh":
@@ -3364,10 +3285,7 @@ useEffect(() => {
                     />
                 );
 
-            // =========================================
             // MARKDOWN
-            // =========================================
-
             case "md":
             case "mdx":
                 return (
@@ -3377,10 +3295,7 @@ useEffect(() => {
                     />
                 );
 
-            // =========================================
             // OTHER LANGUAGES
-            // =========================================
-
             case "lua":
                 return (
                     <SiLua
@@ -3443,10 +3358,7 @@ useEffect(() => {
                     />
                 );
 
-            // =========================================
             // DEFAULT
-            // =========================================
-
             default:
                 return (
                     <File
@@ -3472,14 +3384,7 @@ useEffect(() => {
         });
     }
 
-    
-
-    /*
-     * =========================
-     * RENDER FILE TREE
-     * =========================
-     */
-
+    //RENDER FILE TREE
     function renderFileTree() {
         const normalizePath = (value = "") =>
             value
@@ -3931,13 +3836,7 @@ useEffect(() => {
         );
     }
 
-    /*
-     * =========================
-     * LINE NUMBERS
-     * =========================
-     */
-
-
+    //LINE NUMBERS
     return (
         <div className="forgeai-app">
 
@@ -4935,10 +4834,7 @@ useEffect(() => {
     );
 }
 
-/* =========================
-   APP
-========================= */
-
+//APP
 function App() {
     const [user, setUser] = useState(null);
     const [project, setProject] = useState(null);
