@@ -10,17 +10,13 @@ export function createAgentState({
 
         status: "running",
 
-        // Agent lifecycle state
         phase: "queued",
 
-        // Execution counters
         iteration: 0,
         toolCount: 0,
 
-        // Currently executing tool
         currentTool: null,
 
-        // Runtime heartbeat
         lastHeartbeatAt: new Date().toISOString(),
 
         messages: [],
